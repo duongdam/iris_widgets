@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Environment
+.env
+.env.*
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Mendix widget output
+widgets/*/dist/
+widgets/*/deployment/
+widgets/*/widgets/
+builds/
+*.mpk
+
+# Coverage
+coverage/
+
+# Temp
+*.tmp
+*.swp
+
+# Mock UI
+mock-ui/dist/
+
+# AI
+.cursor/*
+.specify/*

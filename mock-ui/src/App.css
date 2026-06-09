@@ -1,0 +1,104 @@
+@import "../../configs/chart-design-tokens.scss";
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+    margin: 0;
+    min-height: 100%;
+    font-family: var(--iris-font-family);
+    background: var(--iris-surface-muted);
+    color: var(--iris-text-primary);
+}
+
+.mock-ui-layout {
+    min-height: 100vh;
+    background: var(--iris-surface-muted);
+}
+
+.mock-ui-sider {
+    border-right: 1px solid var(--iris-border);
+    background: var(--iris-surface) !important;
+}
+
+.mock-ui-sider-inner {
+    padding: 24px 20px;
+}
+
+.mock-ui-content {
+    padding: 24px;
+}
+
+.mock-ui-chart-panel {
+    background: transparent;
+    border-radius: var(--iris-radius-lg);
+    padding: 0;
+}
+
+.mock-chart {
+    width: 100%;
+}
+
+.mock-ui-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.mock-ui-selection {
+    margin-top: 8px;
+    padding: 12px;
+    background: var(--iris-surface-muted);
+    border: 1px solid var(--iris-border);
+    border-radius: var(--iris-radius-sm);
+    font-size: 13px;
+}
+
+.mock-ui-selection pre {
+    margin: 4px 0 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-size: 11px;
+    max-height: 120px;
+    overflow: auto;
+    color: var(--iris-text-secondary);
+}
+
+.mock-ui-selection > div + div {
+    margin-top: 10px;
+}
+
+.mock-ui-events {
+    margin-top: 8px;
+    padding: 12px;
+    background: var(--iris-surface-muted);
+    border: 1px solid var(--iris-border);
+    border-radius: var(--iris-radius-sm);
+    font-size: 12px;
+    min-height: 72px;
+}
+
+.mock-ui-event-row + .mock-ui-event-row {
+    margin-top: 6px;
+}
+
+.mock-ui-reset {
+    margin-top: 12px;
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid var(--iris-border);
+    border-radius: var(--iris-radius-sm);
+    background: var(--iris-surface);
+    color: var(--iris-text-primary);
+    cursor: pointer;
+    font-family: var(--iris-font-family);
+}
+
+.mock-ui-reset:hover {
+    border-color: var(--iris-primary);
+    color: var(--iris-primary);
+}

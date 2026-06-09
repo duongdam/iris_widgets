@@ -1,0 +1,42 @@
+{
+    "name": "ax-reportchart",
+    "widgetName": "AxReportChart",
+    "version": "1.0.0",
+    "description": "Reporting chart Mendix pluggable widget",
+    "license": "Apache-2.0",
+    "engines": {
+        "node": ">=18"
+    },
+    "config": {
+        "mendixHost": "http://localhost:8080",
+        "developmentPort": 3003
+    },
+    "packagePath": "com.mendix",
+    "scripts": {
+        "start": "pluggable-widgets-tools start:web",
+        "dev": "pluggable-widgets-tools start:web",
+        "build": "pluggable-widgets-tools build:web",
+        "release": "pluggable-widgets-tools release:web",
+        "lint": "pluggable-widgets-tools lint",
+        "lint:fix": "pluggable-widgets-tools lint:fix",
+        "format": "pluggable-widgets-tools format",
+        "test": "pluggable-widgets-tools test:unit:web --no-cache --ci --passWithNoTests"
+    },
+    "dependencies": {
+        "@iris/chart-core": "workspace:*",
+        "@iris/chart-echarts": "workspace:*",
+        "@iris/chart-ui": "workspace:*",
+        "classnames": "2.5.1",
+        "echarts-for-react": "3.0.6",
+        "mobx": "6.16.0",
+        "mobx-react-lite": "4.1.1"
+    },
+    "devDependencies": {
+        "@mendix/pluggable-widgets-tools": "11.8.1",
+        "@types/big.js": "^6.2.0",
+        "@types/enzyme": "^3.10.12",
+        "@types/jest": "^29.0.0",
+        "@types/react-test-renderer": "19.0.0",
+        "typescript": "^5.4.5"
+    }
+}

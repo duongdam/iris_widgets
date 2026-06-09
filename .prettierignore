@@ -1,0 +1,7 @@
+dist/
+deployment/
+node_modules/
+*.mpk
+coverage/
+builds/
+mock-ui/dist/

@@ -1,0 +1,39 @@
+:root {
+    --iris-primary: #4f46e5;
+    --iris-surface: #ffffff;
+    --iris-surface-muted: #f8fafc;
+    --iris-border: #e2e8f0;
+    --iris-border-strong: #cbd5e1;
+    --iris-text-primary: #0f172a;
+    --iris-text-secondary: #64748b;
+    --iris-text-muted: #94a3b8;
+    --iris-grid-line: #f1f5f9;
+    --iris-shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.08);
+    --iris-shadow-md: 0 4px 12px rgba(15, 23, 42, 0.1);
+    --iris-radius-lg: 12px;
+    --iris-radius-sm: 4px;
+    --iris-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+        sans-serif;
+    --iris-series-1: #4f46e5;
+    --iris-series-2: #0ea5e9;
+    --iris-series-3: #10b981;
+    --iris-series-4: #f59e0b;
+    --iris-series-5: #ef4444;
+    --iris-series-6: #8b5cf6;
+    --iris-series-7: #ec4899;
+    --iris-series-8: #14b8a6;
+}
+
+[data-theme="dark"] {
+    --iris-primary: #818cf8;
+    --iris-surface: #0f172a;
+    --iris-surface-muted: #1e293b;
+    --iris-border: #334155;
+    --iris-border-strong: #475569;
+    --iris-text-primary: #f8fafc;
+    --iris-text-secondary: #94a3b8;
+    --iris-text-muted: #64748b;
+    --iris-grid-line: #1e293b;
+    --iris-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --iris-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+}

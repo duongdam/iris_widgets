@@ -1,0 +1,26 @@
+{
+    "name": "@iris/chart-echarts",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        }
+    },
+    "scripts": {
+        "build": "tsc -b",
+        "clean": "rm -rf dist *.tsbuildinfo",
+        "test": "echo \"No tests yet\""
+    },
+    "dependencies": {
+        "@iris/chart-core": "workspace:*",
+        "echarts": "6.1.0"
+    },
+    "devDependencies": {
+        "typescript": "^5.4.5"
+    }
+}

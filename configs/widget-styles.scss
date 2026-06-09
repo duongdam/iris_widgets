@@ -1,0 +1,90 @@
+@use "./chart-design-tokens.scss";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+    .iris-chart-container {
+        @apply relative w-full font-iris;
+        background: var(--iris-surface);
+        border: 1px solid var(--iris-border);
+        border-radius: var(--iris-radius-lg);
+        box-shadow: var(--iris-shadow-sm);
+        padding: 1rem;
+    }
+
+    .iris-chart-container--compact {
+        padding: 0.625rem;
+    }
+
+    .iris-chart-container__header {
+        @apply mb-0;
+    }
+
+    .iris-chart-container__header--divider {
+        border-bottom: 1px solid var(--iris-border);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.625rem;
+    }
+
+    .iris-chart-container__title {
+        @apply text-[15px] font-semibold leading-snug;
+        color: var(--iris-text-primary);
+    }
+
+    .iris-chart-container__subtitle {
+        @apply mt-0.5 text-xs leading-snug;
+        color: var(--iris-text-secondary);
+    }
+
+    .iris-chart-container__body {
+        @apply relative w-full;
+    }
+
+    .iris-chart-empty {
+        @apply flex h-full min-h-[200px] items-center justify-center text-sm;
+        background: var(--iris-surface-muted);
+        border-radius: var(--iris-radius-sm);
+        color: var(--iris-text-muted);
+    }
+
+    .iris-chart-loading {
+        @apply absolute inset-0 z-[1] flex items-center justify-center backdrop-blur-[1px];
+        background: color-mix(in srgb, var(--iris-surface) 72%, transparent);
+    }
+
+    .iris-chart-loading__shimmer {
+        @apply absolute inset-0 overflow-hidden rounded-sm;
+    }
+
+    .iris-chart-loading__shimmer::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+            90deg,
+            transparent 0%,
+            color-mix(in srgb, var(--iris-border) 40%, transparent) 50%,
+            transparent 100%
+        );
+        animation: iris-shimmer 1.4s ease-in-out infinite;
+    }
+
+    .mock-chart,
+    .ax-barchart-preview,
+    .ax-columnchart-preview,
+    .ax-stackareachart-preview,
+    .ax-reportchart-preview {
+        @apply w-full;
+    }
+}
+
+@keyframes iris-shimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}

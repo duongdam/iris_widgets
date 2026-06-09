@@ -1,0 +1,8 @@
+{
+    "files": [],
+    "references": [
+        { "path": "./packages/chart-core" },
+        { "path": "./packages/chart-ui" },
+        { "path": "./packages/chart-echarts" }
+    ]
+}

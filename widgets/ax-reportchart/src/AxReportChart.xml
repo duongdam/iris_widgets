@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<widget
+    id="com.mendix.axreportchart.AxReportChart"
+    pluginWidget="true"
+    offlineCapable="true"
+    xmlns="http://www.mendix.com/widget/1.0/"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.mendix.com/widget/1.0/ ../node_modules/mendix/custom_widget.xsd"
+>
+    <name>Ax Report Chart</name>
+    <description>Report chart widget powered by shared chart platform</description>
+    <icon />
+    <properties>
+        <propertyGroup caption="General">
+            <property key="title" type="string" required="false" defaultValue="">
+                <caption>Title</caption>
+                <description>Chart title displayed above the chart</description>
+            </property>
+            <property key="height" type="integer" required="true" defaultValue="400">
+                <caption>Height</caption>
+                <description>Chart height in pixels</description>
+            </property>
+        </propertyGroup>
+        <propertyGroup caption="Data">
+            <property key="jsonData" type="attribute" required="true">
+                <caption>JSON Data</caption>
+                <description>String attribute containing chart data as JSON</description>
+                <attributeTypes>
+                    <attributeType name="String" />
+                </attributeTypes>
+            </property>
+            <property key="dataFormat" type="enumeration" required="true" defaultValue="flat">
+                <caption>Data Format</caption>
+                <description>Input data format</description>
+                <enumerationValues>
+                    <enumerationValue key="flat">Flat</enumerationValue>
+                    <enumerationValue key="elastic">Elastic</enumerationValue>
+                </enumerationValues>
+            </property>
+        </propertyGroup>
+        <propertyGroup caption="Display">
+            <property key="showTitle" type="boolean" required="true" defaultValue="true">
+                <caption>Show Title</caption>
+                <description>Display the chart title header above the chart</description>
+            </property>
+            <property key="showLegend" type="boolean" required="true" defaultValue="true">
+                <caption>Show Legend</caption>
+                <description>Display the chart legend</description>
+            </property>
+            <property key="showTooltip" type="boolean" required="true" defaultValue="true">
+                <caption>Show Tooltip</caption>
+                <description>Display tooltips when hovering chart elements</description>
+            </property>
+        </propertyGroup>
+        <propertyGroup caption="Selection">
+            <property key="selectedId" type="attribute" required="false">
+                <caption>Selected ID</caption>
+                <description>Writable string attribute for the selected record ID</description>
+                <attributeTypes>
+                    <attributeType name="String" />
+                </attributeTypes>
+            </property>
+            <property key="selectedName" type="attribute" required="false">
+                <caption>Selected Name</caption>
+                <description>Writable string attribute for the selected record name</description>
+                <attributeTypes>
+                    <attributeType name="String" />
+                </attributeTypes>
+            </property>
+            <property key="selectedPayload" type="attribute" required="false">
+                <caption>Selected Payload</caption>
+                <description>Complete selected ChartRecord as JSON string</description>
+                <attributeTypes>
+                    <attributeType name="String" />
+                </attributeTypes>
+            </property>
+        </propertyGroup>
+        <propertyGroup caption="Events">
+            <property key="onClick" type="action" required="false">
+                <caption>On Click</caption>
+                <description>Action executed when a chart element is clicked</description>
+            </property>
+            <property key="onSelectionChanged" type="action" required="false">
+                <caption>On Selection Changed</caption>
+                <description>Action executed when the chart selection changes</description>
+            </property>
+        </propertyGroup>
+    </properties>
+</widget>

@@ -1,0 +1,13 @@
+{
+    "extends": "@mendix/pluggable-widgets-tools/configs/tsconfig.base.json",
+    "compilerOptions": {
+        "baseUrl": "./",
+        "paths": {
+            "@iris/chart-core": ["../../packages/chart-core/src/index.ts"],
+            "@iris/chart-ui": ["../../packages/chart-ui/src/index.ts"],
+            "@iris/chart-echarts": ["../../packages/chart-echarts/src/index.ts"]
+        }
+    },
+    "include": ["./src/**/*"],
+    "jsx": "react-jsx"
+}

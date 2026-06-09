@@ -1,0 +1,5 @@
+dist/
+deployment/
+node_modules/
+*.mpk
+coverage/
