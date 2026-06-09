@@ -1,0 +1,20 @@
+@use "./variables" as *;
+
+/* Cross-highlight via JS-injected classes (cross between grid row + timeline col) */
+.gantt_row.gantt-cross-hover-row,
+.gantt_row.gantt-cross-hover-row.odd {
+    background-color: $gantt-hover-row !important;
+}
+
+.gantt_task_cell.gantt-cross-hover-col {
+    background-color: $gantt-hover-col !important;
+}
+
+/* Native hover */
+.gantt_grid_data .gantt_row:not(.gantt_selected):hover {
+    background-color: $gantt-hover-row;
+}
+
+.gantt_task_bg .gantt_task_row:not(.gantt_selected):hover .gantt_task_cell {
+    background-color: $gantt-hover-col;
+}

@@ -1,0 +1,242 @@
+import type React from "react";
+import { Button, DatePicker, Dropdown, Segmented, Space, Tooltip } from "antd";
+import type { MenuProps } from "antd";
+import dayjs from "dayjs";
+import { observer } from "mobx-react-lite";
+import { useGanttContext } from "../providers/GanttProvider";
+import { GanttIncomingEvents, type SetDateData, TimelineViewMode } from "../eventbus/eventTypes";
+
+const VIEW_OPTIONS = [
+    { label: "Day", value: TimelineViewMode.DAY },
+    { label: "Week", value: TimelineViewMode.WEEK },
+    { label: "Month", value: TimelineViewMode.MONTH },
+];
+
+const EXPORT_ITEMS: MenuProps["items"] = [
+    { key: "pdf", label: "Export PDF" },
+    { key: "png", label: "Export PNG" },
+    { key: "excel", label: "Export Excel" },
+];
+
+const EXPORT_EVENT_MAP: Record<string, GanttIncomingEvents> = {
+    pdf: GanttIncomingEvents.EXPORT_PDF,
+    png: GanttIncomingEvents.EXPORT_PNG,
+    excel: GanttIncomingEvents.EXPORT_EXCEL,
+};
+
+/** SVG icon – collapse/expand/fit/fullscreen using minimal path data */
+function IconToday() {
+    return (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <rect x="1" y="2" width="10" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
+            <line x1="1" y1="5" x2="11" y2="5" stroke="currentColor" strokeWidth="1.2" />
+            <line x1="4" y1="0.5" x2="4" y2="3.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+            <line x1="8" y1="0.5" x2="8" y2="3.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+            <circle cx="6" cy="8" r="1.2" fill="currentColor" />
+        </svg>
+    );
+}
+
+function IconFit() {
+    return (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M1 4V1h3M8 1h3v3M11 8v3H8M4 11H1V8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+    );
+}
+
+function IconExpand() {
+    return (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M2 4l3 3 3-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+            <line x1="2" y1="9" x2="10" y2="9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+        </svg>
+    );
+}
+
+function IconCollapse() {
+    return (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M2 5l3-3 3 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+            <line x1="2" y1="9" x2="10" y2="9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+        </svg>
+    );
+}
+
+function IconFullscreen({ active }: { active: boolean }) {
+    return active ? (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M5 1H1v4M7 1h4v4M5 11H1V7M7 11h4V7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+    ) : (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M1 4V1h3M8 1h3v3M11 8v3H8M4 11H1V8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+    );
+}
+
+function IconExport() {
+    return (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M6 1v7M3.5 5.5L6 8l2.5-2.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M2 9.5h8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+        </svg>
+    );
+}
+
+function IconCalendar() {
+    return (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <rect x="1" y="2" width="10" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
+            <line x1="1" y1="5" x2="11" y2="5" stroke="currentColor" strokeWidth="1.2" />
+            <line x1="4" y1="0.5" x2="4" y2="3.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+            <line x1="8" y1="0.5" x2="8" y2="3.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+        </svg>
+    );
+}
+
+const DATE_PICKER_STYLE: React.CSSProperties = { width: 110 };
+
+export const GanttToolbar = observer(function GanttToolbar(): JSX.Element {
+    const { store, eventBus, widgetId } = useGanttContext();
+
+    function emit(type: GanttIncomingEvents, data?: SetDateData): void {
+        eventBus.emit({ widgetId, type, data });
+    }
+
+    function handleExport(key: string): void {
+        const event = EXPORT_EVENT_MAP[key];
+        if (event) {
+            emit(event);
+        }
+    }
+
+    function handleStartDateChange(date: dayjs.Dayjs | null): void {
+        if (date) {
+            emit(GanttIncomingEvents.SET_START_DATE, { date: date.startOf("day").toISOString() });
+        }
+    }
+
+    function handleEndDateChange(date: dayjs.Dayjs | null): void {
+        if (date) {
+            emit(GanttIncomingEvents.SET_END_DATE, { date: date.endOf("day").toISOString() });
+        }
+    }
+
+    return (
+        <div className="ax-ganttchart__toolbar">
+            {/* View mode segmented */}
+            <Segmented
+                size="small"
+                options={VIEW_OPTIONS}
+                value={store.viewMode}
+                onChange={val => store.setViewMode(val as TimelineViewMode)}
+            />
+
+            <div style={{ width: 1, height: 16, background: "#e8e8e8", flexShrink: 0 }} />
+
+            {/* Timeline range date pickers */}
+            <Space size={4} align="center">
+                <IconCalendar />
+                <Tooltip title="Timeline start date" mouseEnterDelay={0.5}>
+                    <DatePicker
+                        size="small"
+                        allowClear={false}
+                        picker="date"
+                        style={DATE_PICKER_STYLE}
+                        value={dayjs(store.timelineStart)}
+                        onChange={handleStartDateChange}
+                        placeholder="Start date"
+                    />
+                </Tooltip>
+                <span style={{ color: "#aaa", fontSize: 11, lineHeight: 1 }}>→</span>
+                <Tooltip title="Timeline end date" mouseEnterDelay={0.5}>
+                    <DatePicker
+                        size="small"
+                        allowClear={false}
+                        picker="date"
+                        style={DATE_PICKER_STYLE}
+                        value={dayjs(store.timelineEnd)}
+                        onChange={handleEndDateChange}
+                        placeholder="End date"
+                    />
+                </Tooltip>
+            </Space>
+
+            <div style={{ width: 1, height: 16, background: "#e8e8e8", flexShrink: 0 }} />
+
+            {/* Navigation actions */}
+            <Space size={4}>
+                <Tooltip title="Scroll to today" mouseEnterDelay={0.5}>
+                    <Button
+                        size="small"
+                        icon={<IconToday />}
+                        onClick={() => emit(GanttIncomingEvents.SCROLL_TO_TODAY)}
+                    >
+                        Today
+                    </Button>
+                </Tooltip>
+
+                <Tooltip title="Fit timeline to tasks" mouseEnterDelay={0.5}>
+                    <Button
+                        size="small"
+                        icon={<IconFit />}
+                        onClick={() => emit(GanttIncomingEvents.FIT_TIMELINE)}
+                    >
+                        Fit
+                    </Button>
+                </Tooltip>
+            </Space>
+
+            <div style={{ width: 1, height: 16, background: "#e8e8e8", flexShrink: 0 }} />
+
+            {/* Expand / Collapse */}
+            <Space size={4}>
+                <Tooltip title="Expand all rows" mouseEnterDelay={0.5}>
+                    <Button
+                        size="small"
+                        icon={<IconExpand />}
+                        onClick={() => emit(GanttIncomingEvents.EXPAND_ALL)}
+                    />
+                </Tooltip>
+
+                <Tooltip title="Collapse all rows" mouseEnterDelay={0.5}>
+                    <Button
+                        size="small"
+                        icon={<IconCollapse />}
+                        onClick={() => emit(GanttIncomingEvents.COLLAPSE_ALL)}
+                    />
+                </Tooltip>
+            </Space>
+
+            {/* Spacer */}
+            <div style={{ flex: 1 }} />
+
+            {/* Export + Fullscreen */}
+            <Space size={4}>
+                <Dropdown
+                    menu={{
+                        items: EXPORT_ITEMS,
+                        onClick: ({ key }) => handleExport(key)
+                    }}
+                    placement="bottomRight"
+                    trigger={["click"]}
+                >
+                    <Button size="small" icon={<IconExport />}>
+                        Export
+                    </Button>
+                </Dropdown>
+
+                <Tooltip title={store.fullscreen ? "Exit fullscreen" : "Enter fullscreen"} mouseEnterDelay={0.5}>
+                    <Button
+                        size="small"
+                        icon={<IconFullscreen active={store.fullscreen} />}
+                        onClick={() =>
+                            emit(store.fullscreen ? GanttIncomingEvents.EXIT_FULLSCREEN : GanttIncomingEvents.ENTER_FULLSCREEN)
+                        }
+                    />
+                </Tooltip>
+            </Space>
+        </div>
+    );
+});

@@ -14,6 +14,7 @@
         "format": "pnpm --filter './widgets/*' run format",
         "clean": "pnpm -r run clean",
         "dev:barchart": "pnpm --filter ax-barchart run start",
+        "dev:ganttchart": "pnpm --filter ax-ganttchart run start",
         "dev:mock-ui": "pnpm --filter mock-ui run dev"
     },
     "devDependencies": {

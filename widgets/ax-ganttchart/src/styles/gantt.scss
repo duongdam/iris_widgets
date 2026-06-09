@@ -1,0 +1,266 @@
+@use "./variables" as *;
+@use "./hover";
+
+@import "dhtmlx-gantt/codebase/dhtmlxgantt.css";
+
+/* ─── Widget shell ─────────────────────────────────────────────────────────── */
+
+.ax-ganttchart {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    background: #fff;
+    border: 1px solid $gantt-border-color;
+    border-radius: 8px;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+    &--fullscreen {
+        position: fixed !important;
+        inset: 0 !important;
+        border-radius: 0;
+        border: none;
+        z-index: 9999;
+    }
+
+    &__toolbar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        border-bottom: 1px solid $gantt-border-color;
+        background: $gantt-header-bg;
+        flex-shrink: 0;
+    }
+
+    &__body {
+        position: relative;
+        flex: 1;
+        min-height: 0;
+    }
+
+    &__gantt {
+        width: 100%;
+        height: 100%;
+    }
+
+    &__loading,
+    &__empty {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.85);
+        z-index: 2;
+    }
+}
+
+/* ─── Scale / header ────────────────────────────────────────────────────────── */
+
+.gantt_grid_scale,
+.gantt_task_scale {
+    background: $gantt-header-bg !important;
+    color: $gantt-text-secondary !important;
+    font-weight: 500;
+}
+
+.gantt_scale_cell {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ─── Grid rows ─────────────────────────────────────────────────────────────── */
+
+.gantt_grid_data .gantt_row,
+.gantt_grid_data .gantt_row.odd {
+    border-bottom: 1px solid $gantt-border-color;
+    transition: background-color 120ms ease;
+}
+
+.gantt_tree_content {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ─── Selection ─────────────────────────────────────────────────────────────── */
+
+.gantt_grid_data .gantt_row.gantt_selected,
+.gantt_grid_data .gantt_row.gantt_selected.odd {
+    background-color: $gantt-selected-bg !important;
+    box-shadow: inset 3px 0 0 $gantt-selected-border;
+}
+
+.gantt_task_bg .gantt_task_row.gantt_selected .gantt_task_cell {
+    background-color: $gantt-selected-bg !important;
+}
+
+/* ─── Weekend shading ────────────────────────────────────────────────────────── */
+
+.gantt-weekend {
+    background-color: $gantt-weekend-bg !important;
+}
+
+/* ─── Task bars ──────────────────────────────────────────────────────────────── */
+
+.gantt_task_line {
+    border-radius: 4px;
+    border: 1px solid rgba(0, 0, 0, 0.2) !important;
+    box-shadow: none !important;
+    transition: filter 120ms ease, opacity 120ms ease;
+
+    &:hover {
+        filter: brightness(0.92);
+        cursor: pointer;
+    }
+}
+
+/* Regular task */
+.gantt_task_line.gantt-type-task {
+    background-color: $gantt-task-regular;
+}
+
+/* Project / summary task — row_height=40, bar_height=25 → top=(40-25)/2=7.5px, want 30px bar */
+.gantt_task_line.gantt-type-project {
+    background-color: $gantt-task-project;
+    height: 30px !important;
+    margin-top: -3px;
+    border-radius: 4px;
+}
+
+.gantt_row.gantt-row-project .gantt_tree_content {
+    font-weight: 600;
+    color: $gantt-text-primary;
+}
+
+/* Milestone — center 16px diamond in 40px row: margin-top=(40-16)/2=12px */
+.gantt_task_line.gantt-type-milestone {
+    background-color: $gantt-task-milestone !important;
+    border-color: rgba(0, 0, 0, 0.2) !important;
+    transform: rotate(45deg);
+    border-radius: 3px;
+    width: 16px !important;
+    height: 16px !important;
+    margin-top: 12px;
+    margin-left: -8px;
+}
+
+/* Progress overlay */
+.gantt_task_progress {
+    background-color: $gantt-task-progress;
+    border-radius: 4px 0 0 4px;
+}
+
+/* Drag handles (visible on hover) */
+.gantt_task_line .gantt_task_drag {
+    width: 8px;
+    opacity: 0;
+    transition: opacity 120ms ease;
+}
+
+.gantt_task_line:hover .gantt_task_drag {
+    opacity: 1;
+}
+
+.gantt_task_line .gantt_task_drag.task_left {
+    border-radius: 4px 0 0 4px;
+    background: rgba(255, 255, 255, 0.4);
+    cursor: w-resize;
+}
+
+.gantt_task_line .gantt_task_drag.task_right {
+    border-radius: 0 4px 4px 0;
+    background: rgba(255, 255, 255, 0.4);
+    cursor: e-resize;
+}
+
+/* ─── Dependency arrows ──────────────────────────────────────────────────────── */
+
+.gantt_link_arrow {
+    border-width: 5px;
+}
+
+.gantt_task_link .gantt_line_wrapper div {
+    background-color: #8c8c8c;
+}
+
+/* ─── Today marker + pulse ───────────────────────────────────────────────────── */
+
+@keyframes gantt-today-pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.55; }
+}
+
+.gantt_marker_area {
+    pointer-events: none;
+    z-index: 3;
+}
+
+.gantt_marker.today {
+    background-color: $gantt-today-marker !important;
+    width: 2px !important;
+    opacity: 1;
+    z-index: 4;
+    pointer-events: none;
+    animation: gantt-today-pulse 2.4s ease-in-out infinite;
+}
+
+.gantt_marker.today .gantt_marker_content {
+    color: $gantt-today-marker;
+    background: rgba(255, 255, 255, 0.92);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 5px;
+    border-radius: 3px;
+    margin-left: 4px;
+    white-space: nowrap;
+}
+
+/* ─── Grid / cell borders ─────────────────────────────────────────────────────── */
+
+.gantt_layout_cell {
+    border-color: $gantt-border-color !important;
+}
+
+/* ─── Slim custom scrollbar ───────────────────────────────────────────────────── */
+
+.gantt_scroll_hor,
+.gantt_scroll_ver {
+    &::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: #d9d9d9;
+        border-radius: 99px;
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+        background: #bfbfbf;
+    }
+}
+
+/* ─── Toolbar antd overrides ─────────────────────────────────────────────────── */
+
+.ax-ganttchart__toolbar {
+    .ant-segmented {
+        font-size: 12px;
+    }
+
+    .ant-btn {
+        font-size: 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+}

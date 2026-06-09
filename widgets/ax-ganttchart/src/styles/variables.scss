@@ -1,0 +1,27 @@
+$gantt-row-height: 40px;
+$gantt-border-color: #f0f0f0;
+$gantt-header-bg: #fafafa;
+
+// Hover — blue tint (was yellow)
+$gantt-hover-row: #f0f7ff;
+$gantt-hover-col: #e6f4ff;
+
+// Selection state
+$gantt-selected-bg: #e6f4ff;
+$gantt-selected-border: #1677ff;
+
+// Today marker
+$gantt-today-marker: #ff4d4f;
+
+// Typography
+$gantt-text-primary: #1f1f1f;
+$gantt-text-secondary: #595959;
+
+// Weekend tint
+$gantt-weekend-bg: #f7f7f7;
+
+// Task type semantic colors
+$gantt-task-regular: #4096ff;
+$gantt-task-project: #0958d9;
+$gantt-task-milestone: #722ed1;
+$gantt-task-progress: rgba(0, 0, 0, 0.15);

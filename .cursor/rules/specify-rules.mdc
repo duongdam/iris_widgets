@@ -5,16 +5,16 @@ alwaysApply: true
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`specs/001-enterprise-chart-widgets/plan.md`
+`specs/002-enterprise-gantt-widget/plan.md`
 
 Related artifacts:
-- Spec: `specs/001-enterprise-chart-widgets/spec.md`
-- Research: `specs/001-enterprise-chart-widgets/research.md`
-- Data model: `specs/001-enterprise-chart-widgets/data-model.md`
-- Contracts: `specs/001-enterprise-chart-widgets/contracts/`
-- Quickstart: `specs/001-enterprise-chart-widgets/quickstart.md`
+- Spec: `specs/002-enterprise-gantt-widget/spec.md`
+- Research: `specs/002-enterprise-gantt-widget/research.md`
+- Data model: `specs/002-enterprise-gantt-widget/data-model.md`
+- Contracts: `specs/002-enterprise-gantt-widget/contracts/`
+- Quickstart: `specs/002-enterprise-gantt-widget/quickstart.md`
 
-Tech stack: pnpm 10.30.0, @mendix/pluggable-widgets-tools 11.8.1, React 18.2, MobX 6.16, antd 6.4.3, echarts 6.1.0, Tailwind CSS 3.4, SCSS
+Tech stack: pnpm 10.30.0, @mendix/pluggable-widgets-tools 11.8.1, React 18.2, MobX 6.16, antd 6.4.3, dhtmlx-gantt ^9.1.4, SCSS
 
-Current focus: Enterprise visual refresh — see plan.md Phase A–E and styling section in quickstart.md
+Current focus: ax-ganttchart Mendix pluggable widget — Phase 1 planning complete; Phase 2 implementation via /speckit-tasks + /speckit-implement
 <!-- SPECKIT END -->

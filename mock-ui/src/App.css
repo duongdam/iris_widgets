@@ -38,7 +38,8 @@ body,
     padding: 0;
 }
 
-.mock-chart {
+.mock-chart,
+.mock-gantt {
     width: 100%;
 }
 

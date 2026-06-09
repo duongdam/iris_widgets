@@ -16,7 +16,15 @@ export default defineConfig({
         open: true,
     },
     optimizeDeps: {
-        include: ["echarts-for-react", "echarts", "mobx", "mobx-react-lite", "antd"],
+        include: [
+            "echarts-for-react",
+            "echarts",
+            "mobx",
+            "mobx-react-lite",
+            "antd",
+            "dhtmlx-gantt",
+            "classnames",
+        ],
     },
     css: {
         preprocessorOptions: {
