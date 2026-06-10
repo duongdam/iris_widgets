@@ -31,10 +31,11 @@ export function initGantt(container: HTMLElement, display: GanttDisplayConfig): 
     gantt.config.date_format = "%Y-%m-%d %H:%i";
     gantt.config.smart_rendering = true;
     gantt.config.autosize = false;
-    gantt.config.row_height = 40;
-    gantt.config.bar_height = 25;
-    gantt.config.scale_height = 70;
-    gantt.config.column_width = 28;
+    gantt.config.row_height = 26;
+    gantt.config.bar_height = 18;
+    gantt.config.scale_height = 52;  // 2 scale rows × 26px
+    gantt.config.min_column_width = 1;  // remove DHTMLX's 70px default minimum
+    gantt.config.column_width = 32;
     gantt.config.show_progress = display.showProgress;
     gantt.config.show_grid = display.showGrid;
     gantt.config.show_chart = display.showTimeline;

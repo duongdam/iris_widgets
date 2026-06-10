@@ -77,9 +77,7 @@ export interface GanttColumnConfig {
 
 export function getDefaultColumns(): GanttColumnConfig[] {
     return [
-        { name: "text", label: "Projects", width: 200, tree: true },
-        { name: "start_date", label: "Start", width: 82, align: "center" },
-        { name: "end_date", label: "End", width: 82, align: "center" }
+        { name: "text", label: "Projects", width: 260, tree: true }
     ];
 }
 

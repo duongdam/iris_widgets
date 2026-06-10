@@ -9,15 +9,15 @@ export interface GanttScaleConfig {
 }
 
 /**
- * Default timeline window: current year Jan 1 → (current year + 1) Dec 31.
- * Called once at runtime so values always reflect the actual current year.
+ * Default timeline window: current year Jan 1 → current year Dec 31.
+ * One full year is shown by default; use SET_START_DATE / SET_END_DATE to extend.
  */
 export function getDefaultTimelineStart(): Date {
     return new Date(new Date().getFullYear(), 0, 1);
 }
 
 export function getDefaultTimelineEnd(): Date {
-    return new Date(new Date().getFullYear() + 1, 11, 31, 23, 59, 59);
+    return new Date(new Date().getFullYear(), 11, 31, 23, 59, 59);
 }
 
 /** @deprecated Use getDefaultTimelineStart / getDefaultTimelineEnd */
@@ -150,6 +150,9 @@ export function applyMode(
 ): void {
     gantt.config.scales = getScales(mode) as typeof gantt.config.scales;
     applyTimelineRange(gantt, mode, startDate, endDate);
+    // Re-apply after scale change to prevent DHTMLX from reverting to its default 70px
+    gantt.config.min_column_width = 1;
+    gantt.config.column_width = 32;
     gantt.render();
 }
 

@@ -66,12 +66,11 @@
 }
 
 .gantt_scale_cell {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 700;
-    letter-spacing: 0.01em;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    letter-spacing: 0;
+    /* vertical centering without flex — keeps DHTMLX inline-block layout intact */
+    line-height: 26px;
 }
 
 /* ─── Grid rows ─────────────────────────────────────────────────────────────── */
@@ -125,12 +124,12 @@
     background-color: $gantt-task-regular;
 }
 
-/* Project / summary task — row_height=40, bar_height=25 → top=(40-25)/2=7.5px, want 30px bar */
+/* Project / summary task — row_height=26, bar_height=18 → top=4px; want 22px bar */
 .gantt_task_line.gantt-type-project {
     background-color: $gantt-task-project;
-    height: 30px !important;
-    margin-top: -3px;
-    border-radius: 4px;
+    height: 22px !important;
+    margin-top: -2px;
+    border-radius: 3px;
 }
 
 .gantt_row.gantt-row-project .gantt_tree_content {
@@ -138,16 +137,16 @@
     color: $gantt-text-primary;
 }
 
-/* Milestone — center 16px diamond in 40px row: margin-top=(40-16)/2=12px */
+/* Milestone — center 12×12px diamond in 26px row: margin-top=(26-12)/2=7px */
 .gantt_task_line.gantt-type-milestone {
     background-color: $gantt-task-milestone !important;
     border-color: rgba(0, 0, 0, 0.2) !important;
     transform: rotate(45deg);
-    border-radius: 3px;
-    width: 16px !important;
-    height: 16px !important;
-    margin-top: 12px;
-    margin-left: -8px;
+    border-radius: 2px;
+    width: 12px !important;
+    height: 12px !important;
+    margin-top: 7px;
+    margin-left: -6px;
 }
 
 /* Progress overlay */
