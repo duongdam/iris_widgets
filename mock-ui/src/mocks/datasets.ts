@@ -72,6 +72,47 @@ const STACK_AREA_FLAT = [
     { id: "16", name: "Network", period: "2025-04", pm: 58 },
 ];
 
+// Annual fish catch data (2000–2023) — 5 gear types with high variance to show wave patterns
+const FISH_CATCH_SERIES: Record<string, number[]> = {
+    "Bottom trawl":  [28, 29, 31, 30, 32, 31, 29, 30, 28, 27, 29, 30, 31, 30, 29, 31, 30, 29, 28, 30, 27, 28, 29, 28],
+    "Pelagic trawl": [11, 12, 13, 14, 15, 16, 14, 15, 16, 15, 16, 17, 16, 18, 17, 16, 17, 18, 16, 17, 15, 16, 17, 16],
+    "Purse seine":   [25, 27, 30, 32, 28, 24, 27, 30, 26, 22, 26, 29, 31, 27, 25, 23, 26, 28, 24, 26, 23, 25, 27, 25],
+    "Small scale":   [16, 17, 18, 19, 20, 21, 20, 22, 21, 20, 22, 23, 22, 24, 23, 22, 23, 24, 22, 23, 21, 22, 23, 22],
+    "Other gear":    [19, 18, 17, 18, 17, 16, 17, 15, 16, 15, 14, 15, 14, 13, 14, 13, 12, 13, 12, 13, 12, 11, 12, 11],
+};
+const FISH_CATCH_YEARS = Array.from({ length: 24 }, (_, i) => String(2000 + i));
+
+const FISH_CATCH_FLAT = FISH_CATCH_YEARS.flatMap((year, yi) =>
+    Object.entries(FISH_CATCH_SERIES).map(([name, values], si) => ({
+        id: String(yi * 5 + si + 1),
+        name,
+        period: year,
+        pm: values[yi],
+    }))
+);
+
+// Monthly revenue deviation vs target — positive = above target (green), negative = below (red)
+const NEGATIVE_BAR_RAW: Array<{ month: string; value: number }> = [
+    { month: "Jan", value: 12 },
+    { month: "Feb", value: -8 },
+    { month: "Mar", value: 22 },
+    { month: "Apr", value: -5 },
+    { month: "May", value: 18 },
+    { month: "Jun", value: -14 },
+    { month: "Jul", value: 9 },
+    { month: "Aug", value: -3 },
+    { month: "Sep", value: 25 },
+    { month: "Oct", value: -11 },
+    { month: "Nov", value: 30 },
+    { month: "Dec", value: 7 },
+];
+const NEGATIVE_BAR_FLAT = NEGATIVE_BAR_RAW.map((d, i) => ({
+    id: String(i + 1),
+    name: d.month,
+    period: "2025",
+    pm: d.value,
+}));
+
 function flatToElastic(flat: Array<{ name: string; period: string; pm: number }>): string {
     const periodMap = new Map<string, Map<string, number>>();
 
@@ -127,6 +168,20 @@ export const MOCK_DATASETS: MockDataset[] = [
         description: "Same shape as chart-core flat mock with explicit metadata.",
         flat: JSON.stringify(RESOURCE_USAGE_FLAT, null, 2),
         elastic: flatToElastic(RESOURCE_USAGE_FLAT),
+    },
+    {
+        id: "fish-catch",
+        label: "Fish catch by gear (2000–2023)",
+        description: "5 gear types × 24 years — high variance data showing deep wave patterns on stacked area.",
+        flat: JSON.stringify(FISH_CATCH_FLAT, null, 2),
+        elastic: flatToElastic(FISH_CATCH_FLAT),
+    },
+    {
+        id: "negative-bar",
+        label: "Revenue deviation (negative bar)",
+        description: "Monthly revenue vs target — mix of positive and negative deviations. Ideal for ax-negativebarchart.",
+        flat: JSON.stringify(NEGATIVE_BAR_FLAT, null, 2),
+        elastic: flatToElastic(NEGATIVE_BAR_FLAT),
     },
 ];
 

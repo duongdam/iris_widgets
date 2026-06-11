@@ -1,15 +1,15 @@
 import { ThemeProvider } from "@iris/chart-ui";
 import { ValueStatus, type EditableValue } from "mendix";
-import { StackAreaChartView } from "./main/components/StackAreaChartView";
-import { StackAreaChartProvider } from "./main/providers/StackAreaChartProvider";
+import { NegativeBarChartView } from "./main/components/NegativeBarChartView";
+import { NegativeBarChartProvider } from "./main/providers/NegativeBarChartProvider";
 import {
     PREVIEW_DATA_FORMAT,
     PREVIEW_HEIGHT,
     PREVIEW_JSON_DATA,
     PREVIEW_TITLE,
 } from "./preview/previewConfig";
-import type { AxStackAreaChartProps } from "./typings/AxStackAreaChartProps";
-import "./styles/ax-stackareachart.scss";
+import type { AxNegativeBarChartProps } from "./typings/AxNegativeBarChartProps";
+import "./styles/ax-negativebarchart.scss";
 
 const previewJsonData = {
     value: PREVIEW_JSON_DATA,
@@ -25,30 +25,30 @@ const previewJsonData = {
     universe: undefined,
 } as unknown as EditableValue<string>;
 
-const previewProps: AxStackAreaChartProps = {
-    name: "ax-stackareachart-preview",
-    class: "ax-stackareachart-preview",
+const previewProps: AxNegativeBarChartProps = {
+    name: "ax-negativebarchart-preview",
+    class: "ax-negativebarchart-preview",
     title: PREVIEW_TITLE,
     height: PREVIEW_HEIGHT,
     jsonData: previewJsonData,
     dataFormat: PREVIEW_DATA_FORMAT,
+    baselineLabel: "",
     showTitle: true,
     showLegend: true,
     showTooltip: true,
-    referenceLineLabel: "",
 };
 
-export function preview(getProps: () => AxStackAreaChartProps): JSX.Element {
+export function preview(getProps: () => AxNegativeBarChartProps): JSX.Element {
     const props = { ...previewProps, ...getProps() };
     return (
         <ThemeProvider>
-            <StackAreaChartProvider widgetProps={props}>
-                <StackAreaChartView widgetProps={props} />
-            </StackAreaChartProvider>
+            <NegativeBarChartProvider widgetProps={props}>
+                <NegativeBarChartView widgetProps={props} />
+            </NegativeBarChartProvider>
         </ThemeProvider>
     );
 }
 
-export function AxStackAreaChartPreview(): JSX.Element {
+export function AxNegativeBarChartPreview(): JSX.Element {
     return preview(() => previewProps);
 }

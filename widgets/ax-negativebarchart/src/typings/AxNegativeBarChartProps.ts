@@ -2,19 +2,22 @@ import type { ActionValue, EditableValue } from "mendix";
 import type { Big } from "big.js";
 import type { CSSProperties } from "react";
 
-export interface AxStackAreaChartContainerProps {
+export interface AxNegativeBarChartContainerProps {
     name: string;
     class: string;
     style?: CSSProperties;
     tabIndex?: number;
 }
 
-export interface AxStackAreaChartProps extends AxStackAreaChartContainerProps {
+export interface AxNegativeBarChartProps extends AxNegativeBarChartContainerProps {
     title: string;
     height: number;
 
     jsonData: EditableValue<string>;
     dataFormat: "flat" | "elastic";
+
+    baselineValue?: EditableValue<Big>;
+    baselineLabel: string;
 
     showTitle: boolean;
     showLegend: boolean;
@@ -26,7 +29,4 @@ export interface AxStackAreaChartProps extends AxStackAreaChartContainerProps {
 
     onClick?: ActionValue;
     onSelectionChanged?: ActionValue;
-
-    referenceLineValue?: EditableValue<Big>;
-    referenceLineLabel: string;
 }

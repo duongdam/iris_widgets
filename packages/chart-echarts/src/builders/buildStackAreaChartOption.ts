@@ -20,6 +20,9 @@ import { applySelectionOpacity, buildAreaSeriesStyle } from "../theme/seriesStyl
 import type { ChartDisplayOptions } from "./buildBarChartOption";
 
 const SAMPLING_THRESHOLD = 1000;
+const REFERENCE_LINE_COLOR = "#EF4444";
+const REFERENCE_LINE_ANIMATION_DURATION = 1400;
+const REFERENCE_LINE_ANIMATION_DELAY = 400;
 
 export function buildStackAreaChartOption(records: ChartRecord[], options: ChartDisplayOptions): EChartsOption {
     const animation = options.animation ?? !shouldDisableAnimation(records);
@@ -27,8 +30,11 @@ export function buildStackAreaChartOption(records: ChartRecord[], options: Chart
     const periods = getSortedPeriods(records);
     const seriesGroups = groupByName(records);
     const legendTop = resolveLegendTop(options.showTitle);
+    const hasReferenceLine =
+        options.referenceLineValue !== undefined && options.referenceLineValue !== null;
+    const refLineLabel = options.referenceLineLabel?.trim() || String(options.referenceLineValue ?? "");
 
-    const series = seriesGroups.map((group, index) => ({
+    const stackedSeries = seriesGroups.map((group, index) => ({
         name: group.name,
         type: "line" as const,
         stack: "total",
@@ -46,19 +52,57 @@ export function buildStackAreaChartOption(records: ChartRecord[], options: Chart
         ),
     }));
 
+    const referenceSeries = hasReferenceLine
+        ? [
+              {
+                  name: refLineLabel,
+                  type: "line" as const,
+                  data: periods.map(() => options.referenceLineValue as number),
+                  symbol: "none" as const,
+                  silent: true,
+                  animation: true,
+                  animationDuration: REFERENCE_LINE_ANIMATION_DURATION,
+                  animationDelay: REFERENCE_LINE_ANIMATION_DELAY,
+                  animationEasing: "cubicOut" as const,
+                  lineStyle: {
+                      color: REFERENCE_LINE_COLOR,
+                      width: 2,
+                      type: "solid" as const,
+                  },
+                  itemStyle: {
+                      color: REFERENCE_LINE_COLOR,
+                  },
+                  endLabel: {
+                      show: true,
+                      formatter: `{c}`,
+                      color: REFERENCE_LINE_COLOR,
+                      fontWeight: "bold" as const,
+                      fontSize: 12,
+                      backgroundColor: "rgba(255,255,255,0.85)",
+                      padding: [2, 6],
+                      borderRadius: 3,
+                      borderColor: REFERENCE_LINE_COLOR,
+                      borderWidth: 1,
+                  },
+                  tooltip: { show: false },
+              },
+          ]
+        : [];
+
+    const legendNames = [
+        ...seriesGroups.map(g => g.name),
+        ...(hasReferenceLine ? [refLineLabel] : []),
+    ];
+
     return {
         animation,
         title: resolveChartTitle(options.title, options.showTitle),
         tooltip: buildTooltip(options.showTooltip, defaultTooltipFormatter),
-        legend: buildLegend(
-            options.showLegend,
-            legendTop,
-            seriesGroups.map(g => g.name)
-        ),
+        legend: buildLegend(options.showLegend, legendTop, legendNames),
         grid: buildGrid("15%"),
         xAxis: buildCategoryAxis(periods, { boundaryGap: false }),
         yAxis: buildValueAxis(),
         dataZoom: [buildDataZoomInside(), buildDataZoomSlider()],
-        series,
+        series: [...stackedSeries, ...referenceSeries],
     };
 }

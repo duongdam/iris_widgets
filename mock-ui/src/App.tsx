@@ -1,4 +1,4 @@
-import { Button, Layout, Segmented, Select, Space, Switch, Tabs, Typography } from "antd";
+import { Button, Input, InputNumber, Layout, Segmented, Select, Space, Switch, Tabs, Typography } from "antd";
 import type { ChartRecord } from "@iris/chart-core";
 import { ChartEvents, type ChartEventPayload } from "@iris/chart-core";
 import { useCallback, useMemo, useRef, useState } from "react";
@@ -6,6 +6,7 @@ import { BarChartDemo } from "./demos/BarChartDemo";
 import { ColumnChartDemo } from "./demos/ColumnChartDemo";
 import { GanttChartDemo } from "./demos/GanttChartDemo";
 import { ReportChartDemo } from "./demos/ReportChartDemo";
+import { NegativeBarChartDemo } from "./demos/NegativeBarChartDemo";
 import { StackAreaChartDemo } from "./demos/StackAreaChartDemo";
 import type { GanttContextValue } from "../../widgets/ax-ganttchart/src/main/providers/GanttProvider";
 import {
@@ -27,7 +28,7 @@ const { Title, Text, Paragraph } = Typography;
 const CHART_HEIGHT = 440;
 const GANTT_HEIGHT = 560;
 
-type ChartTab = "bar" | "column" | "stack" | "report" | "gantt";
+type ChartTab = "bar" | "column" | "stack" | "report" | "negative" | "gantt";
 
 export function App(): JSX.Element {
     const [chartTab, setChartTab] = useState<ChartTab>("bar");
@@ -38,6 +39,10 @@ export function App(): JSX.Element {
     const [recentEvents, setRecentEvents] = useState<ChartEventPayload[]>([]);
     const [showTitle, setShowTitle] = useState(true);
     const [showTooltip, setShowTooltip] = useState(true);
+    const [refLineValue, setRefLineValue] = useState<number | undefined>(110);
+    const [refLineLabel, setRefLineLabel] = useState("");
+    const [negativeBaseline, setNegativeBaseline] = useState<number>(0);
+    const [negativeBaselineLabel, setNegativeBaselineLabel] = useState("Target");
     const [ganttDatasetId, setGanttDatasetId] = useState("default");
     const [ganttViewMode, setGanttViewMode] = useState<TimelineViewModeEnum>("week");
     const [ganttShowToolbar, setGanttShowToolbar] = useState(true);
@@ -114,6 +119,7 @@ export function App(): JSX.Element {
             column: "Column Chart",
             stack: "Stacked Area Chart",
             report: "Report Chart",
+            negative: "Negative Bar Chart",
             gantt: "Gantt Chart",
         };
         return `${labels[chartTab]} — ${dataset.label} (${dataSource})`;
@@ -308,6 +314,46 @@ export function App(): JSX.Element {
                                 <Switch checked={showTooltip} onChange={setShowTooltip} />
                             </div>
 
+                            {chartTab === "stack" && (
+                                <>
+                                    <Text strong style={{ display: "block", marginTop: 12, marginBottom: 4 }}>
+                                        Reference Line
+                                    </Text>
+                                    <InputNumber
+                                        style={{ width: "100%", marginBottom: 6 }}
+                                        placeholder="Value (leave empty to hide)"
+                                        value={refLineValue}
+                                        onChange={v => setRefLineValue(v ?? undefined)}
+                                    />
+                                    <Input
+                                        style={{ marginBottom: 12 }}
+                                        placeholder="Label (optional)"
+                                        value={refLineLabel}
+                                        onChange={e => setRefLineLabel(e.target.value)}
+                                    />
+                                </>
+                            )}
+
+                            {chartTab === "negative" && (
+                                <>
+                                    <Text strong style={{ display: "block", marginTop: 12, marginBottom: 4 }}>
+                                        Baseline
+                                    </Text>
+                                    <InputNumber
+                                        style={{ width: "100%", marginBottom: 6 }}
+                                        placeholder="Baseline value"
+                                        value={negativeBaseline}
+                                        onChange={v => setNegativeBaseline(v ?? 0)}
+                                    />
+                                    <Input
+                                        style={{ marginBottom: 12 }}
+                                        placeholder="Baseline label"
+                                        value={negativeBaselineLabel}
+                                        onChange={e => setNegativeBaselineLabel(e.target.value)}
+                                    />
+                                </>
+                            )}
+
                             <Text strong>Selection (click chart)</Text>
                             <div className="mock-ui-selection">
                                 <div>
@@ -376,7 +422,11 @@ export function App(): JSX.Element {
                                 label: "Stack Area",
                                 children: (
                                     <div className="mock-ui-chart-panel" key={`stack-${remountKey}`}>
-                                        <StackAreaChartDemo {...demoProps} />
+                                        <StackAreaChartDemo
+                                            {...demoProps}
+                                            referenceLineValue={refLineValue}
+                                            referenceLineLabel={refLineLabel}
+                                        />
                                     </div>
                                 ),
                             },
@@ -386,6 +436,19 @@ export function App(): JSX.Element {
                                 children: (
                                     <div className="mock-ui-chart-panel" key={`report-${remountKey}`}>
                                         <ReportChartDemo {...demoProps} />
+                                    </div>
+                                ),
+                            },
+                            {
+                                key: "negative",
+                                label: "Negative Bar",
+                                children: (
+                                    <div className="mock-ui-chart-panel" key={`negative-${remountKey}`}>
+                                        <NegativeBarChartDemo
+                                            {...demoProps}
+                                            baselineValue={negativeBaseline}
+                                            baselineLabel={negativeBaselineLabel}
+                                        />
                                     </div>
                                 ),
                             },

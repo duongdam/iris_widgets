@@ -25,6 +25,8 @@ export interface ChartDisplayOptions {
     height: number;
     selectedId?: string;
     animation?: boolean;
+    referenceLineValue?: number;
+    referenceLineLabel?: string;
 }
 
 export function buildBarChartOption(records: ChartRecord[], options: ChartDisplayOptions): EChartsOption {

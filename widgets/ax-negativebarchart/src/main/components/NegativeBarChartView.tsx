@@ -1,4 +1,4 @@
-import { buildStackAreaChartOption, getSortedPeriods, IRIS_ECHARTS_THEME_NAME, registerIrisTheme } from "@iris/chart-echarts";
+import { buildNegativeBarChartOption, IRIS_ECHARTS_THEME_NAME, registerIrisTheme } from "@iris/chart-echarts";
 import {
     ChartContainer,
     ChartEmptyState,
@@ -8,21 +8,20 @@ import {
     useChartPointerEvents,
     useSelectionSync,
 } from "@iris/chart-ui";
-import type { EChartsType } from "echarts";
 import ReactECharts from "echarts-for-react";
 import { observer } from "mobx-react-lite";
-import { useCallback, useEffect, useMemo, useRef } from "react";
-import type { AxStackAreaChartProps } from "../../typings/AxStackAreaChartProps";
-import { useStackAreaChartContext } from "../providers/StackAreaChartProvider";
+import { useEffect, useMemo } from "react";
+import type { AxNegativeBarChartProps } from "../../typings/AxNegativeBarChartProps";
+import { useNegativeBarChartContext } from "../providers/NegativeBarChartProvider";
 
-export interface StackAreaChartViewProps {
-    widgetProps: AxStackAreaChartProps;
+export interface NegativeBarChartViewProps {
+    widgetProps: AxNegativeBarChartProps;
 }
 
-export const StackAreaChartView = observer(function StackAreaChartView({
+export const NegativeBarChartView = observer(function NegativeBarChartView({
     widgetProps,
-}: StackAreaChartViewProps): JSX.Element {
-    const { store, bridge } = useStackAreaChartContext();
+}: NegativeBarChartViewProps): JSX.Element {
+    const { store, bridge } = useNegativeBarChartContext();
     const jsonData = widgetProps.jsonData.value ?? "";
 
     const { error, isEmpty } = useChartData(store, jsonData, widgetProps.dataFormat);
@@ -35,21 +34,29 @@ export const StackAreaChartView = observer(function StackAreaChartView({
         bridge,
     });
 
-    const referenceLineValue = widgetProps.referenceLineValue?.value != null
-        ? Number(widgetProps.referenceLineValue.value.toString())
-        : undefined;
+    const baselineValue =
+        widgetProps.baselineValue?.value != null
+            ? Number(widgetProps.baselineValue.value.toString())
+            : 0;
+
+    const labels = useMemo(
+        () =>
+            [...store.records]
+                .sort((a, b) => a.period.localeCompare(b.period) || a.name.localeCompare(b.name))
+                .map(r => (r.period ? `${r.name}\n${r.period}` : r.name)),
+        [store.records]
+    );
 
     const option = useMemo(
         () =>
-            buildStackAreaChartOption(store.records, {
+            buildNegativeBarChartOption(store.records, {
                 title: widgetProps.title,
                 showTitle: widgetProps.showTitle,
                 showLegend: widgetProps.showLegend,
                 showTooltip: widgetProps.showTooltip,
                 height: widgetProps.height,
-                selectedId: store.selectedRecord?.id,
-                referenceLineValue,
-                referenceLineLabel: widgetProps.referenceLineLabel,
+                baselineValue,
+                baselineLabel: widgetProps.baselineLabel,
             }),
         [
             store.records,
@@ -58,36 +65,16 @@ export const StackAreaChartView = observer(function StackAreaChartView({
             widgetProps.showLegend,
             widgetProps.showTooltip,
             widgetProps.height,
-            store.selectedRecord?.id,
-            referenceLineValue,
-            widgetProps.referenceLineLabel,
+            baselineValue,
+            widgetProps.baselineLabel,
         ]
     );
-
-    const periods = useMemo(() => getSortedPeriods(store.records), [store.records]);
 
     useEffect(() => {
         registerIrisTheme();
     }, []);
 
-    const { chartRef, onChartReady: bindPointerEvents } = useChartPointerEvents(store, bridge, {
-        periods,
-    });
-    const bridgeRef = useRef(bridge);
-    bridgeRef.current = bridge;
-
-    const onChartReady = useCallback(
-        (instance: EChartsType) => {
-            bindPointerEvents(instance);
-            instance.off("legendselectchanged");
-            instance.on("legendselectchanged", params => {
-                const event = params as { name: string; selected: Record<string, boolean> };
-                const selected = event.selected[event.name] ?? true;
-                bridgeRef.current.handleLegendSelect(event.name, selected);
-            });
-        },
-        [bindPointerEvents]
-    );
+    const { chartRef, onChartReady } = useChartPointerEvents(store, bridge, { names: labels });
 
     useEffect(() => {
         if (!store.loading && store.records.length > 0) {
@@ -124,7 +111,6 @@ export const StackAreaChartView = observer(function StackAreaChartView({
                         option={option}
                         style={{ height: widgetProps.height, width: "100%" }}
                         opts={{ renderer: "canvas" }}
-                        notMerge={false}
                         onChartReady={onChartReady}
                     />
                 </DeferredChartMount>

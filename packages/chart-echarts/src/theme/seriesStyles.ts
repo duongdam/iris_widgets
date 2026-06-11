@@ -71,17 +71,8 @@ export function buildAreaSeriesStyle(colorIndex: number): Partial<LineSeriesOpti
         symbolSize: 6,
         itemStyle: { color },
         areaStyle: {
-            color: {
-                type: "linear",
-                x: 0,
-                y: 0,
-                x2: 0,
-                y2: 1,
-                colorStops: [
-                    { offset: 0, color: `${color}66` },
-                    { offset: 1, color: `${color}0D` },
-                ],
-            },
+            color,
+            opacity: 0.85,
         },
         emphasis: { focus: "series" },
     };

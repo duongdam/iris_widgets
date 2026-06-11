@@ -3,16 +3,16 @@ import type { ChartEventPayload } from "@iris/chart-core";
 import type { Big } from "big.js";
 import type { EditableValue } from "mendix";
 import { useMemo } from "react";
-import { StackAreaChartView } from "../../../widgets/ax-stackareachart/src/main/components/StackAreaChartView";
+import { NegativeBarChartView } from "../../../widgets/ax-negativebarchart/src/main/components/NegativeBarChartView";
 import {
-    StackAreaChartProvider,
-    useStackAreaChartContext,
-} from "../../../widgets/ax-stackareachart/src/main/providers/StackAreaChartProvider";
-import type { AxStackAreaChartProps } from "../../../widgets/ax-stackareachart/src/typings/AxStackAreaChartProps";
+    NegativeBarChartProvider,
+    useNegativeBarChartContext,
+} from "../../../widgets/ax-negativebarchart/src/main/providers/NegativeBarChartProvider";
+import type { AxNegativeBarChartProps } from "../../../widgets/ax-negativebarchart/src/typings/AxNegativeBarChartProps";
 import { ChartEventMonitor } from "../components/ChartEventMonitor";
-import "../../../widgets/ax-stackareachart/src/styles/ax-stackareachart.scss";
+import "../../../widgets/ax-negativebarchart/src/styles/ax-negativebarchart.scss";
 
-export interface StackAreaChartDemoProps {
+export interface NegativeBarChartDemoProps {
     title: string;
     showTitle: boolean;
     showTooltip: boolean;
@@ -23,8 +23,8 @@ export interface StackAreaChartDemoProps {
     selectedName: EditableValue<string>;
     selectedPayload: EditableValue<string>;
     onChartEvent?: (payload: ChartEventPayload) => void;
-    referenceLineValue?: number;
-    referenceLineLabel?: string;
+    baselineValue?: number;
+    baselineLabel?: string;
 }
 
 function createMockBigValue(value: number): EditableValue<Big> {
@@ -45,30 +45,30 @@ function createMockBigValue(value: number): EditableValue<Big> {
     } as unknown as EditableValue<Big>;
 }
 
-function StackAreaChartEventMonitor({
+function NegativeBarChartEventMonitor({
     onChartEvent,
 }: {
     onChartEvent?: (payload: ChartEventPayload) => void;
 }): JSX.Element | null {
-    const { eventBus } = useStackAreaChartContext();
+    const { eventBus } = useNegativeBarChartContext();
     return <ChartEventMonitor eventBus={eventBus} onChartEvent={onChartEvent} />;
 }
 
-export function StackAreaChartDemo(props: StackAreaChartDemoProps): JSX.Element {
+export function NegativeBarChartDemo(props: NegativeBarChartDemoProps): JSX.Element {
     const {
         title, showTitle, showTooltip, height, jsonData, dataFormat,
         selectedId, selectedName, selectedPayload, onChartEvent,
-        referenceLineValue, referenceLineLabel = "",
+        baselineValue, baselineLabel = "",
     } = props;
 
-    const mockRefLineValue = useMemo(
-        () => (referenceLineValue !== undefined ? createMockBigValue(referenceLineValue) : undefined),
-        [referenceLineValue]
+    const mockBaselineValue = useMemo(
+        () => (baselineValue !== undefined ? createMockBigValue(baselineValue) : undefined),
+        [baselineValue]
     );
 
-    const widgetProps = useMemo<AxStackAreaChartProps>(
+    const widgetProps = useMemo<AxNegativeBarChartProps>(
         () => ({
-            name: "mock-stackareachart",
+            name: "mock-negativebarchart",
             class: "mock-chart",
             title,
             showTitle,
@@ -80,18 +80,19 @@ export function StackAreaChartDemo(props: StackAreaChartDemoProps): JSX.Element 
             selectedId,
             selectedName,
             selectedPayload,
-            referenceLineValue: mockRefLineValue,
-            referenceLineLabel,
+            baselineValue: mockBaselineValue,
+            baselineLabel,
         }),
-        [title, showTitle, showTooltip, height, jsonData, dataFormat, selectedId, selectedName, selectedPayload, mockRefLineValue, referenceLineLabel]
+        [title, showTitle, showTooltip, height, jsonData, dataFormat,
+            selectedId, selectedName, selectedPayload, mockBaselineValue, baselineLabel]
     );
 
     return (
         <ThemeProvider>
-            <StackAreaChartProvider widgetProps={widgetProps}>
-                <StackAreaChartEventMonitor onChartEvent={onChartEvent} />
-                <StackAreaChartView widgetProps={widgetProps} />
-            </StackAreaChartProvider>
+            <NegativeBarChartProvider widgetProps={widgetProps}>
+                <NegativeBarChartEventMonitor onChartEvent={onChartEvent} />
+                <NegativeBarChartView widgetProps={widgetProps} />
+            </NegativeBarChartProvider>
         </ThemeProvider>
     );
 }

@@ -217,6 +217,9 @@ importers:
       '@types/react-test-renderer':
         specifier: 19.0.0
         version: 19.0.0
+      cross-env:
+        specifier: ^10.1.0
+        version: 10.1.0
       rollup:
         specifier: 3.30.0
         version: 3.30.0
@@ -263,6 +266,9 @@ importers:
       '@types/react-test-renderer':
         specifier: 19.0.0
         version: 19.0.0
+      cross-env:
+        specifier: ^10.1.0
+        version: 10.1.0
       rollup:
         specifier: 3.30.0
         version: 3.30.0
@@ -303,6 +309,58 @@ importers:
       '@types/react-test-renderer':
         specifier: 19.0.0
         version: 19.0.0
+      cross-env:
+        specifier: ^10.1.0
+        version: 10.1.0
+      typescript:
+        specifier: ^5.4.5
+        version: 5.9.3
+
+  widgets/ax-negativebarchart:
+    dependencies:
+      '@iris/chart-core':
+        specifier: workspace:*
+        version: link:../../packages/chart-core
+      '@iris/chart-echarts':
+        specifier: workspace:*
+        version: link:../../packages/chart-echarts
+      '@iris/chart-ui':
+        specifier: workspace:*
+        version: link:../../packages/chart-ui
+      classnames:
+        specifier: 2.5.1
+        version: 2.5.1
+      echarts-for-react:
+        specifier: 3.0.6
+        version: 3.0.6(echarts@6.1.0)(react@18.2.0)
+      mobx:
+        specifier: 6.16.0
+        version: 6.16.0
+      mobx-react-lite:
+        specifier: 4.1.1
+        version: 4.1.1(mobx@6.16.0)(react-dom@18.2.0(react@18.2.0))(react-native@0.86.0(@babel/core@7.29.7)(@types/react@19.2.17)(react@18.2.0))(react@18.2.0)
+    devDependencies:
+      '@mendix/pluggable-widgets-tools':
+        specifier: 11.8.1
+        version: 11.8.1(@jest/transform@29.7.0)(@jest/types@29.6.3)(@types/babel__core@7.20.5)(@types/node@20.19.42)(jest-util@29.7.0)(picomatch@4.0.4)(react-dom@18.2.0(react@18.2.0))(react-native@0.86.0(@babel/core@7.29.7)(@types/react@19.2.17)(react@18.2.0))(react@18.2.0)(tslib@2.3.0)
+      '@types/big.js':
+        specifier: ^6.2.0
+        version: 6.2.2
+      '@types/enzyme':
+        specifier: ^3.10.12
+        version: 3.10.19
+      '@types/jest':
+        specifier: ^29.0.0
+        version: 29.5.14
+      '@types/react-test-renderer':
+        specifier: 19.0.0
+        version: 19.0.0
+      cross-env:
+        specifier: ^10.1.0
+        version: 10.1.0
+      rollup:
+        specifier: 3.30.0
+        version: 3.30.0
       typescript:
         specifier: ^5.4.5
         version: 5.9.3
@@ -346,6 +404,9 @@ importers:
       '@types/react-test-renderer':
         specifier: 19.0.0
         version: 19.0.0
+      cross-env:
+        specifier: ^10.1.0
+        version: 10.1.0
       rollup:
         specifier: 3.30.0
         version: 3.30.0
@@ -392,6 +453,9 @@ importers:
       '@types/react-test-renderer':
         specifier: 19.0.0
         version: 19.0.0
+      cross-env:
+        specifier: ^10.1.0
+        version: 10.1.0
       rollup:
         specifier: 3.30.0
         version: 3.30.0
@@ -1149,6 +1213,9 @@ packages:
 
   '@emotion/unitless@0.7.5':
     resolution: {integrity: sha512-OWORNpfjMsSSUBVrRBVGECkhWcULOAJz9ZW8uK9qgxD+87M7jHRcvh/A96XXNhXTLmKcoYSQtBEX7lHMO7YRwg==}
+
+  '@epic-web/invariant@1.0.0':
+    resolution: {integrity: sha512-lrTPqgvfFQtR/eY/qkIzp98OGdNJu0m5ji3q/nJI8v3SXkRKEnWiOxMmbvcSoAIzv/cGiuvRy57k4suKQSAdwA==}
 
   '@esbuild/aix-ppc64@0.21.5':
     resolution: {integrity: sha512-1SDgH6ZSPTlggy1yI6+Dbkiz8xzpHJEVAlF/AM1tHPLsf5STom9rwtjE4hKAF20FfXXNTFqEYXyJNWh1GiZedQ==}
@@ -2834,6 +2901,11 @@ packages:
 
   create-require@1.1.1:
     resolution: {integrity: sha512-dcKFX3jn0MpIaXjisoRvexIJVEKzaq7z2rZKxf+MSr9TkdmHmsU4m2lcLojrj/FHl8mk5VxMmYA+ftRkP/3oKQ==}
+
+  cross-env@10.1.0:
+    resolution: {integrity: sha512-GsYosgnACZTADcmEyJctkJIoqAhHjttw7RsFrVoJNXbsWWqaq6Ym+7kZjq6mS45O0jij6vtiReppKQEtqWy6Dw==}
+    engines: {node: '>=20'}
+    hasBin: true
 
   cross-spawn@7.0.6:
     resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
@@ -6904,6 +6976,8 @@ snapshots:
 
   '@emotion/unitless@0.7.5': {}
 
+  '@epic-web/invariant@1.0.0': {}
+
   '@esbuild/aix-ppc64@0.21.5':
     optional: true
 
@@ -9086,6 +9160,11 @@ snapshots:
       - ts-node
 
   create-require@1.1.1: {}
+
+  cross-env@10.1.0:
+    dependencies:
+      '@epic-web/invariant': 1.0.0
+      cross-spawn: 7.0.6
 
   cross-spawn@7.0.6:
     dependencies:

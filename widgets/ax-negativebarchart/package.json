@@ -1,15 +1,15 @@
 {
-    "name": "ax-stackareachart",
-    "widgetName": "AxStackAreaChart",
+    "name": "ax-negativebarchart",
+    "widgetName": "AxNegativeBarChart",
     "version": "1.0.0",
-    "description": "Stacked area chart Mendix pluggable widget",
+    "description": "Negative/deviation bar chart Mendix pluggable widget — bars colored by value relative to a baseline",
     "license": "Apache-2.0",
     "engines": {
         "node": ">=18"
     },
     "config": {
         "mendixHost": "http://localhost:8080",
-        "developmentPort": 3002
+        "developmentPort": 3005
     },
     "packagePath": "com.mendix",
     "scripts": {

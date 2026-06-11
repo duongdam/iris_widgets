@@ -8,6 +8,10 @@ export {
     buildReportChartOption,
     type ReportChartOptions,
 } from "./builders/buildReportChartOption";
+export {
+    buildNegativeBarChartOption,
+    type NegativeBarChartOptions,
+} from "./builders/buildNegativeBarChartOption";
 
 export { groupByPeriod, getSortedPeriods } from "./transformers/groupByPeriod";
 export { groupByName, getSortedNames } from "./transformers/groupByName";

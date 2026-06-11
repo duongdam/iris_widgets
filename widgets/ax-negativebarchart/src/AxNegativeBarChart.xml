@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <widget
-    id="com.mendix.axstackareachart.AxStackAreaChart"
+    id="com.mendix.axnegativebarchart.AxNegativeBarChart"
     pluginWidget="true"
     offlineCapable="true"
     xmlns="http://www.mendix.com/widget/1.0/"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.mendix.com/widget/1.0/ ../node_modules/mendix/custom_widget.xsd"
 >
-    <name>Ax Stack Area Chart</name>
-    <description>Stacked area chart widget powered by shared chart platform</description>
+    <name>Ax Negative Bar Chart</name>
+    <description>Deviation bar chart where bars are colored green (above baseline) or red (below baseline)</description>
     <icon />
     <properties>
         <propertyGroup caption="General">
@@ -38,6 +38,21 @@
                 </enumerationValues>
             </property>
         </propertyGroup>
+        <propertyGroup caption="Baseline">
+            <property key="baselineValue" type="attribute" required="false">
+                <caption>Baseline Value</caption>
+                <description>Reference value — bars above are green, bars below are red. Defaults to 0.</description>
+                <attributeTypes>
+                    <attributeType name="Decimal" />
+                    <attributeType name="Integer" />
+                    <attributeType name="Long" />
+                </attributeTypes>
+            </property>
+            <property key="baselineLabel" type="string" required="false" defaultValue="">
+                <caption>Baseline Label</caption>
+                <description>Label shown on the baseline reference line. Defaults to "Baseline: {value}".</description>
+            </property>
+        </propertyGroup>
         <propertyGroup caption="Display">
             <property key="showTitle" type="boolean" required="true" defaultValue="true">
                 <caption>Show Title</caption>
@@ -45,26 +60,11 @@
             </property>
             <property key="showLegend" type="boolean" required="true" defaultValue="true">
                 <caption>Show Legend</caption>
-                <description>Display the chart legend</description>
+                <description>Display the above/below legend</description>
             </property>
             <property key="showTooltip" type="boolean" required="true" defaultValue="true">
                 <caption>Show Tooltip</caption>
-                <description>Display tooltips when hovering chart elements</description>
-            </property>
-        </propertyGroup>
-        <propertyGroup caption="Reference Line">
-            <property key="referenceLineValue" type="attribute" required="false">
-                <caption>Reference Line Value</caption>
-                <description>Numeric attribute for the horizontal reference line position. Leave empty to hide the line.</description>
-                <attributeTypes>
-                    <attributeType name="Decimal" />
-                    <attributeType name="Integer" />
-                    <attributeType name="Long" />
-                </attributeTypes>
-            </property>
-            <property key="referenceLineLabel" type="string" required="false" defaultValue="">
-                <caption>Reference Line Label</caption>
-                <description>Label displayed at the right end of the reference line. Defaults to the numeric value if left empty.</description>
+                <description>Display tooltips when hovering bars</description>
             </property>
         </propertyGroup>
         <propertyGroup caption="Selection">
@@ -93,7 +93,7 @@
         <propertyGroup caption="Events">
             <property key="onClick" type="action" required="false">
                 <caption>On Click</caption>
-                <description>Action executed when a chart element is clicked</description>
+                <description>Action executed when a bar is clicked</description>
             </property>
             <property key="onSelectionChanged" type="action" required="false">
                 <caption>On Selection Changed</caption>
