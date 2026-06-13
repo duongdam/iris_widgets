@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<widget
+    id="com.mendix.axcombobox.AxComboBox"
+    pluginWidget="true"
+    offlineCapable="true"
+    xmlns="http://www.mendix.com/widget/1.0/"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.mendix.com/widget/1.0/ ../node_modules/mendix/custom_widget.xsd"
+>
+    <name>Ax Combo Box</name>
+    <description>Ant Design select with datasource, multi-select, and select-all support</description>
+    <icon />
+    <properties>
+        <propertyGroup caption="Datasource">
+            <property key="datasource" type="datasource" isList="true" required="true">
+                <caption>Data source</caption>
+                <description>List datasource providing combobox options</description>
+            </property>
+            <property key="labelAttribute" type="attribute" dataSource="datasource" required="true">
+                <caption>Label attribute</caption>
+                <description>Display text for each option</description>
+                <attributeTypes>
+                    <attributeType name="String" />
+                </attributeTypes>
+            </property>
+            <property key="valueAttribute" type="attribute" dataSource="datasource" required="true">
+                <caption>Value attribute</caption>
+                <description>Unique value stored on selection</description>
+                <attributeTypes>
+                    <attributeType name="String" />
+                </attributeTypes>
+            </property>
+        </propertyGroup>
+        <propertyGroup caption="Behavior">
+            <property key="selectionMode" type="enumeration" required="true" defaultValue="single">
+                <caption>Selection mode</caption>
+                <description>Allow single or multiple selection</description>
+                <enumerationValues>
+                    <enumerationValue key="single">Single</enumerationValue>
+                    <enumerationValue key="multiple">Multiple</enumerationValue>
+                </enumerationValues>
+            </property>
+            <property key="allowSelectAll" type="boolean" required="true" defaultValue="false">
+                <caption>Allow select all</caption>
+                <description>Show select-all control in multiple mode</description>
+            </property>
+            <property key="placeholder" type="string" required="false" defaultValue="">
+                <caption>Placeholder</caption>
+                <description>Placeholder text when nothing is selected</description>
+            </property>
+            <property key="disabled" type="boolean" required="true" defaultValue="false">
+                <caption>Disabled</caption>
+                <description>Disable user interaction</description>
+            </property>
+        </propertyGroup>
+        <propertyGroup caption="Value">
+            <property key="selectedValue" type="attribute" required="false">
+                <caption>Selected value</caption>
+                <description>Writable string or enumeration attribute for single selection</description>
+                <attributeTypes>
+                    <attributeType name="String" />
+                    <attributeType name="Enum" />
+                </attributeTypes>
+            </property>
+            <property key="selectedValues" type="attribute" required="false">
+                <caption>Selected values</caption>
+                <description>Writable string attribute storing JSON array for multiple selection</description>
+                <attributeTypes>
+                    <attributeType name="String" />
+                </attributeTypes>
+            </property>
+            <property key="defaultSelectedValues" type="attribute" required="false">
+                <caption>Default selected values</caption>
+                <description>String attribute with JSON array of pre-selected values</description>
+                <attributeTypes>
+                    <attributeType name="String" />
+                </attributeTypes>
+            </property>
+        </propertyGroup>
+        <propertyGroup caption="Events">
+            <property key="onChange" type="action" required="false">
+                <caption>On change</caption>
+                <description>Action executed when selection changes</description>
+            </property>
+        </propertyGroup>
+    </properties>
+</widget>

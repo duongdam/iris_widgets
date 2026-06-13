@@ -9,6 +9,7 @@ export default defineConfig({
             "@iris/chart-core": path.resolve(__dirname, "../packages/chart-core/src/index.ts"),
             "@iris/chart-ui": path.resolve(__dirname, "../packages/chart-ui/src/index.ts"),
             "@iris/chart-echarts": path.resolve(__dirname, "../packages/chart-echarts/src/index.ts"),
+            "@iris/form-core": path.resolve(__dirname, "../packages/form-core/src/index.ts"),
         },
     },
     server: {

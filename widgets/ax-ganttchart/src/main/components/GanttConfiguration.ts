@@ -3,6 +3,7 @@ import { applyColumns, getDefaultColumns } from "./ColumnManager";
 import { applyTimelineRange, getScales } from "./TimelineManager";
 import { installTodayMarkerSync } from "./todayMarker";
 import { TimelineViewMode, type GanttTask } from "../eventbus/eventTypes";
+import type { GanttAppearanceConfig, GanttEditingConfig } from "../../shared/types/editingConfig";
 
 export interface GanttDisplayConfig {
     showGrid: boolean;
@@ -13,6 +14,7 @@ export interface GanttDisplayConfig {
     taskCount?: number;
     timelineStart?: Date;
     timelineEnd?: Date;
+    appearance?: GanttAppearanceConfig;
 }
 
 export interface GanttNativeEventHandlers {
@@ -33,8 +35,8 @@ export function initGantt(container: HTMLElement, display: GanttDisplayConfig): 
     gantt.config.autosize = false;
     gantt.config.row_height = 26;
     gantt.config.bar_height = 18;
-    gantt.config.scale_height = 52;  // 2 scale rows × 26px
-    gantt.config.min_column_width = 1;  // remove DHTMLX's 70px default minimum
+    gantt.config.scale_height = 52; // 2 scale rows × 26px
+    gantt.config.min_column_width = 1; // remove DHTMLX's 70px default minimum
     gantt.config.column_width = 32;
     gantt.config.show_progress = display.showProgress;
     gantt.config.show_grid = display.showGrid;
@@ -51,16 +53,62 @@ export function initGantt(container: HTMLElement, display: GanttDisplayConfig): 
     applyColumns(gantt, getDefaultColumns());
     gantt.config.scales = getScales(display.viewMode) as typeof gantt.config.scales;
     applyTimelineRange(gantt, display.viewMode, display.timelineStart, display.timelineEnd);
+    applyAppearanceConfig(display.appearance, gantt);
 
     gantt.init(container);
 }
 
+function applyAppearanceConfig(appearance: GanttAppearanceConfig | undefined, target: GanttStatic): void {
+    if (!appearance) {
+        return;
+    }
+
+    // Reserved for critical_path / baseline plugins (future).
+    (target.config as Record<string, unknown>).show_critical_path = appearance.showCriticalPath;
+    (target.config as Record<string, unknown>).show_baseline = appearance.showBaseline;
+}
+
+/** Apply Mendix editing flags to DHTMLX Gantt. Returns detach function for event handlers. */
+export function applyEditingConfig(config: GanttEditingConfig, target: GanttStatic = gantt): () => void {
+    const editable = !config.readOnly;
+
+    target.config.readonly = config.readOnly;
+    target.config.drag_move = config.allowDrag && editable;
+    target.config.drag_resize = config.allowResize && editable;
+    target.config.drag_progress = config.allowUpdate && editable;
+    target.config.details_on_create = config.allowCreate && editable;
+    target.config.details_on_dblclick = config.allowUpdate && editable;
+
+    const eventIds: string[] = [];
+
+    eventIds.push(
+        target.attachEvent("onBeforeTaskAdd", () => {
+            return config.allowCreate && editable;
+        })
+    );
+
+    eventIds.push(
+        target.attachEvent("onBeforeTaskDelete", () => {
+            return config.allowDelete && editable;
+        })
+    );
+
+    eventIds.push(
+        target.attachEvent("onBeforeTaskChanged", () => {
+            return config.allowUpdate && editable;
+        })
+    );
+
+    return () => {
+        for (const eventId of eventIds) {
+            target.detachEvent(eventId);
+        }
+    };
+}
+
 function applyTemplates(target: GanttStatic): void {
     // Weekend cell background — only active when the bottom scale is "day"
-    (target.templates as Record<string, unknown>).timeline_cell_class = (
-        _task: unknown,
-        date: Date
-    ): string => {
+    (target.templates as Record<string, unknown>).timeline_cell_class = (_task: unknown, date: Date): string => {
         const scales = target.config.scales as Array<{ unit: string }> | undefined;
         const bottomUnit = scales?.[scales.length - 1]?.unit;
         if (bottomUnit !== "day") {

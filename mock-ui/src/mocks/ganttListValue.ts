@@ -72,6 +72,7 @@ export function createMockGanttDatasource(tasks: GanttTask[]): Pick<
     | "parentAttribute"
     | "openAttribute"
     | "typeAttribute"
+    | "tagsAttribute"
 > {
     const entities = ganttTasksToEntities(tasks);
 
@@ -104,9 +105,12 @@ export function createMockGanttDatasource(tasks: GanttTask[]): Pick<
         ),
         durationAttribute: createListAttribute(entities, task => task.duration),
         progressAttribute: createListAttribute(entities, task => task.progress),
-        parentAttribute: createListAttribute(entities, task => task.parent),
+        parentAttribute: createListAttribute(entities, task => task.parent) as unknown as AxGanttChartProps["parentAttribute"],
         openAttribute: createListAttribute(entities, task => task.open),
         typeAttribute: createListAttribute(entities, task => task.type),
+        tagsAttribute: createListAttribute(entities, task =>
+            task.tags && task.tags.length > 0 ? JSON.stringify(task.tags) : undefined
+        ),
     } as unknown as Pick<
         AxGanttChartProps,
         | "tasksDatasource"
@@ -119,5 +123,6 @@ export function createMockGanttDatasource(tasks: GanttTask[]): Pick<
         | "parentAttribute"
         | "openAttribute"
         | "typeAttribute"
+        | "tagsAttribute"
     >;
 }

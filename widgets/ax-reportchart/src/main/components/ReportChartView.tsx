@@ -10,7 +10,7 @@ import {
     ChartEmptyState,
     ChartLoadingOverlay,
     DeferredChartMount,
-    useChartData,
+    useChartDatasource,
     useChartPointerEvents,
     useSelectionSync,
 } from "@iris/chart-ui";
@@ -28,13 +28,17 @@ export const ReportChartView = observer(function ReportChartView({
     widgetProps,
 }: ReportChartViewProps): JSX.Element {
     const { store, bridge } = useReportChartContext();
-    const jsonData = widgetProps.jsonData.value ?? "";
 
     const aggregationMode = widgetProps.aggregationMode ?? "both";
     const showGrandTotal = widgetProps.showGrandTotal ?? true;
     const drilldownEnabled = widgetProps.drilldownEnabled ?? true;
 
-    const { error, isEmpty } = useChartData(store, jsonData, widgetProps.dataFormat);
+    const { isEmpty } = useChartDatasource(store, widgetProps.datasource, {
+        idAttribute: widgetProps.idAttribute,
+        nameAttribute: widgetProps.nameAttribute,
+        periodAttribute: widgetProps.periodAttribute,
+        valueAttribute: widgetProps.valueAttribute,
+    });
 
     useSelectionSync({
         store,
@@ -111,14 +115,7 @@ export const ReportChartView = observer(function ReportChartView({
         if (!store.loading) {
             bridge.handleRefresh(store.records.length);
         }
-    }, [jsonData, store.loading, store.records.length, bridge]);
-
-    const emptyMessage =
-        error === "parse-error"
-            ? "Invalid JSON data"
-            : error === "format-mismatch"
-              ? "Data format does not match selected format"
-              : "No chart data available";
+    }, [store.loading, store.records.length, bridge]);
 
     return (
         <ChartContainer
@@ -127,7 +124,7 @@ export const ReportChartView = observer(function ReportChartView({
             showHeaderDivider={widgetProps.showTitle}
         >
             {store.loading ? <ChartLoadingOverlay /> : null}
-            {!store.loading && isEmpty ? <ChartEmptyState message={emptyMessage} /> : null}
+            {!store.loading && isEmpty ? <ChartEmptyState message="No chart data available" /> : null}
             {!store.loading && !isEmpty ? (
                 <DeferredChartMount>
                     <ReactECharts

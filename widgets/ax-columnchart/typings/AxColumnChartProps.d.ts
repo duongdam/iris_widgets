@@ -4,9 +4,10 @@
  * @author Mendix Widgets Framework Team
  */
 import { CSSProperties } from "react";
-import { ActionValue, EditableValue } from "mendix";
+import { ActionValue, EditableValue, ListValue, ListAttributeValue } from "mendix";
+import { Big } from "big.js";
 
-export type DataFormatEnum = "flat" | "elastic";
+export type StackModeEnum = "grouped" | "stacked";
 
 export interface AxColumnChartContainerProps {
     name: string;
@@ -15,11 +16,19 @@ export interface AxColumnChartContainerProps {
     tabIndex?: number;
     title: string;
     height: number;
-    jsonData: EditableValue<string>;
-    dataFormat: DataFormatEnum;
+    datasource: ListValue;
+    idAttribute?: ListAttributeValue<string | Big>;
+    nameAttribute: ListAttributeValue<string>;
+    periodAttribute: ListAttributeValue<string>;
+    valueAttribute: ListAttributeValue<Big>;
+    stackMode: StackModeEnum;
+    columnWidthPercent: number;
+    showSeriesLabels: boolean;
     showTitle: boolean;
     showLegend: boolean;
     showTooltip: boolean;
+    referenceLineValue?: EditableValue<Big>;
+    referenceLineLabel: string;
     selectedId?: EditableValue<string>;
     selectedName?: EditableValue<string>;
     selectedPayload?: EditableValue<string>;
@@ -40,11 +49,19 @@ export interface AxColumnChartPreviewProps {
     translate: (text: string) => string;
     title: string;
     height: number | null;
-    jsonData: string;
-    dataFormat: DataFormatEnum;
+    datasource: {} | { caption: string } | { type: string } | null;
+    idAttribute: string;
+    nameAttribute: string;
+    periodAttribute: string;
+    valueAttribute: string;
+    stackMode: StackModeEnum;
+    columnWidthPercent: number | null;
+    showSeriesLabels: boolean;
     showTitle: boolean;
     showLegend: boolean;
     showTooltip: boolean;
+    referenceLineValue: string;
+    referenceLineLabel: string;
     selectedId: string;
     selectedName: string;
     selectedPayload: string;

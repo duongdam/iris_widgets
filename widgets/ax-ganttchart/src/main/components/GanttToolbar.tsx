@@ -9,19 +9,19 @@ import { GanttIncomingEvents, type SetDateData, TimelineViewMode } from "../even
 const VIEW_OPTIONS = [
     { label: "Day", value: TimelineViewMode.DAY },
     { label: "Week", value: TimelineViewMode.WEEK },
-    { label: "Month", value: TimelineViewMode.MONTH },
+    { label: "Month", value: TimelineViewMode.MONTH }
 ];
 
 const EXPORT_ITEMS: MenuProps["items"] = [
     { key: "pdf", label: "Export PDF" },
     { key: "png", label: "Export PNG" },
-    { key: "excel", label: "Export Excel" },
+    { key: "excel", label: "Export Excel" }
 ];
 
 const EXPORT_EVENT_MAP: Record<string, GanttIncomingEvents> = {
     pdf: GanttIncomingEvents.EXPORT_PDF,
     png: GanttIncomingEvents.EXPORT_PNG,
-    excel: GanttIncomingEvents.EXPORT_EXCEL,
+    excel: GanttIncomingEvents.EXPORT_EXCEL
 };
 
 /** SVG icon – collapse/expand/fit/fullscreen using minimal path data */
@@ -40,7 +40,13 @@ function IconToday() {
 function IconFit() {
     return (
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M1 4V1h3M8 1h3v3M11 8v3H8M4 11H1V8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+                d="M1 4V1h3M8 1h3v3M11 8v3H8M4 11H1V8"
+                stroke="currentColor"
+                strokeWidth="1.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
         </svg>
     );
 }
@@ -48,7 +54,13 @@ function IconFit() {
 function IconExpand() {
     return (
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M2 4l3 3 3-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+                d="M2 4l3 3 3-3"
+                stroke="currentColor"
+                strokeWidth="1.3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
             <line x1="2" y1="9" x2="10" y2="9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
         </svg>
     );
@@ -57,7 +69,13 @@ function IconExpand() {
 function IconCollapse() {
     return (
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M2 5l3-3 3 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+                d="M2 5l3-3 3 3"
+                stroke="currentColor"
+                strokeWidth="1.3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
             <line x1="2" y1="9" x2="10" y2="9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
         </svg>
     );
@@ -66,11 +84,57 @@ function IconCollapse() {
 function IconFullscreen({ active }: { active: boolean }) {
     return active ? (
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M5 1H1v4M7 1h4v4M5 11H1V7M7 11h4V7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+                d="M5 1H1v4M7 1h4v4M5 11H1V7M7 11h4V7"
+                stroke="currentColor"
+                strokeWidth="1.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
         </svg>
     ) : (
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M1 4V1h3M8 1h3v3M11 8v3H8M4 11H1V8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+                d="M1 4V1h3M8 1h3v3M11 8v3H8M4 11H1V8"
+                stroke="currentColor"
+                strokeWidth="1.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+        </svg>
+    );
+}
+
+function IconExpandHeight({ active }: { active: boolean }) {
+    return active ? (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path
+                d="M2 4.5L6 1l4 3.5M2 7.5L6 11l4-3.5"
+                stroke="currentColor"
+                strokeWidth="1.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+            <line
+                x1="6"
+                y1="1"
+                x2="6"
+                y2="11"
+                stroke="currentColor"
+                strokeWidth="1.2"
+                strokeLinecap="round"
+                strokeDasharray="1.5 1.5"
+            />
+        </svg>
+    ) : (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path
+                d="M2 4.5L6 1l4 3.5M2 7.5L6 11l4-3.5"
+                stroke="currentColor"
+                strokeWidth="1.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
         </svg>
     );
 }
@@ -78,7 +142,13 @@ function IconFullscreen({ active }: { active: boolean }) {
 function IconExport() {
     return (
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M6 1v7M3.5 5.5L6 8l2.5-2.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+                d="M6 1v7M3.5 5.5L6 8l2.5-2.5"
+                stroke="currentColor"
+                strokeWidth="1.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
             <path d="M2 9.5h8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
         </svg>
     );
@@ -94,6 +164,13 @@ function IconCalendar() {
         </svg>
     );
 }
+
+const VIEW_MODE_EVENT_MAP: Record<TimelineViewMode, GanttIncomingEvents> = {
+    [TimelineViewMode.DAY]: GanttIncomingEvents.ZOOM_DAY,
+    [TimelineViewMode.WEEK]: GanttIncomingEvents.ZOOM_WEEK,
+    [TimelineViewMode.MONTH]: GanttIncomingEvents.ZOOM_MONTH,
+    [TimelineViewMode.QUARTER]: GanttIncomingEvents.ZOOM_QUARTER
+};
 
 const DATE_PICKER_STYLE: React.CSSProperties = { width: 110 };
 
@@ -130,7 +207,7 @@ export const GanttToolbar = observer(function GanttToolbar(): JSX.Element {
                 size="small"
                 options={VIEW_OPTIONS}
                 value={store.viewMode}
-                onChange={val => store.setViewMode(val as TimelineViewMode)}
+                onChange={val => emit(VIEW_MODE_EVENT_MAP[val as TimelineViewMode])}
             />
 
             <div style={{ width: 1, height: 16, background: "#e8e8e8", flexShrink: 0 }} />
@@ -168,21 +245,13 @@ export const GanttToolbar = observer(function GanttToolbar(): JSX.Element {
             {/* Navigation actions */}
             <Space size={4}>
                 <Tooltip title="Scroll to today" mouseEnterDelay={0.5}>
-                    <Button
-                        size="small"
-                        icon={<IconToday />}
-                        onClick={() => emit(GanttIncomingEvents.SCROLL_TO_TODAY)}
-                    >
+                    <Button size="small" icon={<IconToday />} onClick={() => emit(GanttIncomingEvents.SCROLL_TO_TODAY)}>
                         Today
                     </Button>
                 </Tooltip>
 
                 <Tooltip title="Fit timeline to tasks" mouseEnterDelay={0.5}>
-                    <Button
-                        size="small"
-                        icon={<IconFit />}
-                        onClick={() => emit(GanttIncomingEvents.FIT_TIMELINE)}
-                    >
+                    <Button size="small" icon={<IconFit />} onClick={() => emit(GanttIncomingEvents.FIT_TIMELINE)}>
                         Fit
                     </Button>
                 </Tooltip>
@@ -193,11 +262,7 @@ export const GanttToolbar = observer(function GanttToolbar(): JSX.Element {
             {/* Expand / Collapse */}
             <Space size={4}>
                 <Tooltip title="Expand all rows" mouseEnterDelay={0.5}>
-                    <Button
-                        size="small"
-                        icon={<IconExpand />}
-                        onClick={() => emit(GanttIncomingEvents.EXPAND_ALL)}
-                    />
+                    <Button size="small" icon={<IconExpand />} onClick={() => emit(GanttIncomingEvents.EXPAND_ALL)} />
                 </Tooltip>
 
                 <Tooltip title="Collapse all rows" mouseEnterDelay={0.5}>
@@ -227,12 +292,34 @@ export const GanttToolbar = observer(function GanttToolbar(): JSX.Element {
                     </Button>
                 </Dropdown>
 
+                <Tooltip
+                    title={store.expandHeight ? "Restore default height" : "Expand to full height"}
+                    mouseEnterDelay={0.5}
+                >
+                    <Button
+                        size="small"
+                        type={store.expandHeight ? "primary" : "default"}
+                        icon={<IconExpandHeight active={store.expandHeight} />}
+                        onClick={() =>
+                            emit(
+                                store.expandHeight
+                                    ? GanttIncomingEvents.EXIT_EXPAND_HEIGHT
+                                    : GanttIncomingEvents.ENTER_EXPAND_HEIGHT
+                            )
+                        }
+                    />
+                </Tooltip>
+
                 <Tooltip title={store.fullscreen ? "Exit fullscreen" : "Enter fullscreen"} mouseEnterDelay={0.5}>
                     <Button
                         size="small"
                         icon={<IconFullscreen active={store.fullscreen} />}
                         onClick={() =>
-                            emit(store.fullscreen ? GanttIncomingEvents.EXIT_FULLSCREEN : GanttIncomingEvents.ENTER_FULLSCREEN)
+                            emit(
+                                store.fullscreen
+                                    ? GanttIncomingEvents.EXIT_FULLSCREEN
+                                    : GanttIncomingEvents.ENTER_FULLSCREEN
+                            )
                         }
                     />
                 </Tooltip>

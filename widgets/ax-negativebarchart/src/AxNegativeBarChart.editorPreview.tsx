@@ -1,37 +1,37 @@
+import { createMockDatasource } from "@iris/chart-core";
 import { ThemeProvider } from "@iris/chart-ui";
-import { ValueStatus, type EditableValue } from "mendix";
+import type { Big } from "big.js";
+import type { ListAttributeValue } from "mendix";
 import { NegativeBarChartView } from "./main/components/NegativeBarChartView";
 import { NegativeBarChartProvider } from "./main/providers/NegativeBarChartProvider";
-import {
-    PREVIEW_DATA_FORMAT,
-    PREVIEW_HEIGHT,
-    PREVIEW_JSON_DATA,
-    PREVIEW_TITLE,
-} from "./preview/previewConfig";
+import { PREVIEW_HEIGHT, PREVIEW_TITLE } from "./preview/previewConfig";
 import type { AxNegativeBarChartProps } from "./typings/AxNegativeBarChartProps";
 import "./styles/ax-negativebarchart.scss";
 
-const previewJsonData = {
-    value: PREVIEW_JSON_DATA,
-    status: ValueStatus.Available,
-    readOnly: true,
-    displayValue: PREVIEW_JSON_DATA,
-    formatter: { format: (v: string) => String(v), parse: (v: string) => v },
-    setFormatter: () => undefined,
-    setTextValue: () => undefined,
-    setValue: () => undefined,
-    isList: false as const,
-    validation: undefined,
-    universe: undefined,
-} as unknown as EditableValue<string>;
+const PREVIEW_RECORDS = [
+    { id: "1", name: "Jan", period: "2025", pm: 12 },
+    { id: "2", name: "Feb", period: "2025", pm: -8 },
+    { id: "3", name: "Mar", period: "2025", pm: 22 },
+    { id: "4", name: "Apr", period: "2025", pm: -5 },
+    { id: "5", name: "May", period: "2025", pm: 18 },
+    { id: "6", name: "Jun", period: "2025", pm: -14 },
+    { id: "7", name: "Jul", period: "2025", pm: 9 },
+    { id: "8", name: "Aug", period: "2025", pm: -3 },
+];
+
+const { datasource, idAttribute, nameAttribute, periodAttribute, valueAttribute } =
+    createMockDatasource(PREVIEW_RECORDS);
 
 const previewProps: AxNegativeBarChartProps = {
     name: "ax-negativebarchart-preview",
     class: "ax-negativebarchart-preview",
     title: PREVIEW_TITLE,
     height: PREVIEW_HEIGHT,
-    jsonData: previewJsonData,
-    dataFormat: PREVIEW_DATA_FORMAT,
+    datasource,
+    idAttribute,
+    nameAttribute,
+    periodAttribute,
+    valueAttribute: valueAttribute as unknown as ListAttributeValue<Big>,
     baselineLabel: "",
     showTitle: true,
     showLegend: true,

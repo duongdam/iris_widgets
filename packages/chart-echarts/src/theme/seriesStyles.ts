@@ -53,6 +53,26 @@ export const barVerticalPreset: Partial<BarSeriesOption> = {
     barMinHeight: 2,
 };
 
+export function buildColumnBarPreset(options: {
+    columnWidthPercent: number;
+    isStacked: boolean;
+}): Partial<BarSeriesOption> {
+    const width = Math.min(100, Math.max(10, options.columnWidthPercent));
+    const barCategoryGap = `${100 - width}%`;
+
+    if (options.isStacked) {
+        return { barCategoryGap };
+    }
+
+    return {
+        barGap: "20%",
+        barCategoryGap,
+        itemStyle: {
+            borderRadius: [4, 4, 0, 0],
+        },
+    };
+}
+
 export const columnGroupedPreset: Partial<BarSeriesOption> = {
     barMaxWidth: 36,
     barGap: "20%",
@@ -62,13 +82,19 @@ export const columnGroupedPreset: Partial<BarSeriesOption> = {
     },
 };
 
+/** @deprecated Use buildColumnBarPreset instead */
+export const columnStackedPreset: Partial<BarSeriesOption> = {
+    barMaxWidth: 48,
+    barCategoryGap: "30%",
+};
+
 export function buildAreaSeriesStyle(colorIndex: number): Partial<LineSeriesOption> {
     const color = getSeriesColor(colorIndex);
     return {
         smooth: true,
         lineStyle: { width: 2, color },
         showSymbol: true,
-        symbolSize: 6,
+        symbolSize: 8,
         itemStyle: { color },
         areaStyle: {
             color,

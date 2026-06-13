@@ -4,7 +4,7 @@ import {
     ChartEmptyState,
     ChartLoadingOverlay,
     DeferredChartMount,
-    useChartData,
+    useChartDatasource,
     useChartPointerEvents,
     useSelectionSync,
 } from "@iris/chart-ui";
@@ -22,9 +22,12 @@ export const ColumnChartView = observer(function ColumnChartView({
     widgetProps,
 }: ColumnChartViewProps): JSX.Element {
     const { store, bridge } = useColumnChartContext();
-    const jsonData = widgetProps.jsonData.value ?? "";
-
-    const { error, isEmpty } = useChartData(store, jsonData, widgetProps.dataFormat);
+    const { isEmpty } = useChartDatasource(store, widgetProps.datasource, {
+        idAttribute: widgetProps.idAttribute,
+        nameAttribute: widgetProps.nameAttribute,
+        periodAttribute: widgetProps.periodAttribute,
+        valueAttribute: widgetProps.valueAttribute,
+    });
 
     useSelectionSync({
         store,
@@ -33,6 +36,10 @@ export const ColumnChartView = observer(function ColumnChartView({
         selectedPayload: widgetProps.selectedPayload,
         bridge,
     });
+
+    const referenceLineValue = widgetProps.referenceLineValue?.value != null
+        ? Number(widgetProps.referenceLineValue.value.toString())
+        : undefined;
 
     const option = useMemo(
         () =>
@@ -43,6 +50,11 @@ export const ColumnChartView = observer(function ColumnChartView({
                 showTooltip: widgetProps.showTooltip,
                 height: widgetProps.height,
                 selectedId: store.selectedRecord?.id,
+                stackMode: widgetProps.stackMode,
+                columnWidthPercent: widgetProps.columnWidthPercent,
+                showSeriesLabels: widgetProps.showSeriesLabels,
+                referenceLineValue,
+                referenceLineLabel: widgetProps.referenceLineLabel,
             }),
         [
             store.records,
@@ -51,7 +63,12 @@ export const ColumnChartView = observer(function ColumnChartView({
             widgetProps.showLegend,
             widgetProps.showTooltip,
             widgetProps.height,
+            widgetProps.stackMode,
+            widgetProps.columnWidthPercent,
+            widgetProps.showSeriesLabels,
+            widgetProps.referenceLineLabel,
             store.selectedRecord?.id,
+            referenceLineValue,
         ]
     );
 
@@ -73,14 +90,7 @@ export const ColumnChartView = observer(function ColumnChartView({
         if (!store.loading) {
             bridge.handleRefresh(store.records.length);
         }
-    }, [jsonData, store.loading, store.records.length, bridge]);
-
-    const emptyMessage =
-        error === "parse-error"
-            ? "Invalid JSON data"
-            : error === "format-mismatch"
-              ? "Data format does not match selected format"
-              : "No chart data available";
+    }, [store.loading, store.records.length, bridge]);
 
     return (
         <ChartContainer
@@ -89,7 +99,7 @@ export const ColumnChartView = observer(function ColumnChartView({
             showHeaderDivider={widgetProps.showTitle}
         >
             {store.loading ? <ChartLoadingOverlay /> : null}
-            {!store.loading && isEmpty ? <ChartEmptyState message={emptyMessage} /> : null}
+            {!store.loading && isEmpty ? <ChartEmptyState message="No chart data available" /> : null}
             {!store.loading && !isEmpty ? (
                 <DeferredChartMount>
                     <ReactECharts

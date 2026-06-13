@@ -1,0 +1,48 @@
+.ax-combobox {
+    width: 100%;
+
+    .ax-field-validation {
+        margin-top: 4px;
+        font-size: 12px;
+        color: var(--iris-danger, #ff4d4f);
+    }
+
+    .ant-select {
+        width: 100%;
+    }
+
+    .ant-select-multiple .ant-select-selection-item {
+        border-radius: 6px;
+        font-weight: 500;
+        color: var(--iris-text-primary);
+
+        .ant-select-selection-item-content {
+            color: inherit;
+        }
+
+        .ant-select-selection-item-remove {
+            color: var(--iris-text-muted);
+            opacity: 0.75;
+
+            &:hover {
+                opacity: 1;
+                color: var(--iris-text-secondary);
+            }
+        }
+    }
+
+    &__select-all {
+        padding: 4px 8px 0;
+    }
+}
+
+.ax-combobox__dropdown {
+    .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+        font-weight: 500;
+        color: var(--iris-text-primary);
+    }
+
+    .ant-select-item-option-active:not(.ant-select-item-option-disabled) {
+        background: var(--iris-surface-muted);
+    }
+}

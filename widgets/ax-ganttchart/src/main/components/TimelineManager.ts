@@ -122,12 +122,7 @@ function snapToWeekEnd(date: Date): Date {
  * @param endDate   - Desired range end   (defaults to next-year Dec 31)
  * @param mode      - Current view mode; used to snap week boundaries
  */
-export function applyTimelineRange(
-    gantt: GanttStatic,
-    mode: TimelineViewMode,
-    startDate?: Date,
-    endDate?: Date
-): void {
+export function applyTimelineRange(gantt: GanttStatic, mode: TimelineViewMode, startDate?: Date, endDate?: Date): void {
     let start = startDate ? new Date(startDate) : getDefaultTimelineStart();
     let end = endDate ? new Date(endDate) : getDefaultTimelineEnd();
 
@@ -142,16 +137,11 @@ export function applyTimelineRange(
     gantt.config.end_date = end;
 }
 
-export function applyMode(
-    gantt: GanttStatic,
-    mode: TimelineViewMode,
-    startDate?: Date,
-    endDate?: Date
-): void {
+export function applyMode(gantt: GanttStatic, mode: TimelineViewMode, startDate?: Date, endDate?: Date): void {
     gantt.config.scales = getScales(mode) as typeof gantt.config.scales;
     applyTimelineRange(gantt, mode, startDate, endDate);
     // Re-apply after scale change to prevent DHTMLX from reverting to its default 70px
-    gantt.config.min_column_width = 1;
+    gantt.config.min_column_width = 30;
     gantt.config.column_width = 32;
     gantt.render();
 }

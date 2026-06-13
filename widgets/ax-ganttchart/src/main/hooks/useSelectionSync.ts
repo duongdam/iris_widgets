@@ -1,30 +1,29 @@
 import { reaction } from "mobx";
 import { useEffect, useRef } from "react";
+import type { Big } from "big.js";
+import type { EditableValue } from "mendix";
 import type { GanttStore } from "../../stores/GanttStore";
 import type { GanttTask } from "../eventbus/eventTypes";
 import type { WidgetEventBridge } from "../services/WidgetEventBridge";
 
-export interface WritableStringAttribute {
-    readOnly: boolean;
-    setValue(value: string): void;
-}
+type WritableTaskId = EditableValue<string | Big>;
 
-function isWritable(attr?: WritableStringAttribute): attr is WritableStringAttribute {
-    return attr != null && !attr.readOnly;
+function isWritable(attr?: WritableTaskId): attr is WritableTaskId {
+    return attr?.status === "available" && attr.readOnly !== true;
 }
 
 function syncSelectionToMendix(
     task: GanttTask | undefined,
-    selectedTaskId?: WritableStringAttribute,
-    selectedPayload?: WritableStringAttribute,
+    selectedTaskId?: WritableTaskId,
+    selectedPayload?: EditableValue<string>,
     bridge?: WidgetEventBridge
 ): void {
     if (!task) {
         if (isWritable(selectedTaskId)) {
-            selectedTaskId.setValue("");
+            selectedTaskId.setValue(undefined);
         }
-        if (isWritable(selectedPayload)) {
-            selectedPayload.setValue("");
+        if (selectedPayload?.status === "available" && selectedPayload.readOnly !== true) {
+            selectedPayload.setValue(undefined);
         }
         bridge?.handleSelectionChanged(undefined);
         return;
@@ -33,7 +32,7 @@ function syncSelectionToMendix(
     if (isWritable(selectedTaskId)) {
         selectedTaskId.setValue(task.id);
     }
-    if (isWritable(selectedPayload)) {
+    if (selectedPayload?.status === "available" && selectedPayload.readOnly !== true) {
         selectedPayload.setValue(JSON.stringify(task));
     }
     bridge?.handleSelectionChanged(task);
@@ -41,8 +40,8 @@ function syncSelectionToMendix(
 
 export function useSelectionSync(
     store: GanttStore,
-    selectedTaskId?: WritableStringAttribute,
-    selectedPayload?: WritableStringAttribute,
+    selectedTaskId?: WritableTaskId,
+    selectedPayload?: EditableValue<string>,
     bridge?: WidgetEventBridge
 ): void {
     const bridgeRef = useRef(bridge);

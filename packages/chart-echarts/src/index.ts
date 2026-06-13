@@ -2,7 +2,11 @@ export {
     buildBarChartOption,
     type ChartDisplayOptions,
 } from "./builders/buildBarChartOption";
-export { buildColumnChartOption } from "./builders/buildColumnChartOption";
+export {
+    buildColumnChartOption,
+    type ColumnChartOptions,
+    type ColumnStackMode,
+} from "./builders/buildColumnChartOption";
 export { buildStackAreaChartOption } from "./builders/buildStackAreaChartOption";
 export {
     buildReportChartOption,
@@ -19,7 +23,12 @@ export { aggregateTotals, type AggregationTotals } from "./transformers/aggregat
 
 export { buildCategoryAxis, buildValueAxis, sumByField } from "./helpers/axisHelpers";
 export { CHART_COLORS, getSeriesColor, getColorPalette } from "./helpers/colorPalette";
-export { formatRecordTooltip, defaultTooltipFormatter } from "./helpers/tooltipFormatters";
+export {
+    formatRecordTooltip,
+    defaultTooltipFormatter,
+    stackedColumnTooltipFormatter,
+    stackAreaItemTooltipFormatter,
+} from "./helpers/tooltipFormatters";
 export {
     buildGrid,
     buildLegend,
@@ -35,5 +44,13 @@ export {
     buildBarGradient,
     barVerticalPreset,
     columnGroupedPreset,
+    columnStackedPreset,
+    buildColumnBarPreset,
     buildAreaSeriesStyle,
 } from "./theme/seriesStyles";
+export {
+    buildReferenceMarkLine,
+    hasReferenceLine,
+    resolveReferenceLineLabel,
+    type ReferenceLineConfig,
+} from "./helpers/referenceLineHelpers";

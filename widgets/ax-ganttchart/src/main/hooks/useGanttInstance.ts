@@ -2,6 +2,7 @@ import { reaction } from "mobx";
 import { useEffect, useRef } from "react";
 import type { GanttStore } from "../../stores/GanttStore";
 import {
+    applyEditingConfig,
     attachNativeEvents,
     enablePlugins,
     gantt,
@@ -15,6 +16,7 @@ import { scheduleTodayMarkerRefresh, syncTodayMarker } from "../components/today
 import type { GanttTask } from "../eventbus/eventTypes";
 import type { WidgetEventBridge } from "../services/WidgetEventBridge";
 import { syncTasks } from "../services/GanttSyncService";
+import type { GanttEditingConfig } from "../../shared/types/editingConfig";
 
 export interface UseGanttInstanceOptions {
     store: GanttStore;
@@ -23,6 +25,9 @@ export interface UseGanttInstanceOptions {
     showTimeline: boolean;
     showProgress: boolean;
     showTodayMarker: boolean;
+    showCriticalPath: boolean;
+    showBaseline: boolean;
+    editing: GanttEditingConfig;
     bridge?: WidgetEventBridge;
     onHoverTask?: (taskId: string | undefined) => void;
 }
@@ -66,13 +71,26 @@ function scheduleFocusOnToday(showMarker: boolean): void {
 }
 
 export function useGanttInstance(options: UseGanttInstanceOptions): void {
-    const { store, containerRef, showGrid, showTimeline, showProgress, showTodayMarker, bridge, onHoverTask } = options;
+    const {
+        store,
+        containerRef,
+        showGrid,
+        showTimeline,
+        showProgress,
+        showTodayMarker,
+        showCriticalPath,
+        showBaseline,
+        editing,
+        bridge,
+        onHoverTask
+    } = options;
 
     const initializedRef = useRef(false);
     const previousTasksRef = useRef<GanttTask[]>([]);
     const bridgeRef = useRef(bridge);
     const showTodayMarkerRef = useRef(showTodayMarker);
     const teardownTodayMarkerRef = useRef<(() => void) | null>(null);
+    const teardownEditingRef = useRef<(() => void) | null>(null);
     bridgeRef.current = bridge;
     showTodayMarkerRef.current = showTodayMarker;
 
@@ -93,10 +111,12 @@ export function useGanttInstance(options: UseGanttInstanceOptions): void {
             viewMode: store.viewMode,
             taskCount: store.tasks.length,
             timelineStart: store.timelineStart,
-            timelineEnd: store.timelineEnd
+            timelineEnd: store.timelineEnd,
+            appearance: { showCriticalPath, showBaseline }
         });
 
         teardownTodayMarkerRef.current = setupTodayMarkerSync(() => showTodayMarkerRef.current);
+        teardownEditingRef.current = applyEditingConfig(editing);
 
         const detachEvents = attachNativeEvents({
             onTaskClick: (id: string) => {
@@ -139,12 +159,37 @@ export function useGanttInstance(options: UseGanttInstanceOptions): void {
         return () => {
             teardownTodayMarkerRef.current?.();
             teardownTodayMarkerRef.current = null;
+            teardownEditingRef.current?.();
+            teardownEditingRef.current = null;
             detachEvents();
             clearCrossHighlight();
             resetGantt();
             initializedRef.current = false;
         };
-    }, [containerRef, showProgress, store.viewMode, store.showGrid, store.showTimeline, onHoverTask]);
+    }, [
+        containerRef,
+        showProgress,
+        showCriticalPath,
+        showBaseline,
+        store.viewMode,
+        store.showGrid,
+        store.showTimeline,
+        onHoverTask
+    ]);
+
+    useEffect(() => {
+        if (!initializedRef.current) {
+            return undefined;
+        }
+
+        teardownEditingRef.current?.();
+        teardownEditingRef.current = applyEditingConfig(editing);
+
+        return () => {
+            teardownEditingRef.current?.();
+            teardownEditingRef.current = null;
+        };
+    }, [editing]);
 
     useEffect(() => {
         if (!initializedRef.current) {

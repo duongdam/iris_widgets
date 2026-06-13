@@ -4,10 +4,8 @@
  * @author Mendix Widgets Framework Team
  */
 import { CSSProperties } from "react";
-import { ActionValue, EditableValue } from "mendix";
+import { ActionValue, EditableValue, ListValue, ListAttributeValue } from "mendix";
 import { Big } from "big.js";
-
-export type DataFormatEnum = "flat" | "elastic";
 
 export interface AxNegativeBarChartContainerProps {
     name: string;
@@ -16,8 +14,11 @@ export interface AxNegativeBarChartContainerProps {
     tabIndex?: number;
     title: string;
     height: number;
-    jsonData: EditableValue<string>;
-    dataFormat: DataFormatEnum;
+    datasource: ListValue;
+    idAttribute?: ListAttributeValue<string | Big>;
+    nameAttribute: ListAttributeValue<string>;
+    periodAttribute: ListAttributeValue<string>;
+    valueAttribute: ListAttributeValue<Big>;
     baselineValue?: EditableValue<Big>;
     baselineLabel: string;
     showTitle: boolean;
@@ -43,8 +44,11 @@ export interface AxNegativeBarChartPreviewProps {
     translate: (text: string) => string;
     title: string;
     height: number | null;
-    jsonData: string;
-    dataFormat: DataFormatEnum;
+    datasource: {} | { caption: string } | { type: string } | null;
+    idAttribute: string;
+    nameAttribute: string;
+    periodAttribute: string;
+    valueAttribute: string;
     baselineValue: string;
     baselineLabel: string;
     showTitle: boolean;

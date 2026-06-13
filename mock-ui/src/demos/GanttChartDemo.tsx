@@ -23,6 +23,14 @@ export interface GanttChartDemoProps {
     showTimeline: boolean;
     showProgress: boolean;
     showTodayMarker: boolean;
+    showCriticalPath: boolean;
+    showBaseline: boolean;
+    allowCreate: boolean;
+    allowUpdate: boolean;
+    allowDelete: boolean;
+    allowDrag: boolean;
+    allowResize: boolean;
+    readOnly: boolean;
     selectedTaskId: EditableValue<string>;
     selectedPayload: EditableValue<string>;
     onGanttEvent?: (payload: GanttEventPayload) => void;
@@ -61,6 +69,14 @@ export function GanttChartDemo({
     showTimeline,
     showProgress,
     showTodayMarker,
+    showCriticalPath,
+    showBaseline,
+    allowCreate,
+    allowUpdate,
+    allowDelete,
+    allowDrag,
+    allowResize,
+    readOnly,
     selectedTaskId,
     selectedPayload,
     onGanttEvent,
@@ -79,7 +95,15 @@ export function GanttChartDemo({
             showTimeline,
             showProgress,
             showTodayMarker,
-            selectedTaskId,
+            showCriticalPath,
+            showBaseline,
+            allowCreate,
+            allowUpdate,
+            allowDelete,
+            allowDrag,
+            allowResize,
+            readOnly,
+            selectedTaskId: selectedTaskId as AxGanttChartProps["selectedTaskId"],
             selectedPayload,
             ...datasourceProps,
         }),
@@ -91,6 +115,14 @@ export function GanttChartDemo({
             showTimeline,
             showProgress,
             showTodayMarker,
+            showCriticalPath,
+            showBaseline,
+            allowCreate,
+            allowUpdate,
+            allowDelete,
+            allowDrag,
+            allowResize,
+            readOnly,
             selectedTaskId,
             selectedPayload,
             datasourceProps,

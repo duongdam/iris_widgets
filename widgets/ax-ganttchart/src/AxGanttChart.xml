@@ -22,8 +22,6 @@
                 <caption>Data source</caption>
                 <description>List datasource returning task objects from database, microflow, nanoflow, or REST integration</description>
             </property>
-        </propertyGroup>
-        <propertyGroup caption="Mapping">
             <property key="idAttribute" type="attribute" dataSource="tasksDatasource" required="true">
                 <caption>ID attribute</caption>
                 <description>Unique task identifier</description>
@@ -75,6 +73,7 @@
                 <description>Parent task ID for hierarchy</description>
                 <attributeTypes>
                     <attributeType name="String" />
+                    <attributeType name="AutoNumber" />
                 </attributeTypes>
             </property>
             <property key="openAttribute" type="attribute" dataSource="tasksDatasource" required="false">
@@ -114,6 +113,40 @@
                 <caption>Show today marker</caption>
                 <description>Display vertical marker for current date</description>
             </property>
+            <property key="showCriticalPath" type="boolean" required="true" defaultValue="false">
+                <caption>Show critical path</caption>
+                <description>Highlight critical path tasks (future feature)</description>
+            </property>
+            <property key="showBaseline" type="boolean" required="true" defaultValue="false">
+                <caption>Show baseline</caption>
+                <description>Display baseline bars (future feature)</description>
+            </property>
+        </propertyGroup>
+        <propertyGroup caption="Editing">
+            <property key="allowCreate" type="boolean" required="true" defaultValue="true">
+                <caption>Allow create</caption>
+                <description>Allow creating new tasks in the Gantt</description>
+            </property>
+            <property key="allowUpdate" type="boolean" required="true" defaultValue="true">
+                <caption>Allow update</caption>
+                <description>Allow updating existing tasks</description>
+            </property>
+            <property key="allowDelete" type="boolean" required="true" defaultValue="true">
+                <caption>Allow delete</caption>
+                <description>Allow deleting tasks</description>
+            </property>
+            <property key="allowDrag" type="boolean" required="true" defaultValue="true">
+                <caption>Allow drag</caption>
+                <description>Allow dragging tasks on the timeline</description>
+            </property>
+            <property key="allowResize" type="boolean" required="true" defaultValue="true">
+                <caption>Allow resize</caption>
+                <description>Allow resizing task bars</description>
+            </property>
+            <property key="readOnly" type="boolean" required="true" defaultValue="false">
+                <caption>Read only</caption>
+                <description>Disable all Gantt editing interactions</description>
+            </property>
         </propertyGroup>
         <propertyGroup caption="Timeline">
             <property key="defaultViewMode" type="enumeration" required="true" defaultValue="week">
@@ -130,14 +163,38 @@
         <propertyGroup caption="Selection">
             <property key="selectedTaskId" type="attribute" required="false">
                 <caption>Selected task ID</caption>
-                <description>Writable string attribute for the selected task identifier</description>
+                <description>Writable attribute for the selected task identifier</description>
                 <attributeTypes>
                     <attributeType name="String" />
+                    <attributeType name="AutoNumber" />
                 </attributeTypes>
             </property>
             <property key="selectedPayload" type="attribute" required="false">
                 <caption>Selected payload</caption>
                 <description>Complete selected GanttTask as JSON string including metadata</description>
+                <attributeTypes>
+                    <attributeType name="String" />
+                </attributeTypes>
+            </property>
+        </propertyGroup>
+        <propertyGroup caption="Commands">
+            <property key="command" type="attribute" required="false">
+                <caption>Command</caption>
+                <description>
+                    Write a command name to control the Gantt from Mendix (e.g. FIT_TIMELINE, ZOOM_WEEK, EXPAND_ALL).
+                    Clear the attribute after execute to allow re-triggering the same command.
+                </description>
+                <attributeTypes>
+                    <attributeType name="String" />
+                    <attributeType name="Enum" />
+                </attributeTypes>
+            </property>
+            <property key="commandPayload" type="attribute" required="false">
+                <caption>Command payload</caption>
+                <description>
+                    Optional JSON for commands that need data: SET_START_DATE / SET_END_DATE ({ "date": "ISO" }),
+                    SCROLL_TO_TASK ({ "taskId": "..." }), or a plain task ID string.
+                </description>
                 <attributeTypes>
                     <attributeType name="String" />
                 </attributeTypes>
@@ -167,12 +224,6 @@
             <property key="onSelectionChanged" type="action" required="false">
                 <caption>On selection changed</caption>
                 <description>Action executed when task selection changes</description>
-            </property>
-        </propertyGroup>
-        <propertyGroup caption="Export">
-            <property key="exportServerUrl" type="string" required="false" defaultValue="">
-                <caption>Export server URL</caption>
-                <description>Override DHTMLX export API endpoint for on-prem deployments (default: online service)</description>
             </property>
         </propertyGroup>
     </properties>

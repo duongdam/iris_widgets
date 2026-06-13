@@ -8,6 +8,7 @@ export { ChartLoadingOverlay, type ChartLoadingOverlayProps } from "./components
 export { useChartDimensions, type ChartDimensions } from "./hooks/useChartDimensions";
 export { useStableCallback } from "./hooks/useStableCallback";
 export { useChartData, type ChartDataError, type UseChartDataResult } from "./hooks/useChartData";
+export { useChartDatasource } from "./hooks/useChartDatasource";
 export {
     useSelectionSync,
     type SelectionSyncBridge,

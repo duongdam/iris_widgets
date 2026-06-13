@@ -21,21 +21,41 @@
                 <description>Chart height in pixels</description>
             </property>
         </propertyGroup>
-        <propertyGroup caption="Data">
-            <property key="jsonData" type="attribute" required="true">
-                <caption>JSON Data</caption>
-                <description>String attribute containing chart data as JSON</description>
+        <propertyGroup caption="Datasource">
+            <property key="datasource" type="datasource" isList="true" required="true">
+                <caption>Data source</caption>
+                <description>List datasource providing chart records</description>
+            </property>
+            <property key="idAttribute" type="attribute" dataSource="datasource" required="false">
+                <caption>ID attribute</caption>
+                <description>Unique record identifier (auto-generated if absent)</description>
+                <attributeTypes>
+                    <attributeType name="String" />
+                    <attributeType name="AutoNumber" />
+                </attributeTypes>
+            </property>
+            <property key="nameAttribute" type="attribute" dataSource="datasource" required="true">
+                <caption>Name attribute</caption>
+                <description>Series name — groups records into chart series</description>
                 <attributeTypes>
                     <attributeType name="String" />
                 </attributeTypes>
             </property>
-            <property key="dataFormat" type="enumeration" required="true" defaultValue="flat">
-                <caption>Data Format</caption>
-                <description>Input data format</description>
-                <enumerationValues>
-                    <enumerationValue key="flat">Flat</enumerationValue>
-                    <enumerationValue key="elastic">Elastic</enumerationValue>
-                </enumerationValues>
+            <property key="periodAttribute" type="attribute" dataSource="datasource" required="true">
+                <caption>Period attribute</caption>
+                <description>X-axis category (date, month, quarter, label…)</description>
+                <attributeTypes>
+                    <attributeType name="String" />
+                </attributeTypes>
+            </property>
+            <property key="valueAttribute" type="attribute" dataSource="datasource" required="true">
+                <caption>Value attribute</caption>
+                <description>Numeric value for the Y-axis</description>
+                <attributeTypes>
+                    <attributeType name="Decimal" />
+                    <attributeType name="Integer" />
+                    <attributeType name="Long" />
+                </attributeTypes>
             </property>
         </propertyGroup>
         <propertyGroup caption="Baseline">

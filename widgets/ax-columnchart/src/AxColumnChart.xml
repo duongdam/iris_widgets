@@ -21,24 +21,60 @@
                 <description>Chart height in pixels</description>
             </property>
         </propertyGroup>
-        <propertyGroup caption="Data">
-            <property key="jsonData" type="attribute" required="true">
-                <caption>JSON Data</caption>
-                <description>String attribute containing chart data as JSON</description>
+        <propertyGroup caption="Datasource">
+            <property key="datasource" type="datasource" isList="true" required="true">
+                <caption>Data source</caption>
+                <description>List datasource providing chart records</description>
+            </property>
+            <property key="idAttribute" type="attribute" dataSource="datasource" required="false">
+                <caption>ID attribute</caption>
+                <description>Unique record identifier (auto-generated if absent)</description>
+                <attributeTypes>
+                    <attributeType name="String" />
+                    <attributeType name="AutoNumber" />
+                </attributeTypes>
+            </property>
+            <property key="nameAttribute" type="attribute" dataSource="datasource" required="true">
+                <caption>Name attribute</caption>
+                <description>Series name — groups records into chart series</description>
                 <attributeTypes>
                     <attributeType name="String" />
                 </attributeTypes>
             </property>
-            <property key="dataFormat" type="enumeration" required="true" defaultValue="flat">
-                <caption>Data Format</caption>
-                <description>Input data format</description>
-                <enumerationValues>
-                    <enumerationValue key="flat">Flat</enumerationValue>
-                    <enumerationValue key="elastic">Elastic</enumerationValue>
-                </enumerationValues>
+            <property key="periodAttribute" type="attribute" dataSource="datasource" required="true">
+                <caption>Period attribute</caption>
+                <description>X-axis category (date, month, quarter, label…)</description>
+                <attributeTypes>
+                    <attributeType name="String" />
+                </attributeTypes>
+            </property>
+            <property key="valueAttribute" type="attribute" dataSource="datasource" required="true">
+                <caption>Value attribute</caption>
+                <description>Numeric value for the Y-axis</description>
+                <attributeTypes>
+                    <attributeType name="Decimal" />
+                    <attributeType name="Integer" />
+                    <attributeType name="Long" />
+                </attributeTypes>
             </property>
         </propertyGroup>
         <propertyGroup caption="Display">
+            <property key="stackMode" type="enumeration" required="true" defaultValue="grouped">
+                <caption>Stack mode</caption>
+                <description>Grouped columns side-by-side, or stacked columns sharing the same period</description>
+                <enumerationValues>
+                    <enumerationValue key="grouped">Grouped</enumerationValue>
+                    <enumerationValue key="stacked">Stacked</enumerationValue>
+                </enumerationValues>
+            </property>
+            <property key="columnWidthPercent" type="integer" required="true" defaultValue="70">
+                <caption>Column width (%)</caption>
+                <description>Column width as a percentage of each category slot (10–100). Remaining space becomes gap between categories.</description>
+            </property>
+            <property key="showSeriesLabels" type="boolean" required="true" defaultValue="false">
+                <caption>Show series labels</caption>
+                <description>Display the series name on each column segment</description>
+            </property>
             <property key="showTitle" type="boolean" required="true" defaultValue="true">
                 <caption>Show Title</caption>
                 <description>Display the chart title header above the chart</description>
@@ -50,6 +86,21 @@
             <property key="showTooltip" type="boolean" required="true" defaultValue="true">
                 <caption>Show Tooltip</caption>
                 <description>Display tooltips when hovering chart elements</description>
+            </property>
+        </propertyGroup>
+        <propertyGroup caption="Reference Line">
+            <property key="referenceLineValue" type="attribute" required="false">
+                <caption>Reference Line Value</caption>
+                <description>Numeric attribute for the horizontal reference line position. Leave empty to hide the line.</description>
+                <attributeTypes>
+                    <attributeType name="Decimal" />
+                    <attributeType name="Integer" />
+                    <attributeType name="Long" />
+                </attributeTypes>
+            </property>
+            <property key="referenceLineLabel" type="string" required="false" defaultValue="">
+                <caption>Reference Line Label</caption>
+                <description>Label displayed at the right end of the reference line. Defaults to the numeric value if left empty.</description>
             </property>
         </propertyGroup>
         <propertyGroup caption="Selection">

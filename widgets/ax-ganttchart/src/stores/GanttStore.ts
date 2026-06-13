@@ -7,6 +7,7 @@ export class GanttStore {
     selectedTask?: GanttTask;
     viewMode: TimelineViewMode = TimelineViewMode.WEEK;
     fullscreen = false;
+    expandHeight = false;
     loading = false;
     showGrid = true;
     showTimeline = true;
@@ -51,6 +52,14 @@ export class GanttStore {
 
     setFullscreen(value: boolean): void {
         this.fullscreen = value;
+    }
+
+    setExpandHeight(value: boolean): void {
+        this.expandHeight = value;
+    }
+
+    toggleExpandHeight(): void {
+        this.expandHeight = !this.expandHeight;
     }
 
     setLoading(value: boolean): void {

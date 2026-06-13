@@ -1,7 +1,6 @@
-import type { ActionValue, EditableValue } from "mendix";
+import type { ActionValue, EditableValue, ListAttributeValue, ListValue } from "mendix";
+import type { Big } from "big.js";
 import type { CSSProperties } from "react";
-
-export type ReportAggregationMode = "period" | "name" | "both";
 
 export interface AxReportChartContainerProps {
     name: string;
@@ -10,12 +9,17 @@ export interface AxReportChartContainerProps {
     tabIndex?: number;
 }
 
+export type ReportAggregationMode = "period" | "name" | "both";
+
 export interface AxReportChartProps extends AxReportChartContainerProps {
     title: string;
     height: number;
 
-    jsonData: EditableValue<string>;
-    dataFormat: "flat" | "elastic";
+    datasource: ListValue;
+    idAttribute?: ListAttributeValue<string | Big>;
+    nameAttribute: ListAttributeValue<string>;
+    periodAttribute: ListAttributeValue<string>;
+    valueAttribute: ListAttributeValue<Big>;
 
     showTitle: boolean;
     showLegend: boolean;

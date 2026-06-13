@@ -8,9 +8,14 @@ export interface ThemeProviderProps {
 }
 
 function buildIrisAntdTheme(darkMode?: boolean): ThemeConfig {
+    const primary = darkMode ? "#818cf8" : "#4f46e5";
+    const primaryBg = darkMode ? "#312e81" : "#eef2ff";
+    const primaryBorder = darkMode ? "#4338ca" : "#c7d2fe";
+    const selectedText = darkMode ? "#f8fafc" : "#0f172a";
+
     return {
         token: {
-            colorPrimary: "var(--iris-primary)",
+            colorPrimary: primary,
             colorBgContainer: "var(--iris-surface)",
             colorBorder: "var(--iris-border)",
             colorText: "var(--iris-text-primary)",
@@ -18,6 +23,15 @@ function buildIrisAntdTheme(darkMode?: boolean): ThemeConfig {
             colorTextDescription: "var(--iris-text-muted)",
             borderRadius: 8,
             fontFamily: "var(--iris-font-family)",
+        },
+        components: {
+            Select: {
+                optionSelectedBg: primaryBg,
+                optionSelectedColor: selectedText,
+                optionActiveBg: darkMode ? "#1e293b" : "#f8fafc",
+                multipleItemBg: primaryBg,
+                multipleItemBorderColor: primaryBorder,
+            },
         },
         algorithm: darkMode ? [antdTheme.darkAlgorithm] : [antdTheme.defaultAlgorithm],
     };
@@ -32,6 +46,10 @@ function mergeTheme(customTheme?: ThemeConfig, darkMode?: boolean): ThemeConfig 
         token: {
             ...irisTheme.token,
             ...customTheme?.token,
+        },
+        components: {
+            ...irisTheme.components,
+            ...customTheme?.components,
         },
         algorithm: customTheme?.algorithm ?? irisTheme.algorithm,
     };

@@ -1,5 +1,5 @@
 import { ThemeProvider } from "@iris/chart-ui";
-import type { ChartEventPayload } from "@iris/chart-core";
+import type { ChartEventPayload, ChartRecord } from "@iris/chart-core";
 import type { Big } from "big.js";
 import type { EditableValue } from "mendix";
 import { useMemo } from "react";
@@ -10,6 +10,7 @@ import {
 } from "../../../widgets/ax-negativebarchart/src/main/providers/NegativeBarChartProvider";
 import type { AxNegativeBarChartProps } from "../../../widgets/ax-negativebarchart/src/typings/AxNegativeBarChartProps";
 import { ChartEventMonitor } from "../components/ChartEventMonitor";
+import { createMockListValue } from "../mocks/listValue";
 import "../../../widgets/ax-negativebarchart/src/styles/ax-negativebarchart.scss";
 
 export interface NegativeBarChartDemoProps {
@@ -17,8 +18,7 @@ export interface NegativeBarChartDemoProps {
     showTitle: boolean;
     showTooltip: boolean;
     height: number;
-    jsonData: EditableValue<string>;
-    dataFormat: "flat" | "elastic";
+    records: ChartRecord[];
     selectedId: EditableValue<string>;
     selectedName: EditableValue<string>;
     selectedPayload: EditableValue<string>;
@@ -56,10 +56,15 @@ function NegativeBarChartEventMonitor({
 
 export function NegativeBarChartDemo(props: NegativeBarChartDemoProps): JSX.Element {
     const {
-        title, showTitle, showTooltip, height, jsonData, dataFormat,
+        title, showTitle, showTooltip, height, records,
         selectedId, selectedName, selectedPayload, onChartEvent,
         baselineValue, baselineLabel = "",
     } = props;
+
+    const { datasource, idAttribute, nameAttribute, periodAttribute, valueAttribute } = useMemo(
+        () => createMockListValue(records),
+        [records]
+    );
 
     const mockBaselineValue = useMemo(
         () => (baselineValue !== undefined ? createMockBigValue(baselineValue) : undefined),
@@ -73,8 +78,11 @@ export function NegativeBarChartDemo(props: NegativeBarChartDemoProps): JSX.Elem
             title,
             showTitle,
             height,
-            jsonData,
-            dataFormat,
+            datasource,
+            idAttribute,
+            nameAttribute,
+            periodAttribute,
+            valueAttribute,
             showLegend: true,
             showTooltip,
             selectedId,
@@ -83,7 +91,7 @@ export function NegativeBarChartDemo(props: NegativeBarChartDemoProps): JSX.Elem
             baselineValue: mockBaselineValue,
             baselineLabel,
         }),
-        [title, showTitle, showTooltip, height, jsonData, dataFormat,
+        [title, showTitle, showTooltip, height, datasource, idAttribute, nameAttribute, periodAttribute, valueAttribute,
             selectedId, selectedName, selectedPayload, mockBaselineValue, baselineLabel]
     );
 

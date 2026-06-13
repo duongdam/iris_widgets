@@ -15,6 +15,13 @@
         "clean": "pnpm -r run clean",
         "dev:barchart": "pnpm --filter ax-barchart run start",
         "dev:ganttchart": "pnpm --filter ax-ganttchart run start",
+        "dev:datepicker": "pnpm --filter ax-datepicker run start",
+        "dev:combobox": "pnpm --filter ax-combobox run start",
+        "dev:input": "pnpm --filter ax-input run start",
+        "dev:numberinput": "pnpm --filter ax-numberinput run start",
+        "dev:switch": "pnpm --filter ax-switch run start",
+        "dev:textarea": "pnpm --filter ax-textarea run start",
+        "dev:checkboxgroup": "pnpm --filter ax-checkboxgroup run start",
         "dev:mock-ui": "pnpm --filter mock-ui run dev"
     },
     "devDependencies": {

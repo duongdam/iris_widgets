@@ -1,0 +1,13 @@
+.ax-datepicker {
+    width: 100%;
+
+    .ant-picker {
+        width: 100%;
+    }
+
+    .ax-field-validation {
+        margin-top: 4px;
+        font-size: 12px;
+        color: var(--iris-danger, #ff4d4f);
+    }
+}

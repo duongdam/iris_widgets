@@ -17,6 +17,9 @@ import {
     buildBarGradient,
 } from "../theme/seriesStyles";
 
+const BAR_POSITIVE_COLOR = "#166534";
+const BAR_NEGATIVE_COLOR = "#991B1B";
+
 export interface ChartDisplayOptions {
     title?: string;
     showTitle: boolean;
@@ -34,12 +37,26 @@ export function buildBarChartOption(records: ChartRecord[], options: ChartDispla
         (left, right) => left.name.localeCompare(right.name) || left.period.localeCompare(right.period)
     );
     const labels = sortedRecords.map(record => `${record.name} (${record.period})`);
-    const rawData = sortedRecords.map(record => ({
-        value: record.pm,
-        recordId: record.id,
-        name: record.name,
-        period: record.period,
-    }));
+
+    const hasMixedSigns =
+        sortedRecords.some(r => r.pm < 0) && sortedRecords.some(r => r.pm > 0);
+
+    const rawData = sortedRecords.map(record => {
+        const isNegative = record.pm < 0;
+        return {
+            value: record.pm,
+            recordId: record.id,
+            name: record.name,
+            period: record.period,
+            ...(hasMixedSigns && {
+                itemStyle: {
+                    color: isNegative ? BAR_NEGATIVE_COLOR : BAR_POSITIVE_COLOR,
+                    borderRadius: isNegative ? [0, 0, 4, 4] : [4, 4, 0, 0],
+                },
+            }),
+        };
+    });
+
     const data = applySelectionOpacity(rawData, options.selectedId);
 
     const largeOptions = getLargeSeriesOptions(records);
@@ -61,7 +78,7 @@ export function buildBarChartOption(records: ChartRecord[], options: ChartDispla
                 ...largeOptions,
                 ...barVerticalPreset,
                 animation,
-                itemStyle: buildBarGradient(0),
+                itemStyle: hasMixedSigns ? {} : buildBarGradient(0),
                 emphasis: {
                     itemStyle: {
                         shadowBlur: 8,

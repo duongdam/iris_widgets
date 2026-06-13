@@ -23,6 +23,10 @@
         z-index: 9999;
     }
 
+    &--expand-height {
+        height: 100vh !important;
+    }
+
     &__toolbar {
         display: flex;
         align-items: center;
@@ -85,6 +89,76 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    width: 100%;
+}
+
+.gantt-text-cell {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    width: 100%;
+    min-width: 0;
+}
+
+.gantt-text-cell__label {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.gantt-text-cell__meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+.gantt-text-cell__chips {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.gantt-text-cell__count {
+    font-size: 11px;
+    font-weight: 500;
+    color: $gantt-text-secondary;
+    white-space: nowrap;
+}
+
+.gantt-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 5px;
+    height: 16px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+}
+
+.gantt-chip--manual {
+    color: #0958d9;
+    background: #e6f4ff;
+    border: 1px solid #91caff;
+}
+
+.gantt-chip--process {
+    color: #389e0d;
+    background: #f6ffed;
+    border: 1px solid #b7eb8f;
+}
+
+.gantt-chip--default {
+    color: #595959;
+    background: #fafafa;
+    border: 1px solid #d9d9d9;
 }
 
 /* ─── Selection ─────────────────────────────────────────────────────────────── */
@@ -132,7 +206,7 @@
     border-radius: 3px;
 }
 
-.gantt_row.gantt-row-project .gantt_tree_content {
+.gantt_row.gantt-row-project .gantt-text-cell__label {
     font-weight: 600;
     color: $gantt-text-primary;
 }
@@ -191,8 +265,13 @@
 /* ─── Today marker + pulse ───────────────────────────────────────────────────── */
 
 @keyframes gantt-today-pulse {
-    0%, 100% { opacity: 1; }
-    50%       { opacity: 0.55; }
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.55;
+    }
 }
 
 .gantt_marker_area {
@@ -202,7 +281,7 @@
 
 .gantt_marker.today {
     background-color: $gantt-today-marker !important;
-    width: 2px !important;
+    width: 1px !important;
     opacity: 1;
     z-index: 4;
     pointer-events: none;
@@ -214,9 +293,9 @@
     background: rgba(255, 255, 255, 0.92);
     font-size: 11px;
     font-weight: 600;
-    padding: 2px 5px;
-    border-radius: 3px;
-    margin-left: 4px;
+    padding: 1px 4px;
+    border-radius: 0;
+    margin-left: 1px;
     white-space: nowrap;
 }
 

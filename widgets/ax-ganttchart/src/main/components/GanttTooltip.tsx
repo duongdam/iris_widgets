@@ -35,7 +35,7 @@ function calcDuration(task: GanttTask): string {
 
 function progressPercent(progress: number | undefined): number {
     if (progress == null) return 0;
-    return Math.round((progress > 1 ? progress : progress * 100));
+    return Math.round(progress > 1 ? progress : progress * 100);
 }
 
 interface TooltipPos {
@@ -108,13 +108,11 @@ export const GanttTooltip = observer(function GanttTooltip({
                 maxWidth: 280,
                 fontSize: 12,
                 lineHeight: "1.6",
-                transition: "opacity 120ms ease",
+                transition: "opacity 120ms ease"
             }}
         >
             {/* Task name */}
-            <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 6, wordBreak: "break-word" }}>
-                {task.text}
-            </div>
+            <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 6, wordBreak: "break-word" }}>{task.text}</div>
 
             {/* Status + type chips */}
             {(status || task.type) && (
@@ -127,7 +125,7 @@ export const GanttTooltip = observer(function GanttTooltip({
                                 padding: "1px 6px",
                                 fontSize: 10,
                                 fontWeight: 500,
-                                textTransform: "capitalize",
+                                textTransform: "capitalize"
                             }}
                         >
                             {task.type}
@@ -139,7 +137,7 @@ export const GanttTooltip = observer(function GanttTooltip({
                                 background: "rgba(255,255,255,0.15)",
                                 borderRadius: 3,
                                 padding: "1px 6px",
-                                fontSize: 10,
+                                fontSize: 10
                             }}
                         >
                             {status}
@@ -172,7 +170,7 @@ export const GanttTooltip = observer(function GanttTooltip({
                             height: 4,
                             background: "rgba(255,255,255,0.15)",
                             borderRadius: 99,
-                            overflow: "hidden",
+                            overflow: "hidden"
                         }}
                     >
                         <div
@@ -181,7 +179,7 @@ export const GanttTooltip = observer(function GanttTooltip({
                                 height: "100%",
                                 background: pct >= 100 ? "#52c41a" : "#4096ff",
                                 borderRadius: 99,
-                                transition: "width 200ms ease",
+                                transition: "width 200ms ease"
                             }}
                         />
                     </div>

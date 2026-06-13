@@ -67,6 +67,50 @@ function resolveTaskDuration(task: {
     return days > 0 ? `${days}d` : "";
 }
 
+function escapeHtml(value: string): string {
+    return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+const CHIP_CLASS_MAP: Record<string, string> = {
+    Manual: "gantt-chip--manual",
+    Process: "gantt-chip--process"
+};
+
+function renderChip(tag: string): string {
+    const chipClass = CHIP_CLASS_MAP[tag] ?? "gantt-chip--default";
+    return `<span class="gantt-chip ${chipClass}">${escapeHtml(tag)}</span>`;
+}
+
+function countDescendants(taskId: string, target: GanttStatic): number {
+    if (!target.isTaskExists(taskId)) {
+        return 0;
+    }
+
+    let count = 0;
+    target.eachTask(() => {
+        count += 1;
+    }, taskId);
+    return count;
+}
+
+function renderTextCell(task: TaskLike, target: GanttStatic): string {
+    const text = task.text ?? "";
+    const safeText = escapeHtml(text);
+    const childCount = countDescendants(String(task.id), target);
+    const chips = (task.tags ?? []).map(renderChip).join("");
+    const countHtml = childCount > 0 ? `<span class="gantt-text-cell__count">(${childCount})</span>` : "";
+
+    return (
+        `<div class="gantt-text-cell">` +
+        `<span class="gantt-text-cell__label" title="${safeText}">${safeText}</span>` +
+        `<span class="gantt-text-cell__meta">` +
+        (chips ? `<span class="gantt-text-cell__chips">${chips}</span>` : "") +
+        countHtml +
+        `</span>` +
+        `</div>`
+    );
+}
+
 export interface GanttColumnConfig {
     name: string;
     label: string;
@@ -76,20 +120,20 @@ export interface GanttColumnConfig {
 }
 
 export function getDefaultColumns(): GanttColumnConfig[] {
-    return [
-        { name: "text", label: "Projects", width: 260, tree: true }
-    ];
+    return [{ name: "text", label: "Projects", width: 300, tree: true }];
 }
 
 type TaskLike = {
+    id?: string | number;
     text?: string;
+    tags?: string[];
     start_date?: GanttDateValue;
     end_date?: GanttDateValue;
     duration?: number;
 };
 
-export function applyColumns(gantt: GanttStatic, columns: GanttColumnConfig[]): void {
-    gantt.config.columns = columns.map(col => {
+export function applyColumns(ganttInstance: GanttStatic, columns: GanttColumnConfig[]): void {
+    ganttInstance.config.columns = columns.map(col => {
         if (col.name === "text") {
             return {
                 name: col.name,
@@ -97,10 +141,7 @@ export function applyColumns(gantt: GanttStatic, columns: GanttColumnConfig[]): 
                 width: col.width,
                 align: col.align ?? "left",
                 tree: col.tree,
-                template: (task: TaskLike) => {
-                    const text = task.text ?? "";
-                    return `<span title="${text.replace(/"/g, "&quot;")}">${text}</span>`;
-                }
+                template: (task: TaskLike) => renderTextCell(task, ganttInstance)
             };
         }
 
@@ -141,5 +182,5 @@ export function applyColumns(gantt: GanttStatic, columns: GanttColumnConfig[]): 
             align: col.align ?? "left",
             tree: col.tree
         };
-    }) as typeof gantt.config.columns;
+    }) as typeof ganttInstance.config.columns;
 }

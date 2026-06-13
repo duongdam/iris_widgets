@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<widget
+    id="com.mendix.axnumberinput.AxNumberInput"
+    pluginWidget="true"
+    offlineCapable="true"
+    xmlns="http://www.mendix.com/widget/1.0/"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.mendix.com/widget/1.0/ ../node_modules/mendix/custom_widget.xsd"
+>
+    <name>Ax Number Input</name>
+    <description>Ant Design number input with Decimal, Integer, or Long writeback</description>
+    <icon />
+    <properties>
+        <propertyGroup caption="General">
+            <property key="min" type="integer" required="false">
+                <caption>Min</caption>
+                <description>Minimum allowed value</description>
+            </property>
+            <property key="max" type="integer" required="false">
+                <caption>Max</caption>
+                <description>Maximum allowed value</description>
+            </property>
+            <property key="step" type="integer" required="false">
+                <caption>Step</caption>
+                <description>Increment step for spinner controls</description>
+            </property>
+            <property key="precision" type="integer" required="false">
+                <caption>Precision</caption>
+                <description>Decimal precision for display and input</description>
+            </property>
+            <property key="disabled" type="boolean" required="true" defaultValue="false">
+                <caption>Disabled</caption>
+                <description>Disable user interaction</description>
+            </property>
+        </propertyGroup>
+        <propertyGroup caption="Value">
+            <property key="value" type="attribute" required="false">
+                <caption>Value</caption>
+                <description>Writable numeric attribute</description>
+                <attributeTypes>
+                    <attributeType name="Decimal" />
+                    <attributeType name="Integer" />
+                    <attributeType name="Long" />
+                </attributeTypes>
+            </property>
+            <property key="defaultValue" type="attribute" required="false">
+                <caption>Default value</caption>
+                <description>Initial numeric value</description>
+                <attributeTypes>
+                    <attributeType name="Decimal" />
+                    <attributeType name="Integer" />
+                    <attributeType name="Long" />
+                </attributeTypes>
+            </property>
+        </propertyGroup>
+        <propertyGroup caption="Events">
+            <property key="onChange" type="action" required="false">
+                <caption>On change</caption>
+                <description>Action when value changes</description>
+            </property>
+        </propertyGroup>
+    </properties>
+</widget>

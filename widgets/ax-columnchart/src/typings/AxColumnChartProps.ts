@@ -1,5 +1,8 @@
-import type { ActionValue, EditableValue } from "mendix";
+import type { ActionValue, EditableValue, ListAttributeValue, ListValue } from "mendix";
+import type { Big } from "big.js";
 import type { CSSProperties } from "react";
+
+export type ColumnStackModeEnum = "grouped" | "stacked";
 
 export interface AxColumnChartContainerProps {
     name: string;
@@ -12,12 +15,21 @@ export interface AxColumnChartProps extends AxColumnChartContainerProps {
     title: string;
     height: number;
 
-    jsonData: EditableValue<string>;
-    dataFormat: "flat" | "elastic";
+    datasource: ListValue;
+    idAttribute?: ListAttributeValue<string | Big>;
+    nameAttribute: ListAttributeValue<string>;
+    periodAttribute: ListAttributeValue<string>;
+    valueAttribute: ListAttributeValue<Big>;
 
     showTitle: boolean;
     showLegend: boolean;
     showTooltip: boolean;
+    stackMode: ColumnStackModeEnum;
+    columnWidthPercent: number;
+    showSeriesLabels: boolean;
+
+    referenceLineValue?: EditableValue<Big>;
+    referenceLineLabel: string;
 
     selectedId?: EditableValue<string>;
     selectedName?: EditableValue<string>;

@@ -1,5 +1,5 @@
 import { ThemeProvider } from "@iris/chart-ui";
-import type { ChartEventPayload } from "@iris/chart-core";
+import type { ChartEventPayload, ChartRecord } from "@iris/chart-core";
 import type { Big } from "big.js";
 import type { EditableValue } from "mendix";
 import { useMemo } from "react";
@@ -10,6 +10,7 @@ import {
 } from "../../../widgets/ax-stackareachart/src/main/providers/StackAreaChartProvider";
 import type { AxStackAreaChartProps } from "../../../widgets/ax-stackareachart/src/typings/AxStackAreaChartProps";
 import { ChartEventMonitor } from "../components/ChartEventMonitor";
+import { createMockListValue } from "../mocks/listValue";
 import "../../../widgets/ax-stackareachart/src/styles/ax-stackareachart.scss";
 
 export interface StackAreaChartDemoProps {
@@ -17,8 +18,7 @@ export interface StackAreaChartDemoProps {
     showTitle: boolean;
     showTooltip: boolean;
     height: number;
-    jsonData: EditableValue<string>;
-    dataFormat: "flat" | "elastic";
+    records: ChartRecord[];
     selectedId: EditableValue<string>;
     selectedName: EditableValue<string>;
     selectedPayload: EditableValue<string>;
@@ -56,10 +56,15 @@ function StackAreaChartEventMonitor({
 
 export function StackAreaChartDemo(props: StackAreaChartDemoProps): JSX.Element {
     const {
-        title, showTitle, showTooltip, height, jsonData, dataFormat,
+        title, showTitle, showTooltip, height, records,
         selectedId, selectedName, selectedPayload, onChartEvent,
         referenceLineValue, referenceLineLabel = "",
     } = props;
+
+    const { datasource, idAttribute, nameAttribute, periodAttribute, valueAttribute } = useMemo(
+        () => createMockListValue(records),
+        [records]
+    );
 
     const mockRefLineValue = useMemo(
         () => (referenceLineValue !== undefined ? createMockBigValue(referenceLineValue) : undefined),
@@ -73,8 +78,11 @@ export function StackAreaChartDemo(props: StackAreaChartDemoProps): JSX.Element 
             title,
             showTitle,
             height,
-            jsonData,
-            dataFormat,
+            datasource,
+            idAttribute,
+            nameAttribute,
+            periodAttribute,
+            valueAttribute,
             showLegend: true,
             showTooltip,
             selectedId,
@@ -83,7 +91,7 @@ export function StackAreaChartDemo(props: StackAreaChartDemoProps): JSX.Element 
             referenceLineValue: mockRefLineValue,
             referenceLineLabel,
         }),
-        [title, showTitle, showTooltip, height, jsonData, dataFormat, selectedId, selectedName, selectedPayload, mockRefLineValue, referenceLineLabel]
+        [title, showTitle, showTooltip, height, datasource, idAttribute, nameAttribute, periodAttribute, valueAttribute, selectedId, selectedName, selectedPayload, mockRefLineValue, referenceLineLabel]
     );
 
     return (

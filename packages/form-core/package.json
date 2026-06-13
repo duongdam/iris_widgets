@@ -1,0 +1,30 @@
+{
+    "name": "@iris/form-core",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        }
+    },
+    "scripts": {
+        "build": "tsc -b",
+        "clean": "rm -rf dist *.tsbuildinfo",
+        "test": "echo \"No tests yet\""
+    },
+    "devDependencies": {
+        "@types/node": "^20.14.0",
+        "mendix": "^11.8.1",
+        "typescript": "^5.4.5"
+    },
+    "dependencies": {
+        "big.js": "^6.2.1"
+    },
+    "peerDependencies": {
+        "mendix": "*"
+    }
+}

@@ -1,12 +1,13 @@
 import { Empty } from "antd";
 import classNames from "classnames";
 import { observer } from "mobx-react-lite";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import type { AxGanttChartProps } from "../../typings/AxGanttChartProps";
 import { GanttSkeleton } from "./GanttSkeleton";
 import { GanttToolbar } from "./GanttToolbar";
 import { GanttTooltip } from "./GanttTooltip";
 import { useDatasourceSync } from "../hooks/useDatasourceSync";
+import { useCommandSync } from "../hooks/useCommandSync";
 import { useEventBusBridge } from "../hooks/useEventBusBridge";
 import { useGanttInstance } from "../hooks/useGanttInstance";
 import { useSelectionSync } from "../hooks/useSelectionSync";
@@ -31,8 +32,27 @@ export const AxGanttChartView = observer(function AxGanttChartView({
 
     const [tooltipPos, setTooltipPos] = useState<TooltipPos>({ x: 0, y: 0 });
 
-    useDatasourceSync(store, widgetProps, !isPreview);
+    const mappingValid = useDatasourceSync(store, widgetProps, !isPreview);
     useSelectionSync(store, widgetProps.selectedTaskId, widgetProps.selectedPayload, bridge);
+
+    const editingConfig = useMemo(
+        () => ({
+            allowCreate: widgetProps.allowCreate,
+            allowUpdate: widgetProps.allowUpdate,
+            allowDelete: widgetProps.allowDelete,
+            allowDrag: widgetProps.allowDrag,
+            allowResize: widgetProps.allowResize,
+            readOnly: widgetProps.readOnly
+        }),
+        [
+            widgetProps.allowCreate,
+            widgetProps.allowUpdate,
+            widgetProps.allowDelete,
+            widgetProps.allowDrag,
+            widgetProps.allowResize,
+            widgetProps.readOnly
+        ]
+    );
 
     useGanttInstance({
         store,
@@ -41,16 +61,19 @@ export const AxGanttChartView = observer(function AxGanttChartView({
         showTimeline: widgetProps.showTimeline,
         showProgress: widgetProps.showProgress,
         showTodayMarker: widgetProps.showTodayMarker,
+        showCriticalPath: widgetProps.showCriticalPath,
+        showBaseline: widgetProps.showBaseline,
+        editing: editingConfig,
         bridge
     });
 
     const handleRefresh = useCallback(() => {
-        if (isPreview || !isDatasourceAvailable(widgetProps.tasksDatasource)) {
+        if (isPreview || !isDatasourceAvailable(widgetProps.tasksDatasource) || !mappingValid) {
             return;
         }
         const mapped = mapMendixDatasourceToGanttTasks(widgetProps);
         store.setTasksIfChanged(mapped.tasks);
-    }, [isPreview, store, widgetProps]);
+    }, [isPreview, mappingValid, store, widgetProps]);
 
     useEventBusBridge({
         store,
@@ -62,9 +85,18 @@ export const AxGanttChartView = observer(function AxGanttChartView({
         onRefresh: handleRefresh
     });
 
+    useCommandSync({
+        command: widgetProps.command,
+        commandPayload: widgetProps.commandPayload,
+        eventBus,
+        widgetId,
+        enabled: !isPreview
+    });
+
     const hoveredTask = store.hoveredTaskId ? store.taskById.get(store.hoveredTaskId) : undefined;
-    const showEmpty = !store.loading && !store.hasTasks;
-    const height = widgetProps.height;
+    const showConfigError = !isPreview && !mappingValid;
+    const showEmpty = !showConfigError && !store.loading && !store.hasTasks;
+    const height = store.expandHeight ? "100vh" : widgetProps.height;
 
     function handleMouseMove(e: React.MouseEvent<HTMLDivElement>): void {
         setTooltipPos({ x: e.clientX, y: e.clientY });
@@ -78,46 +110,38 @@ export const AxGanttChartView = observer(function AxGanttChartView({
         <div
             ref={rootRef}
             className={classNames("ax-ganttchart", widgetProps.class, {
-                "ax-ganttchart--fullscreen": store.fullscreen
+                "ax-ganttchart--fullscreen": store.fullscreen,
+                "ax-ganttchart--expand-height": store.expandHeight
             })}
             style={{ height }}
         >
-            {/* Toolbar */}
             {widgetProps.showToolbar && <GanttToolbar />}
 
-            <div
-                className="ax-ganttchart__body"
-                onMouseMove={handleMouseMove}
-                onMouseLeave={handleMouseLeave}
-            >
-                {/* Shimmer skeleton while loading */}
+            <div className="ax-ganttchart__body" onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave}>
                 {store.loading && <GanttSkeleton />}
 
-                {/* Empty state */}
-                {showEmpty && (
+                {showConfigError && (
                     <div className="ax-ganttchart__empty">
                         <Empty
                             image={Empty.PRESENTED_IMAGE_SIMPLE}
-                            description="No tasks to display"
+                            description="Gantt configuration incomplete. Check id, text, start date, and end date or duration mappings."
                         />
                     </div>
                 )}
 
-                {/* DHTMLX Gantt container */}
+                {showEmpty && (
+                    <div className="ax-ganttchart__empty">
+                        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No tasks to display" />
+                    </div>
+                )}
+
                 <div
                     ref={containerRef}
                     className="ax-ganttchart__gantt"
-                    style={{ display: showEmpty && !store.loading ? "none" : "block" }}
+                    style={{ display: showEmpty || showConfigError ? "none" : store.loading ? "none" : "block" }}
                 />
 
-                {/* Rich hover tooltip */}
-                {hoveredTask && (
-                    <GanttTooltip
-                        task={hoveredTask}
-                        pos={tooltipPos}
-                        containerRef={rootRef}
-                    />
-                )}
+                {hoveredTask && <GanttTooltip task={hoveredTask} pos={tooltipPos} containerRef={rootRef} />}
             </div>
         </div>
     );

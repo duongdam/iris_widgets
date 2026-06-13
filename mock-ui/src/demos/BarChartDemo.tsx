@@ -1,5 +1,5 @@
 import { ThemeProvider } from "@iris/chart-ui";
-import type { ChartEventPayload } from "@iris/chart-core";
+import type { ChartEventPayload, ChartRecord } from "@iris/chart-core";
 import type { EditableValue } from "mendix";
 import { useMemo } from "react";
 import { BarChartView } from "../../../widgets/ax-barchart/src/main/components/BarChartView";
@@ -9,6 +9,7 @@ import {
 } from "../../../widgets/ax-barchart/src/main/providers/BarChartProvider";
 import type { AxBarChartProps } from "../../../widgets/ax-barchart/src/typings/AxBarChartProps";
 import { ChartEventMonitor } from "../components/ChartEventMonitor";
+import { createMockListValue } from "../mocks/listValue";
 import "../../../widgets/ax-barchart/src/styles/ax-barchart.scss";
 
 export interface BarChartDemoProps {
@@ -16,8 +17,7 @@ export interface BarChartDemoProps {
     showTitle: boolean;
     showTooltip: boolean;
     height: number;
-    jsonData: EditableValue<string>;
-    dataFormat: "flat" | "elastic";
+    records: ChartRecord[];
     selectedId: EditableValue<string>;
     selectedName: EditableValue<string>;
     selectedPayload: EditableValue<string>;
@@ -38,13 +38,17 @@ export function BarChartDemo({
     showTitle,
     showTooltip,
     height,
-    jsonData,
-    dataFormat,
+    records,
     selectedId,
     selectedName,
     selectedPayload,
     onChartEvent,
 }: BarChartDemoProps): JSX.Element {
+    const { datasource, idAttribute, nameAttribute, periodAttribute, valueAttribute } = useMemo(
+        () => createMockListValue(records),
+        [records]
+    );
+
     const widgetProps = useMemo<AxBarChartProps>(
         () => ({
             name: "mock-barchart",
@@ -52,15 +56,18 @@ export function BarChartDemo({
             title,
             showTitle,
             height,
-            jsonData,
-            dataFormat,
+            datasource,
+            idAttribute,
+            nameAttribute,
+            periodAttribute,
+            valueAttribute,
             showLegend: true,
             showTooltip,
             selectedId,
             selectedName,
             selectedPayload,
         }),
-        [title, showTitle, showTooltip, height, jsonData, dataFormat, selectedId, selectedName, selectedPayload]
+        [title, showTitle, showTooltip, height, datasource, idAttribute, nameAttribute, periodAttribute, valueAttribute, selectedId, selectedName, selectedPayload]
     );
 
     return (

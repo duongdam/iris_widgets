@@ -4,14 +4,23 @@ import type { AxGanttChartProps } from "../../typings/AxGanttChartProps";
 import {
     isDatasourceLoading,
     isDatasourceUnavailable,
-    mapMendixDatasourceToGanttTasks
+    mapMendixDatasourceToGanttTasks,
+    validateDatasourceMapping
 } from "../services/MendixTaskAdapter";
 
-export function useDatasourceSync(store: GanttStore, props: AxGanttChartProps, enabled = true): void {
+export function useDatasourceSync(store: GanttStore, props: AxGanttChartProps, enabled = true): boolean {
     const { tasksDatasource } = props;
+    const mappingValidation = validateDatasourceMapping(props);
+    const mappingValid = mappingValidation.valid;
 
     useEffect(() => {
         if (!enabled) {
+            return;
+        }
+
+        if (!mappingValid) {
+            store.setTasksIfChanged([]);
+            store.setLoading(false);
             return;
         }
 
@@ -36,6 +45,7 @@ export function useDatasourceSync(store: GanttStore, props: AxGanttChartProps, e
         }
     }, [
         enabled,
+        mappingValid,
         store,
         tasksDatasource,
         tasksDatasource.status,
@@ -48,6 +58,9 @@ export function useDatasourceSync(store: GanttStore, props: AxGanttChartProps, e
         props.progressAttribute,
         props.parentAttribute,
         props.openAttribute,
-        props.typeAttribute
+        props.typeAttribute,
+        props.tagsAttribute
     ]);
+
+    return mappingValid;
 }

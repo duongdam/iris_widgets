@@ -4,6 +4,7 @@ export type { DataAdapter, AdapterResult, AdapterError, AdapterRegistry } from "
 export { FlatDataAdapter } from "./adapters/FlatDataAdapter";
 export { ElasticAggregationAdapter } from "./adapters/ElasticAggregationAdapter";
 export { AdapterRegistryImpl, adapterRegistry, getAdapter } from "./adapters/AdapterRegistry";
+export { mapDatasourceToRecords, type DatasourceMapping } from "./adapters/DatasourceAdapter";
 
 export { ChartStore, createChartStore } from "./stores/ChartStore";
 
@@ -25,7 +26,7 @@ export { ChartContextProvider, useChartContext, ChartContext } from "./context/C
 
 export { safeJsonParse } from "./utils/jsonParse";
 export { generateId, resetIdCounter } from "./utils/generateId";
-export { MOCK_FLAT_JSON, MOCK_ELASTIC_JSON, MOCK_FLAT_RECORDS } from "./utils/mockData";
+export { MOCK_FLAT_JSON, MOCK_ELASTIC_JSON, MOCK_FLAT_RECORDS, createMockDatasource, type MockDatasource } from "./utils/mockData";
 
 export {
     createWidgetEventBridge,

@@ -38,6 +38,28 @@ body,
     padding: 0;
 }
 
+.mock-ui-form-panel-wrap,
+.mock-ui-form-panel {
+    background: var(--iris-surface);
+    border: 1px solid var(--iris-border);
+    border-radius: var(--iris-radius-lg);
+    padding: 24px;
+    max-width: 720px;
+}
+
+.mock-ui-cascading-row {
+    margin-bottom: 8px;
+}
+
+.mock-ui-selection-value {
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: var(--iris-surface-muted);
+    border: 1px solid var(--iris-border);
+    border-radius: var(--iris-radius-sm);
+    font-size: 12px;
+}
+
 .mock-chart,
 .mock-gantt {
     width: 100%;

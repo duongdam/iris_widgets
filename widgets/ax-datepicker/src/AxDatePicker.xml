@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<widget
+    id="com.mendix.axdatepicker.AxDatePicker"
+    pluginWidget="true"
+    offlineCapable="true"
+    xmlns="http://www.mendix.com/widget/1.0/"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.mendix.com/widget/1.0/ ../node_modules/mendix/custom_widget.xsd"
+>
+    <name>Ax Date Picker</name>
+    <description>Ant Design date picker with date, week, month, and year selection modes</description>
+    <icon />
+    <properties>
+        <propertyGroup caption="General">
+            <property key="pickerMode" type="enumeration" required="true" defaultValue="date">
+                <caption>Picker mode</caption>
+                <description>Granularity of date selection</description>
+                <enumerationValues>
+                    <enumerationValue key="date">Select date</enumerationValue>
+                    <enumerationValue key="week">Select week</enumerationValue>
+                    <enumerationValue key="month">Select month</enumerationValue>
+                    <enumerationValue key="year">Select year</enumerationValue>
+                </enumerationValues>
+            </property>
+            <property key="placeholder" type="string" required="false" defaultValue="">
+                <caption>Placeholder</caption>
+                <description>Placeholder text shown when no date is selected</description>
+            </property>
+            <property key="disabled" type="boolean" required="true" defaultValue="false">
+                <caption>Disabled</caption>
+                <description>Disable user interaction</description>
+            </property>
+            <property key="allowClear" type="boolean" required="true" defaultValue="true">
+                <caption>Allow clear</caption>
+                <description>Show clear button to reset selection</description>
+            </property>
+        </propertyGroup>
+        <propertyGroup caption="Value">
+            <property key="selectedDate" type="attribute" required="false">
+                <caption>Selected date</caption>
+                <description>Writable DateTime attribute for the user selection</description>
+                <attributeTypes>
+                    <attributeType name="DateTime" />
+                </attributeTypes>
+            </property>
+            <property key="defaultDate" type="attribute" required="false">
+                <caption>Default date</caption>
+                <description>Initial DateTime value shown before user interaction</description>
+                <attributeTypes>
+                    <attributeType name="DateTime" />
+                </attributeTypes>
+            </property>
+        </propertyGroup>
+        <propertyGroup caption="Events">
+            <property key="onChange" type="action" required="false">
+                <caption>On change</caption>
+                <description>Action executed when the selected date changes</description>
+            </property>
+        </propertyGroup>
+    </properties>
+</widget>

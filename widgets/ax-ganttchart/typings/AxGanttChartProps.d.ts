@@ -22,7 +22,7 @@ export interface AxGanttChartContainerProps {
     endDateAttribute?: ListAttributeValue<Date>;
     durationAttribute?: ListAttributeValue<Big>;
     progressAttribute?: ListAttributeValue<Big>;
-    parentAttribute?: ListAttributeValue<string>;
+    parentAttribute?: ListAttributeValue<string | Big>;
     openAttribute?: ListAttributeValue<boolean>;
     typeAttribute?: ListAttributeValue<string>;
     showToolbar: boolean;
@@ -30,16 +30,25 @@ export interface AxGanttChartContainerProps {
     showTimeline: boolean;
     showProgress: boolean;
     showTodayMarker: boolean;
+    showCriticalPath: boolean;
+    showBaseline: boolean;
+    allowCreate: boolean;
+    allowUpdate: boolean;
+    allowDelete: boolean;
+    allowDrag: boolean;
+    allowResize: boolean;
+    readOnly: boolean;
     defaultViewMode: DefaultViewModeEnum;
-    selectedTaskId?: EditableValue<string>;
+    selectedTaskId?: EditableValue<string | Big>;
     selectedPayload?: EditableValue<string>;
+    command?: EditableValue<string>;
+    commandPayload?: EditableValue<string>;
     onTaskClick?: ActionValue;
     onTaskDoubleClick?: ActionValue;
     onTaskCreated?: ActionValue;
     onTaskUpdated?: ActionValue;
     onTaskDeleted?: ActionValue;
     onSelectionChanged?: ActionValue;
-    exportServerUrl: string;
 }
 
 export interface AxGanttChartPreviewProps {
@@ -69,14 +78,23 @@ export interface AxGanttChartPreviewProps {
     showTimeline: boolean;
     showProgress: boolean;
     showTodayMarker: boolean;
+    showCriticalPath: boolean;
+    showBaseline: boolean;
+    allowCreate: boolean;
+    allowUpdate: boolean;
+    allowDelete: boolean;
+    allowDrag: boolean;
+    allowResize: boolean;
+    readOnly: boolean;
     defaultViewMode: DefaultViewModeEnum;
     selectedTaskId: string;
     selectedPayload: string;
+    command: string;
+    commandPayload: string;
     onTaskClick: {} | null;
     onTaskDoubleClick: {} | null;
     onTaskCreated: {} | null;
     onTaskUpdated: {} | null;
     onTaskDeleted: {} | null;
     onSelectionChanged: {} | null;
-    exportServerUrl: string;
 }

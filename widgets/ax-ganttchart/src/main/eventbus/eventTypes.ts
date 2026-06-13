@@ -9,6 +9,8 @@ export interface GanttTask {
     open?: boolean;
     type?: string;
     color?: string;
+    /** Optional labels rendered as chips in the grid text column (e.g. Manual, Process). */
+    tags?: string[];
     metadata?: Record<string, unknown>;
 }
 
@@ -26,6 +28,9 @@ export enum GanttIncomingEvents {
     COLLAPSE_ALL = "COLLAPSE_ALL",
     ENTER_FULLSCREEN = "ENTER_FULLSCREEN",
     EXIT_FULLSCREEN = "EXIT_FULLSCREEN",
+    ENTER_EXPAND_HEIGHT = "ENTER_EXPAND_HEIGHT",
+    EXIT_EXPAND_HEIGHT = "EXIT_EXPAND_HEIGHT",
+    TOGGLE_EXPAND_HEIGHT = "TOGGLE_EXPAND_HEIGHT",
     ZOOM_DAY = "ZOOM_DAY",
     ZOOM_WEEK = "ZOOM_WEEK",
     ZOOM_MONTH = "ZOOM_MONTH",

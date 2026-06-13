@@ -20,7 +20,7 @@ function ShimmerBar({ width, offset, delay }: ShimmerBarProps) {
                 borderRadius: 4,
                 background: "linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)",
                 backgroundSize: "400px 100%",
-                animation: `gantt-shimmer 1.4s ${delay}s ease-in-out infinite`,
+                animation: `gantt-shimmer 1.4s ${delay}s ease-in-out infinite`
             }}
         />
     );
@@ -42,7 +42,7 @@ function ShimmerText({ width, indent = 0, delay }: ShimmerTextProps) {
                 borderRadius: 3,
                 background: "linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%)",
                 backgroundSize: "400px 100%",
-                animation: `gantt-shimmer 1.4s ${delay}s ease-in-out infinite`,
+                animation: `gantt-shimmer 1.4s ${delay}s ease-in-out infinite`
             }}
         />
     );
@@ -69,7 +69,7 @@ export function GanttSkeleton(): JSX.Element {
                     zIndex: 2,
                     display: "flex",
                     flexDirection: "column",
-                    overflow: "hidden",
+                    overflow: "hidden"
                 }}
             >
                 {/* Header row */}
@@ -82,7 +82,7 @@ export function GanttSkeleton(): JSX.Element {
                         alignItems: "center",
                         padding: "0 12px",
                         gap: 40,
-                        flexShrink: 0,
+                        flexShrink: 0
                     }}
                 >
                     {[90, 60, 60, 40].map((w, i) => (
@@ -92,7 +92,7 @@ export function GanttSkeleton(): JSX.Element {
                                 width: w,
                                 height: 10,
                                 borderRadius: 3,
-                                background: "#e8e8e8",
+                                background: "#e8e8e8"
                             }}
                         />
                     ))}
@@ -105,7 +105,7 @@ export function GanttSkeleton(): JSX.Element {
                         style={{
                             width: 420,
                             flexShrink: 0,
-                            borderRight: "1px solid #f0f0f0",
+                            borderRight: "1px solid #f0f0f0"
                         }}
                     >
                         {Array.from({ length: ROW_COUNT }, (_, i) => (
@@ -115,14 +115,10 @@ export function GanttSkeleton(): JSX.Element {
                                     height: 32,
                                     display: "flex",
                                     alignItems: "center",
-                                    borderBottom: "1px solid #f5f5f5",
+                                    borderBottom: "1px solid #f5f5f5"
                                 }}
                             >
-                                <ShimmerText
-                                    width={TEXT_WIDTHS[i]}
-                                    indent={INDENTS[i]}
-                                    delay={DELAYS[i]}
-                                />
+                                <ShimmerText width={TEXT_WIDTHS[i]} indent={INDENTS[i]} delay={DELAYS[i]} />
                             </div>
                         ))}
                     </div>
@@ -135,14 +131,10 @@ export function GanttSkeleton(): JSX.Element {
                                 style={{
                                     height: 32,
                                     position: "relative",
-                                    borderBottom: "1px solid #f5f5f5",
+                                    borderBottom: "1px solid #f5f5f5"
                                 }}
                             >
-                                <ShimmerBar
-                                    width={BAR_WIDTHS[i]}
-                                    offset={BAR_OFFSETS[i]}
-                                    delay={DELAYS[i]}
-                                />
+                                <ShimmerBar width={BAR_WIDTHS[i]} offset={BAR_OFFSETS[i]} delay={DELAYS[i]} />
                             </div>
                         ))}
                     </div>

@@ -4,7 +4,7 @@ import {
     ChartEmptyState,
     ChartLoadingOverlay,
     DeferredChartMount,
-    useChartData,
+    useChartDatasource,
     useChartPointerEvents,
     useSelectionSync,
 } from "@iris/chart-ui";
@@ -22,9 +22,13 @@ export const NegativeBarChartView = observer(function NegativeBarChartView({
     widgetProps,
 }: NegativeBarChartViewProps): JSX.Element {
     const { store, bridge } = useNegativeBarChartContext();
-    const jsonData = widgetProps.jsonData.value ?? "";
 
-    const { error, isEmpty } = useChartData(store, jsonData, widgetProps.dataFormat);
+    const { isEmpty } = useChartDatasource(store, widgetProps.datasource, {
+        idAttribute: widgetProps.idAttribute,
+        nameAttribute: widgetProps.nameAttribute,
+        periodAttribute: widgetProps.periodAttribute,
+        valueAttribute: widgetProps.valueAttribute,
+    });
 
     useSelectionSync({
         store,
@@ -86,14 +90,9 @@ export const NegativeBarChartView = observer(function NegativeBarChartView({
         if (!store.loading) {
             bridge.handleRefresh(store.records.length);
         }
-    }, [jsonData, store.loading, store.records.length, bridge]);
+    }, [store.loading, store.records.length, bridge]);
 
-    const emptyMessage =
-        error === "parse-error"
-            ? "Invalid JSON data"
-            : error === "format-mismatch"
-              ? "Data format does not match selected format"
-              : "No chart data available";
+    const emptyMessage = "No chart data available";
 
     return (
         <ChartContainer

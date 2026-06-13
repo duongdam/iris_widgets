@@ -16,7 +16,8 @@ export const MOCK_GANTT_TASKS: GanttTask[] = [
         start_date: "2026-01-01 00:00",
         end_date: "2027-12-31 00:00",
         progress: 0.38,
-        open: true
+        open: true,
+        tags: ["Process"]
     },
 
     // ── Level 2: Phase A ──────────────────────────────────────────────────────
@@ -27,7 +28,8 @@ export const MOCK_GANTT_TASKS: GanttTask[] = [
         start_date: "2026-01-01 00:00",
         end_date: "2026-06-30 00:00",
         progress: 0.9,
-        open: true
+        open: true,
+        tags: ["Process"]
     },
 
     // Level 3: Work packages under Phase A
@@ -38,7 +40,8 @@ export const MOCK_GANTT_TASKS: GanttTask[] = [
         start_date: "2026-01-01 00:00",
         end_date: "2026-03-31 00:00",
         progress: 1,
-        open: true
+        open: true,
+        tags: ["Manual"]
     },
     // Level 4: Tasks under WP1
     {
@@ -47,7 +50,8 @@ export const MOCK_GANTT_TASKS: GanttTask[] = [
         parent: "2-1",
         start_date: "2026-01-05 00:00",
         end_date: "2026-01-30 00:00",
-        progress: 1
+        progress: 1,
+        tags: ["Manual"]
     },
     {
         id: "2-1-2",
@@ -55,7 +59,8 @@ export const MOCK_GANTT_TASKS: GanttTask[] = [
         parent: "2-1",
         start_date: "2026-02-01 00:00",
         end_date: "2026-02-28 00:00",
-        progress: 1
+        progress: 1,
+        tags: ["Process"]
     },
     {
         id: "2-1-3",
@@ -73,7 +78,8 @@ export const MOCK_GANTT_TASKS: GanttTask[] = [
         start_date: "2026-04-01 00:00",
         end_date: "2026-06-30 00:00",
         progress: 0.8,
-        open: true
+        open: true,
+        tags: ["Process"]
     },
     {
         id: "2-2-1",
@@ -119,7 +125,8 @@ export const MOCK_GANTT_TASKS: GanttTask[] = [
         start_date: "2026-07-01 00:00",
         end_date: "2027-03-31 00:00",
         progress: 0.45,
-        open: true
+        open: true,
+        tags: ["Process"]
     },
 
     // Level 3: Work packages under Phase B
@@ -130,7 +137,8 @@ export const MOCK_GANTT_TASKS: GanttTask[] = [
         start_date: "2026-07-01 00:00",
         end_date: "2026-09-30 00:00",
         progress: 0.9,
-        open: true
+        open: true,
+        tags: ["Manual"]
     },
     {
         id: "3-1-1",
@@ -172,7 +180,8 @@ export const MOCK_GANTT_TASKS: GanttTask[] = [
         parent: "3-2",
         start_date: "2026-10-01 00:00",
         end_date: "2026-10-31 00:00",
-        progress: 0.7
+        progress: 0.7,
+        tags: ["Manual"]
     },
     {
         id: "3-2-2",
@@ -244,7 +253,8 @@ export const MOCK_GANTT_TASKS: GanttTask[] = [
         start_date: "2027-04-01 00:00",
         end_date: "2027-12-31 00:00",
         progress: 0.05,
-        open: true
+        open: true,
+        tags: ["Manual"]
     },
 
     {
@@ -262,7 +272,8 @@ export const MOCK_GANTT_TASKS: GanttTask[] = [
         parent: "4-1",
         start_date: "2027-04-01 00:00",
         end_date: "2027-04-30 00:00",
-        progress: 0.2
+        progress: 0.2,
+        tags: ["Process"]
     },
     {
         id: "4-1-2",
@@ -384,7 +395,8 @@ export function generateLargeMockTasks(count: number): GanttTask[] {
             end_date: endStr,
             progress: (i % 10) / 10,
             parent: i % 20 === 0 ? undefined : `task-${Math.floor(i / 20) * 20 + 1}`,
-            open: i % 20 === 0
+            open: i % 20 === 0,
+            tags: i % 7 === 0 ? ["Manual"] : i % 11 === 0 ? ["Process"] : undefined
         });
     }
 

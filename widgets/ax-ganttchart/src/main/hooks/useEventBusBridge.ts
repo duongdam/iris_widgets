@@ -1,11 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { gantt } from "../components/GanttConfiguration";
-import {
-    fitTimeline,
-    incomingEventToViewMode,
-    scrollToToday,
-    scrollToTask
-} from "../components/TimelineManager";
+import { fitTimeline, incomingEventToViewMode, scrollToToday, scrollToTask } from "../components/TimelineManager";
 import {
     GanttIncomingEvents,
     type GanttEventBus,
@@ -15,6 +10,7 @@ import {
 import type { GanttStore } from "../../stores/GanttStore";
 import { createExportService, type ExportService } from "../services/ExportService";
 import { createFullscreenService } from "../services/FullscreenService";
+import { installGanttGlobalApi, registerGanttWidget, unregisterGanttWidget } from "../services/GanttCommandRegistry";
 import type { WidgetEventBridge } from "../services/WidgetEventBridge";
 
 export interface UseEventBusBridgeOptions {
@@ -75,6 +71,27 @@ export function useEventBusBridge(options: UseEventBusBridgeOptions): void {
                     return;
                 }
                 await fullscreenService.exit();
+            }),
+
+            eventBus.on(GanttIncomingEvents.ENTER_EXPAND_HEIGHT, payload => {
+                if (payload.widgetId !== widgetId) {
+                    return;
+                }
+                store.setExpandHeight(true);
+            }),
+
+            eventBus.on(GanttIncomingEvents.EXIT_EXPAND_HEIGHT, payload => {
+                if (payload.widgetId !== widgetId) {
+                    return;
+                }
+                store.setExpandHeight(false);
+            }),
+
+            eventBus.on(GanttIncomingEvents.TOGGLE_EXPAND_HEIGHT, payload => {
+                if (payload.widgetId !== widgetId) {
+                    return;
+                }
+                store.toggleExpandHeight();
             }),
 
             eventBus.on(GanttIncomingEvents.SCROLL_TO_TODAY, payload => {
@@ -207,11 +224,15 @@ export function useEventBusBridge(options: UseEventBusBridgeOptions): void {
             bridge.handleFullscreenChanged(fullscreen);
         });
 
+        installGanttGlobalApi();
+        registerGanttWidget(widgetId, eventBus);
+
         return () => {
             for (const unsubscribe of unsubscribers) {
                 unsubscribe();
             }
             removeFullscreenListener();
+            unregisterGanttWidget(widgetId);
         };
     }, [store, eventBus, widgetId, bridge, containerRef, exportService, fullscreenService, onRefresh]);
 }

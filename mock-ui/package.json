@@ -11,7 +11,9 @@
     "dependencies": {
         "@iris/chart-core": "workspace:*",
         "@iris/chart-ui": "workspace:*",
+        "@iris/form-core": "workspace:*",
         "antd": "6.4.3",
+        "dayjs": "^1.11.13",
         "classnames": "2.5.1",
         "dhtmlx-gantt": "^9.1.4",
         "echarts-for-react": "3.0.6",

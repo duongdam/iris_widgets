@@ -1,5 +1,5 @@
 import { ThemeProvider } from "@iris/chart-ui";
-import type { ChartEventPayload } from "@iris/chart-core";
+import type { ChartEventPayload, ChartRecord } from "@iris/chart-core";
 import type { EditableValue } from "mendix";
 import { useMemo } from "react";
 import { ReportChartView } from "../../../widgets/ax-reportchart/src/main/components/ReportChartView";
@@ -9,6 +9,7 @@ import {
 } from "../../../widgets/ax-reportchart/src/main/providers/ReportChartProvider";
 import type { AxReportChartProps } from "../../../widgets/ax-reportchart/src/typings/AxReportChartProps";
 import { ChartEventMonitor } from "../components/ChartEventMonitor";
+import { createMockListValue } from "../mocks/listValue";
 import "../../../widgets/ax-reportchart/src/styles/ax-reportchart.scss";
 
 export interface ReportChartDemoProps {
@@ -16,8 +17,7 @@ export interface ReportChartDemoProps {
     showTitle: boolean;
     showTooltip: boolean;
     height: number;
-    jsonData: EditableValue<string>;
-    dataFormat: "flat" | "elastic";
+    records: ChartRecord[];
     selectedId: EditableValue<string>;
     selectedName: EditableValue<string>;
     selectedPayload: EditableValue<string>;
@@ -34,8 +34,13 @@ function ReportChartEventMonitor({
 }
 
 export function ReportChartDemo(props: ReportChartDemoProps): JSX.Element {
-    const { title, showTitle, showTooltip, height, jsonData, dataFormat, selectedId, selectedName, selectedPayload, onChartEvent } =
+    const { title, showTitle, showTooltip, height, records, selectedId, selectedName, selectedPayload, onChartEvent } =
         props;
+
+    const { datasource, idAttribute, nameAttribute, periodAttribute, valueAttribute } = useMemo(
+        () => createMockListValue(records),
+        [records]
+    );
 
     const widgetProps = useMemo<AxReportChartProps>(
         () => ({
@@ -44,8 +49,11 @@ export function ReportChartDemo(props: ReportChartDemoProps): JSX.Element {
             title,
             showTitle,
             height,
-            jsonData,
-            dataFormat,
+            datasource,
+            idAttribute,
+            nameAttribute,
+            periodAttribute,
+            valueAttribute,
             showLegend: true,
             showTooltip,
             aggregationMode: "both",
@@ -55,7 +63,7 @@ export function ReportChartDemo(props: ReportChartDemoProps): JSX.Element {
             selectedName,
             selectedPayload,
         }),
-        [title, showTitle, showTooltip, height, jsonData, dataFormat, selectedId, selectedName, selectedPayload]
+        [title, showTitle, showTooltip, height, datasource, idAttribute, nameAttribute, periodAttribute, valueAttribute, selectedId, selectedName, selectedPayload]
     );
 
     return (

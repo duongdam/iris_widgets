@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<widget
+    id="com.mendix.axswitch.AxSwitch"
+    pluginWidget="true"
+    offlineCapable="true"
+    xmlns="http://www.mendix.com/widget/1.0/"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.mendix.com/widget/1.0/ ../node_modules/mendix/custom_widget.xsd"
+>
+    <name>Ax Switch</name>
+    <description>Ant Design switch with Boolean writeback</description>
+    <icon />
+    <properties>
+        <propertyGroup caption="General">
+            <property key="checkedLabel" type="string" required="false" defaultValue="">
+                <caption>Checked label</caption>
+                <description>Label shown when switch is on</description>
+            </property>
+            <property key="uncheckedLabel" type="string" required="false" defaultValue="">
+                <caption>Unchecked label</caption>
+                <description>Label shown when switch is off</description>
+            </property>
+            <property key="disabled" type="boolean" required="true" defaultValue="false">
+                <caption>Disabled</caption>
+                <description>Disable user interaction</description>
+            </property>
+        </propertyGroup>
+        <propertyGroup caption="Value">
+            <property key="value" type="attribute" required="false">
+                <caption>Value</caption>
+                <description>Writable boolean attribute</description>
+                <attributeTypes>
+                    <attributeType name="Boolean" />
+                </attributeTypes>
+            </property>
+            <property key="defaultValue" type="attribute" required="false">
+                <caption>Default value</caption>
+                <description>Initial boolean value</description>
+                <attributeTypes>
+                    <attributeType name="Boolean" />
+                </attributeTypes>
+            </property>
+        </propertyGroup>
+        <propertyGroup caption="Events">
+            <property key="onChange" type="action" required="false">
+                <caption>On change</caption>
+                <description>Action when value changes</description>
+            </property>
+        </propertyGroup>
+    </properties>
+</widget>

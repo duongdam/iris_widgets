@@ -1,4 +1,5 @@
-import { MOCK_ELASTIC_JSON, MOCK_FLAT_JSON } from "@iris/chart-core";
+import { MOCK_ELASTIC_JSON, MOCK_FLAT_JSON, MOCK_FLAT_RECORDS } from "@iris/chart-core";
+import type { ChartRecord } from "@iris/chart-core";
 
 export type DataSourceKind = "flat" | "elastic";
 
@@ -6,6 +7,7 @@ export interface MockDataset {
     id: string;
     label: string;
     description: string;
+    records: ChartRecord[];
     flat: string;
     elastic: string;
 }
@@ -113,6 +115,20 @@ const NEGATIVE_BAR_FLAT = NEGATIVE_BAR_RAW.map((d, i) => ({
     pm: d.value,
 }));
 
+// Monthly variance — 5 negative values (below 0) and 5 positive (above 0), spanning -150 to +150
+const MIXED_BAR_FLAT = [
+    { id: "mb1", name: "Mar", period: "2025", pm: -120 },
+    { id: "mb2", name: "Jul", period: "2025", pm: -85 },
+    { id: "mb3", name: "Jan", period: "2025", pm: -150 },
+    { id: "mb4", name: "Sep", period: "2025", pm: -45 },
+    { id: "mb5", name: "Nov", period: "2025", pm: -70 },
+    { id: "mb6", name: "Feb", period: "2025", pm: 90 },
+    { id: "mb7", name: "Jun", period: "2025", pm: 130 },
+    { id: "mb8", name: "Apr", period: "2025", pm: 65 },
+    { id: "mb9", name: "Oct", period: "2025", pm: 110 },
+    { id: "mb10", name: "Dec", period: "2025", pm: 80 },
+];
+
 function flatToElastic(flat: Array<{ name: string; period: string; pm: number }>): string {
     const periodMap = new Map<string, Map<string, number>>();
 
@@ -145,6 +161,7 @@ export const MOCK_DATASETS: MockDataset[] = [
         id: "resource",
         label: "Resource usage",
         description: "Small dataset from chart-core mocks — good for quick smoke tests.",
+        records: MOCK_FLAT_RECORDS,
         flat: MOCK_FLAT_JSON,
         elastic: MOCK_ELASTIC_JSON,
     },
@@ -152,6 +169,7 @@ export const MOCK_DATASETS: MockDataset[] = [
         id: "infra",
         label: "Infrastructure trends",
         description: "6 months × 5 services — bar/column/report charts with richer bars.",
+        records: INFRA_TRENDS_FLAT as ChartRecord[],
         flat: JSON.stringify(INFRA_TRENDS_FLAT, null, 2),
         elastic: flatToElastic(INFRA_TRENDS_FLAT),
     },
@@ -159,6 +177,7 @@ export const MOCK_DATASETS: MockDataset[] = [
         id: "stack",
         label: "Stack area series",
         description: "4 series × 4 periods — ideal for stacked area and legend toggles.",
+        records: STACK_AREA_FLAT as ChartRecord[],
         flat: JSON.stringify(STACK_AREA_FLAT, null, 2),
         elastic: flatToElastic(STACK_AREA_FLAT),
     },
@@ -166,6 +185,7 @@ export const MOCK_DATASETS: MockDataset[] = [
         id: "resource-local",
         label: "Resource usage (local)",
         description: "Same shape as chart-core flat mock with explicit metadata.",
+        records: RESOURCE_USAGE_FLAT as ChartRecord[],
         flat: JSON.stringify(RESOURCE_USAGE_FLAT, null, 2),
         elastic: flatToElastic(RESOURCE_USAGE_FLAT),
     },
@@ -173,6 +193,7 @@ export const MOCK_DATASETS: MockDataset[] = [
         id: "fish-catch",
         label: "Fish catch by gear (2000–2023)",
         description: "5 gear types × 24 years — high variance data showing deep wave patterns on stacked area.",
+        records: FISH_CATCH_FLAT as ChartRecord[],
         flat: JSON.stringify(FISH_CATCH_FLAT, null, 2),
         elastic: flatToElastic(FISH_CATCH_FLAT),
     },
@@ -180,12 +201,26 @@ export const MOCK_DATASETS: MockDataset[] = [
         id: "negative-bar",
         label: "Revenue deviation (negative bar)",
         description: "Monthly revenue vs target — mix of positive and negative deviations. Ideal for ax-negativebarchart.",
+        records: NEGATIVE_BAR_FLAT as ChartRecord[],
         flat: JSON.stringify(NEGATIVE_BAR_FLAT, null, 2),
         elastic: flatToElastic(NEGATIVE_BAR_FLAT),
+    },
+    {
+        id: "mixed-bar",
+        label: "Mixed positive/negative (bar)",
+        description: "5 negative values (dark red) + 5 positive values (dark green) — demonstrates sign-based bar coloring.",
+        records: MIXED_BAR_FLAT as ChartRecord[],
+        flat: JSON.stringify(MIXED_BAR_FLAT, null, 2),
+        elastic: flatToElastic(MIXED_BAR_FLAT),
     },
 ];
 
 export function getDatasetJson(datasetId: string, source: DataSourceKind): string {
     const dataset = MOCK_DATASETS.find(d => d.id === datasetId) ?? MOCK_DATASETS[0];
     return source === "flat" ? dataset.flat : dataset.elastic;
+}
+
+export function getDatasetRecords(datasetId: string): ChartRecord[] {
+    const dataset = MOCK_DATASETS.find(d => d.id === datasetId) ?? MOCK_DATASETS[0];
+    return dataset.records;
 }

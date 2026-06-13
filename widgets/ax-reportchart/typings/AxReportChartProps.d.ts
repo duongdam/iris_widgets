@@ -4,9 +4,8 @@
  * @author Mendix Widgets Framework Team
  */
 import { CSSProperties } from "react";
-import { ActionValue, EditableValue } from "mendix";
-
-export type DataFormatEnum = "flat" | "elastic";
+import { ActionValue, EditableValue, ListValue, ListAttributeValue } from "mendix";
+import { Big } from "big.js";
 
 export interface AxReportChartContainerProps {
     name: string;
@@ -15,8 +14,11 @@ export interface AxReportChartContainerProps {
     tabIndex?: number;
     title: string;
     height: number;
-    jsonData: EditableValue<string>;
-    dataFormat: DataFormatEnum;
+    datasource: ListValue;
+    idAttribute?: ListAttributeValue<string | Big>;
+    nameAttribute: ListAttributeValue<string>;
+    periodAttribute: ListAttributeValue<string>;
+    valueAttribute: ListAttributeValue<Big>;
     showTitle: boolean;
     showLegend: boolean;
     showTooltip: boolean;
@@ -40,8 +42,11 @@ export interface AxReportChartPreviewProps {
     translate: (text: string) => string;
     title: string;
     height: number | null;
-    jsonData: string;
-    dataFormat: DataFormatEnum;
+    datasource: {} | { caption: string } | { type: string } | null;
+    idAttribute: string;
+    nameAttribute: string;
+    periodAttribute: string;
+    valueAttribute: string;
     showTitle: boolean;
     showLegend: boolean;
     showTooltip: boolean;

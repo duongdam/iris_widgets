@@ -8,6 +8,10 @@ import { GanttChartDemo } from "./demos/GanttChartDemo";
 import { ReportChartDemo } from "./demos/ReportChartDemo";
 import { NegativeBarChartDemo } from "./demos/NegativeBarChartDemo";
 import { StackAreaChartDemo } from "./demos/StackAreaChartDemo";
+import { DatePickerDemo } from "./demos/DatePickerDemo";
+import { ComboBoxDemo } from "./demos/ComboBoxDemo";
+import { CascadingComboboxDemo } from "./demos/CascadingComboboxDemo";
+import { FormWidgetsDemo } from "./demos/FormWidgetsDemo";
 import type { GanttContextValue } from "../../widgets/ax-ganttchart/src/main/providers/GanttProvider";
 import {
     GanttIncomingEvents,
@@ -16,10 +20,11 @@ import {
     type TaskEventData,
 } from "../../widgets/ax-ganttchart/src/main/eventbus/eventTypes";
 import type { TimelineViewModeEnum } from "../../widgets/ax-ganttchart/src/typings/AxGanttChartProps";
-import { getDatasetJson, MOCK_DATASETS, type DataSourceKind } from "./mocks/datasets";
+import type { ColumnStackModeEnum } from "../../widgets/ax-columnchart/src/typings/AxColumnChartProps";
+import { MOCK_DATASETS, getDatasetRecords } from "./mocks/datasets";
 import { GANTT_DATASETS, getGanttDataset } from "./mocks/ganttDatasets";
 import { useMockGanttSelectionFields } from "./mocks/ganttSelection";
-import { createMockEditableValue, useMockSelectionFields } from "./mocks/editableValue";
+import { useMockSelectionFields } from "./mocks/editableValue";
 import "./App.css";
 
 const { Content, Sider } = Layout;
@@ -28,17 +33,31 @@ const { Title, Text, Paragraph } = Typography;
 const CHART_HEIGHT = 440;
 const GANTT_HEIGHT = 560;
 
-type ChartTab = "bar" | "column" | "stack" | "report" | "negative" | "gantt";
+type ChartTab =
+    | "bar"
+    | "column"
+    | "stack"
+    | "report"
+    | "negative"
+    | "gantt"
+    | "datepicker"
+    | "combobox"
+    | "cascading"
+    | "form";
 
 export function App(): JSX.Element {
     const [chartTab, setChartTab] = useState<ChartTab>("bar");
-    const [dataSource, setDataSource] = useState<DataSourceKind>("flat");
     const [datasetId, setDatasetId] = useState("infra");
     const { selectedId, selectedName, selectedPayload, selectionSummary, resetSelection, applySelection } =
         useMockSelectionFields();
     const [recentEvents, setRecentEvents] = useState<ChartEventPayload[]>([]);
     const [showTitle, setShowTitle] = useState(true);
     const [showTooltip, setShowTooltip] = useState(true);
+    const [columnStackMode, setColumnStackMode] = useState<ColumnStackModeEnum>("grouped");
+    const [columnWidthPercent, setColumnWidthPercent] = useState(70);
+    const [columnShowSeriesLabels, setColumnShowSeriesLabels] = useState(false);
+    const [columnRefLineValue, setColumnRefLineValue] = useState<number | undefined>(110);
+    const [columnRefLineLabel, setColumnRefLineLabel] = useState("");
     const [refLineValue, setRefLineValue] = useState<number | undefined>(110);
     const [refLineLabel, setRefLineLabel] = useState("");
     const [negativeBaseline, setNegativeBaseline] = useState<number>(0);
@@ -50,6 +69,14 @@ export function App(): JSX.Element {
     const [ganttShowTimeline, setGanttShowTimeline] = useState(true);
     const [ganttShowProgress, setGanttShowProgress] = useState(true);
     const [ganttShowTodayMarker, setGanttShowTodayMarker] = useState(true);
+    const [ganttShowCriticalPath, setGanttShowCriticalPath] = useState(false);
+    const [ganttShowBaseline, setGanttShowBaseline] = useState(false);
+    const [ganttAllowCreate, setGanttAllowCreate] = useState(true);
+    const [ganttAllowUpdate, setGanttAllowUpdate] = useState(true);
+    const [ganttAllowDelete, setGanttAllowDelete] = useState(true);
+    const [ganttAllowDrag, setGanttAllowDrag] = useState(true);
+    const [ganttAllowResize, setGanttAllowResize] = useState(true);
+    const [ganttReadOnly, setGanttReadOnly] = useState(false);
     const [ganttEvents, setGanttEvents] = useState<GanttEventPayload[]>([]);
     const ganttContextRef = useRef<GanttContextValue | null>(null);
     const {
@@ -76,11 +103,10 @@ export function App(): JSX.Element {
         [applySelection]
     );
 
-    const jsonString = useMemo(
-        () => getDatasetJson(datasetId, dataSource),
-        [datasetId, dataSource]
+    const records = useMemo(
+        () => getDatasetRecords(datasetId),
+        [datasetId]
     );
-    const jsonData = useMemo(() => createMockEditableValue(jsonString), [jsonString]);
 
     const dataset = MOCK_DATASETS.find(d => d.id === datasetId) ?? MOCK_DATASETS[0];
     const ganttDataset = getGanttDataset(ganttDatasetId);
@@ -101,16 +127,18 @@ export function App(): JSX.Element {
         [applyGanttSelection]
     );
 
-    const emitGanttCommand = useCallback((type: GanttIncomingEvents) => {
+    const emitGanttCommand = useCallback((type: GanttIncomingEvents, data?: unknown) => {
         const context = ganttContextRef.current;
-        if (!context) {
+        if (context) {
+            context.eventBus.emit({
+                widgetId: context.widgetId,
+                type,
+                data,
+            });
             return;
         }
 
-        context.eventBus.emit({
-            widgetId: context.widgetId,
-            type,
-        });
+        window.__AX_GANTT__?.emit("mock-ganttchart", type, data);
     }, []);
 
     const chartTitle = useMemo(() => {
@@ -121,39 +149,56 @@ export function App(): JSX.Element {
             report: "Report Chart",
             negative: "Negative Bar Chart",
             gantt: "Gantt Chart",
+            datepicker: "Date Picker",
+            combobox: "Combo Box",
+            cascading: "Cascading Combo Box",
+            form: "Form Widgets",
         };
-        return `${labels[chartTab]} — ${dataset.label} (${dataSource})`;
-    }, [chartTab, dataset.label, dataSource]);
+        return `${labels[chartTab]} — ${dataset.label}`;
+    }, [chartTab, dataset.label]);
 
     const demoProps = {
         title: chartTitle,
         showTitle,
         showTooltip,
         height: CHART_HEIGHT,
-        jsonData,
-        dataFormat: dataSource,
+        records,
         selectedId,
         selectedName,
         selectedPayload,
         onChartEvent: handleChartEvent,
     };
 
-    const remountKey = `${datasetId}-${dataSource}-${showTitle}-${showTooltip}`;
-    const ganttRemountKey = `${ganttDatasetId}-${ganttViewMode}-${ganttShowToolbar}-${ganttShowGrid}-${ganttShowTimeline}-${ganttShowProgress}-${ganttShowTodayMarker}`;
+    const remountKey = `${datasetId}-${showTitle}-${showTooltip}-${columnStackMode}-${columnWidthPercent}-${columnShowSeriesLabels}-${columnRefLineValue}-${columnRefLineLabel}`;
+    const ganttRemountKey = `${ganttDatasetId}-${ganttViewMode}`;
     const isGanttTab = chartTab === "gantt";
+    const isFormTab =
+        chartTab === "datepicker" ||
+        chartTab === "combobox" ||
+        chartTab === "cascading" ||
+        chartTab === "form";
 
     return (
         <Layout className="mock-ui-layout">
             <Sider width={320} className="mock-ui-sider" theme="light">
                 <div className="mock-ui-sider-inner">
-                    <Title level={4}>{isGanttTab ? "Gantt Mock UI" : "Chart Mock UI"}</Title>
+                    <Title level={4}>
+                        {isFormTab ? "Form Widget Mock UI" : isGanttTab ? "Gantt Mock UI" : "Chart Mock UI"}
+                    </Title>
                     <Paragraph type="secondary">
-                        {isGanttTab
-                            ? "Preview ax-ganttchart with Mendix datasource mocks, selection, and event bus commands."
-                            : "Preview widget main/components with flat JSON or Elasticsearch aggregation mocks."}
+                        {isFormTab
+                            ? "Preview ax form widgets (Input, Number, Switch, TextArea, CheckboxGroup, DatePicker, ComboBox) with antd controls and Mendix attribute mocks."
+                            : isGanttTab
+                              ? "Preview ax-ganttchart with Mendix datasource mocks, selection, and event bus commands."
+                              : "Preview widget main/components with flat JSON or Elasticsearch aggregation mocks."}
                     </Paragraph>
 
-                    {isGanttTab ? (
+                    {isFormTab ? (
+                        <Paragraph type="secondary" style={{ fontSize: 12 }}>
+                            Use the tabs to switch between DatePicker, ComboBox, and Cascading demos. Controls
+                            are embedded in each demo panel.
+                        </Paragraph>
+                    ) : isGanttTab ? (
                         <>
                             <Text strong>Dataset</Text>
                             <Select
@@ -178,6 +223,7 @@ export function App(): JSX.Element {
                                     { label: "Day", value: "day" },
                                     { label: "Week", value: "week" },
                                     { label: "Month", value: "month" },
+                                    { label: "Quarter", value: "quarter" },
                                 ]}
                                 style={{ marginBottom: 16 }}
                             />
@@ -209,6 +255,65 @@ export function App(): JSX.Element {
                                 <Switch
                                     checked={ganttShowTodayMarker}
                                     onChange={setGanttShowTodayMarker}
+                                />
+                            </div>
+                            <div className="mock-ui-toggle-row">
+                                <Text strong>Critical path</Text>
+                                <Switch
+                                    checked={ganttShowCriticalPath}
+                                    onChange={setGanttShowCriticalPath}
+                                />
+                            </div>
+                            <div className="mock-ui-toggle-row">
+                                <Text strong>Baseline</Text>
+                                <Switch checked={ganttShowBaseline} onChange={setGanttShowBaseline} />
+                            </div>
+
+                            <Text strong style={{ display: "block", marginTop: 12 }}>
+                                Editing
+                            </Text>
+                            <div className="mock-ui-toggle-row">
+                                <Text strong>Read only</Text>
+                                <Switch checked={ganttReadOnly} onChange={setGanttReadOnly} />
+                            </div>
+                            <div className="mock-ui-toggle-row">
+                                <Text strong>Allow create</Text>
+                                <Switch
+                                    checked={ganttAllowCreate}
+                                    onChange={setGanttAllowCreate}
+                                    disabled={ganttReadOnly}
+                                />
+                            </div>
+                            <div className="mock-ui-toggle-row">
+                                <Text strong>Allow update</Text>
+                                <Switch
+                                    checked={ganttAllowUpdate}
+                                    onChange={setGanttAllowUpdate}
+                                    disabled={ganttReadOnly}
+                                />
+                            </div>
+                            <div className="mock-ui-toggle-row">
+                                <Text strong>Allow delete</Text>
+                                <Switch
+                                    checked={ganttAllowDelete}
+                                    onChange={setGanttAllowDelete}
+                                    disabled={ganttReadOnly}
+                                />
+                            </div>
+                            <div className="mock-ui-toggle-row">
+                                <Text strong>Allow drag</Text>
+                                <Switch
+                                    checked={ganttAllowDrag}
+                                    onChange={setGanttAllowDrag}
+                                    disabled={ganttReadOnly}
+                                />
+                            </div>
+                            <div className="mock-ui-toggle-row">
+                                <Text strong>Allow resize</Text>
+                                <Switch
+                                    checked={ganttAllowResize}
+                                    onChange={setGanttAllowResize}
+                                    disabled={ganttReadOnly}
                                 />
                             </div>
 
@@ -247,7 +352,35 @@ export function App(): JSX.Element {
                                 >
                                     Collapse
                                 </Button>
+                                <Button
+                                    size="small"
+                                    onClick={() => emitGanttCommand(GanttIncomingEvents.TOGGLE_EXPAND_HEIGHT)}
+                                >
+                                    Height
+                                </Button>
+                                <Button
+                                    size="small"
+                                    onClick={() => emitGanttCommand(GanttIncomingEvents.ENTER_FULLSCREEN)}
+                                >
+                                    Fullscreen
+                                </Button>
+                                <Button
+                                    size="small"
+                                    onClick={() => emitGanttCommand(GanttIncomingEvents.REFRESH)}
+                                >
+                                    Refresh
+                                </Button>
+                                <Button
+                                    size="small"
+                                    onClick={() => emitGanttCommand(GanttIncomingEvents.EXPORT_PDF)}
+                                >
+                                    Export PDF
+                                </Button>
                             </Space>
+                            <Paragraph type="secondary" style={{ fontSize: 12, marginBottom: 16 }}>
+                                Commands also work via{" "}
+                                <Text code>window.__AX_GANTT__.emit("mock-ganttchart", "FIT_TIMELINE")</Text>
+                            </Paragraph>
 
                             <Text strong>Selection (click task)</Text>
                             <div className="mock-ui-selection">
@@ -281,18 +414,6 @@ export function App(): JSX.Element {
                         </>
                     ) : (
                         <>
-                            <Text strong>Data source</Text>
-                            <Segmented
-                                block
-                                value={dataSource}
-                                onChange={value => setDataSource(value as DataSourceKind)}
-                                options={[
-                                    { label: "Flat JSON", value: "flat" },
-                                    { label: "Elasticsearch", value: "elastic" },
-                                ]}
-                                style={{ marginBottom: 16 }}
-                            />
-
                             <Text strong>Dataset</Text>
                             <Select
                                 style={{ width: "100%", marginBottom: 8 }}
@@ -313,6 +434,59 @@ export function App(): JSX.Element {
                                 <Text strong>Show tooltip</Text>
                                 <Switch checked={showTooltip} onChange={setShowTooltip} />
                             </div>
+
+                            {chartTab === "column" && (
+                                <>
+                                    <Text strong style={{ display: "block", marginTop: 12, marginBottom: 8 }}>
+                                        Stack mode
+                                    </Text>
+                                    <Segmented
+                                        block
+                                        value={columnStackMode}
+                                        onChange={value => setColumnStackMode(value as ColumnStackModeEnum)}
+                                        options={[
+                                            { label: "Grouped", value: "grouped" },
+                                            { label: "Stacked", value: "stacked" },
+                                        ]}
+                                        style={{ marginBottom: 12 }}
+                                    />
+
+                                    <Text strong style={{ display: "block", marginBottom: 4 }}>
+                                        Column width (%)
+                                    </Text>
+                                    <InputNumber
+                                        style={{ width: "100%", marginBottom: 12 }}
+                                        min={10}
+                                        max={100}
+                                        value={columnWidthPercent}
+                                        onChange={v => setColumnWidthPercent(v ?? 70)}
+                                    />
+
+                                    <div className="mock-ui-toggle-row">
+                                        <Text strong>Show series labels</Text>
+                                        <Switch
+                                            checked={columnShowSeriesLabels}
+                                            onChange={setColumnShowSeriesLabels}
+                                        />
+                                    </div>
+
+                                    <Text strong style={{ display: "block", marginTop: 12, marginBottom: 4 }}>
+                                        Reference Line
+                                    </Text>
+                                    <InputNumber
+                                        style={{ width: "100%", marginBottom: 6 }}
+                                        placeholder="Value (leave empty to hide)"
+                                        value={columnRefLineValue}
+                                        onChange={v => setColumnRefLineValue(v ?? undefined)}
+                                    />
+                                    <Input
+                                        style={{ marginBottom: 12 }}
+                                        placeholder="Label (optional)"
+                                        value={columnRefLineLabel}
+                                        onChange={e => setColumnRefLineLabel(e.target.value)}
+                                    />
+                                </>
+                            )}
 
                             {chartTab === "stack" && (
                                 <>
@@ -413,7 +587,14 @@ export function App(): JSX.Element {
                                 label: "Column Chart",
                                 children: (
                                     <div className="mock-ui-chart-panel" key={`column-${remountKey}`}>
-                                        <ColumnChartDemo {...demoProps} />
+                                        <ColumnChartDemo
+                                            {...demoProps}
+                                            stackMode={columnStackMode}
+                                            columnWidthPercent={columnWidthPercent}
+                                            showSeriesLabels={columnShowSeriesLabels}
+                                            referenceLineValue={columnRefLineValue}
+                                            referenceLineLabel={columnRefLineLabel}
+                                        />
                                     </div>
                                 ),
                             },
@@ -466,6 +647,14 @@ export function App(): JSX.Element {
                                             showTimeline={ganttShowTimeline}
                                             showProgress={ganttShowProgress}
                                             showTodayMarker={ganttShowTodayMarker}
+                                            showCriticalPath={ganttShowCriticalPath}
+                                            showBaseline={ganttShowBaseline}
+                                            allowCreate={ganttAllowCreate}
+                                            allowUpdate={ganttAllowUpdate}
+                                            allowDelete={ganttAllowDelete}
+                                            allowDrag={ganttAllowDrag}
+                                            allowResize={ganttAllowResize}
+                                            readOnly={ganttReadOnly}
                                             selectedTaskId={ganttSelectedTaskId}
                                             selectedPayload={ganttSelectedPayload}
                                             onGanttEvent={handleGanttEvent}
@@ -473,6 +662,42 @@ export function App(): JSX.Element {
                                                 ganttContextRef.current = context;
                                             }}
                                         />
+                                    </div>
+                                ),
+                            },
+                            {
+                                key: "datepicker",
+                                label: "Date Picker",
+                                children: (
+                                    <div className="mock-ui-form-panel-wrap">
+                                        <DatePickerDemo />
+                                    </div>
+                                ),
+                            },
+                            {
+                                key: "combobox",
+                                label: "Combo Box",
+                                children: (
+                                    <div className="mock-ui-form-panel-wrap">
+                                        <ComboBoxDemo />
+                                    </div>
+                                ),
+                            },
+                            {
+                                key: "cascading",
+                                label: "Cascading",
+                                children: (
+                                    <div className="mock-ui-form-panel-wrap">
+                                        <CascadingComboboxDemo />
+                                    </div>
+                                ),
+                            },
+                            {
+                                key: "form",
+                                label: "Form",
+                                children: (
+                                    <div className="mock-ui-form-panel-wrap">
+                                        <FormWidgetsDemo />
                                     </div>
                                 ),
                             },
