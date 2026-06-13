@@ -1,5 +1,6 @@
 .ax-combobox {
     width: 100%;
+    min-width: 150px;
 
     .ax-field-validation {
         margin-top: 4px;
@@ -11,24 +12,47 @@
         width: 100%;
     }
 
-    .ant-select-multiple .ant-select-selection-item {
-        border-radius: 6px;
-        font-weight: 500;
-        color: var(--iris-text-primary);
-
-        .ant-select-selection-item-content {
-            color: inherit;
+    .ant-select-multiple {
+        .ant-select-selector {
+            flex-wrap: nowrap;
+            overflow: hidden;
         }
 
-        .ant-select-selection-item-remove {
-            color: var(--iris-text-muted);
-            opacity: 0.75;
+        .ant-select-selection-overflow {
+            flex-wrap: nowrap;
+            overflow: hidden;
+        }
 
-            &:hover {
-                opacity: 1;
-                color: var(--iris-text-secondary);
+        .ant-select-selection-item {
+            border-radius: 6px;
+            font-weight: 500;
+            color: var(--iris-text-primary);
+            flex-shrink: 1;
+            max-width: 100%;
+
+            .ant-select-selection-item-content {
+                color: inherit;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .ant-select-selection-item-remove {
+                color: var(--iris-text-muted);
+                opacity: 0.75;
+
+                &:hover {
+                    opacity: 1;
+                    color: var(--iris-text-secondary);
+                }
             }
         }
+    }
+
+    &__max-tag {
+        font-weight: 500;
+        color: var(--iris-text-secondary);
+        white-space: nowrap;
     }
 
     &__select-all {

@@ -3,6 +3,7 @@ import { Button, DatePicker, Dropdown, Segmented, Space, Tooltip } from "antd";
 import type { MenuProps } from "antd";
 import dayjs from "dayjs";
 import { observer } from "mobx-react-lite";
+import type { GanttTask } from "../eventbus/eventTypes";
 import { useGanttContext } from "../providers/GanttProvider";
 import { GanttIncomingEvents, type SetDateData, TimelineViewMode } from "../eventbus/eventTypes";
 
@@ -174,8 +175,52 @@ const VIEW_MODE_EVENT_MAP: Record<TimelineViewMode, GanttIncomingEvents> = {
 
 const DATE_PICKER_STYLE: React.CSSProperties = { width: 110 };
 
+function getMaxExpandableLevelFromTasks(tasks: GanttTask[]): number {
+    const childrenByParent = new Map<string, string[]>();
+
+    for (const task of tasks) {
+        if (!task.parent || task.parent === "0") {
+            continue;
+        }
+
+        const siblings = childrenByParent.get(task.parent) ?? [];
+        siblings.push(task.id);
+        childrenByParent.set(task.parent, siblings);
+    }
+
+    function subtreeDepth(id: string): number {
+        const children = childrenByParent.get(id) ?? [];
+        if (children.length === 0) {
+            return 0;
+        }
+
+        return 1 + Math.max(...children.map(subtreeDepth));
+    }
+
+    const roots = tasks.filter(task => !task.parent || task.parent === "0");
+    if (roots.length === 0) {
+        return 0;
+    }
+
+    return Math.max(...roots.map(root => subtreeDepth(root.id)));
+}
+
+function getExpandTooltip(expandLevel: number, maxLevel: number): string {
+    if (maxLevel === 0) {
+        return "No expandable rows";
+    }
+
+    if (expandLevel >= maxLevel) {
+        return `Fully expanded (${maxLevel}/${maxLevel} levels)`;
+    }
+
+    return `Expand next level (${expandLevel}/${maxLevel})`;
+}
+
 export const GanttToolbar = observer(function GanttToolbar(): JSX.Element {
     const { store, eventBus, widgetId } = useGanttContext();
+    const maxExpandLevel = getMaxExpandableLevelFromTasks(store.tasks);
+    const canExpandFurther = maxExpandLevel > 0 && store.expandLevel < maxExpandLevel;
 
     function emit(type: GanttIncomingEvents, data?: SetDateData): void {
         eventBus.emit({ widgetId, type, data });
@@ -261,8 +306,13 @@ export const GanttToolbar = observer(function GanttToolbar(): JSX.Element {
 
             {/* Expand / Collapse */}
             <Space size={4}>
-                <Tooltip title="Expand all rows" mouseEnterDelay={0.5}>
-                    <Button size="small" icon={<IconExpand />} onClick={() => emit(GanttIncomingEvents.EXPAND_ALL)} />
+                <Tooltip title={getExpandTooltip(store.expandLevel, maxExpandLevel)} mouseEnterDelay={0.5}>
+                    <Button
+                        size="small"
+                        icon={<IconExpand />}
+                        disabled={!canExpandFurther}
+                        onClick={() => emit(GanttIncomingEvents.EXPAND_ALL)}
+                    />
                 </Tooltip>
 
                 <Tooltip title="Collapse all rows" mouseEnterDelay={0.5}>

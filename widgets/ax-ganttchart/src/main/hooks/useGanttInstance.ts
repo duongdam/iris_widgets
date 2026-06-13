@@ -11,6 +11,7 @@ import {
     setupTodayMarkerSync,
     updateLayout
 } from "../components/GanttConfiguration";
+import { expandToLevel } from "../components/TreeExpandManager";
 import { applyMode, applyTimelineRange, scrollToToday } from "../components/TimelineManager";
 import { scheduleTodayMarkerRefresh, syncTodayMarker } from "../components/todayMarker";
 import type { GanttTask } from "../eventbus/eventTypes";
@@ -199,6 +200,10 @@ export function useGanttInstance(options: UseGanttInstanceOptions): void {
         const hadTasks = previousTasksRef.current.length > 0;
         syncTasks(previousTasksRef.current, store.tasks);
         previousTasksRef.current = store.tasks;
+
+        if (store.expandLevel > 0) {
+            expandToLevel(gantt, store.expandLevel);
+        }
 
         if (!hadTasks && store.tasks.length > 0) {
             scheduleFocusOnToday(showTodayMarkerRef.current);

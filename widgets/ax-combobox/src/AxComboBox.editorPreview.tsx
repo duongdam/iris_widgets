@@ -39,7 +39,7 @@ const previewProps: AxComboBoxProps = {
     allowSelectAll: true,
     placeholder: PREVIEW_PLACEHOLDER,
     disabled: false,
-    selectedValues: createPreviewStringValue(JSON.stringify(["Site1"])),
+    selectedValues: createPreviewStringValue(JSON.stringify(["Site1", "Site2", "Site3", "Site4", "Site5", "Site6"])),
     defaultSelectedValues: createPreviewStringValue(JSON.stringify(["Site1"]))
 };
 

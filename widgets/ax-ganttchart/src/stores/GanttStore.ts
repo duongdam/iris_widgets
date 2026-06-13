@@ -8,6 +8,8 @@ export class GanttStore {
     viewMode: TimelineViewMode = TimelineViewMode.WEEK;
     fullscreen = false;
     expandHeight = false;
+    /** How many hierarchy levels are expanded via toolbar (0 = all branches collapsed). */
+    expandLevel = 0;
     loading = false;
     showGrid = true;
     showTimeline = true;
@@ -60,6 +62,14 @@ export class GanttStore {
 
     toggleExpandHeight(): void {
         this.expandHeight = !this.expandHeight;
+    }
+
+    setExpandLevel(level: number): void {
+        this.expandLevel = level;
+    }
+
+    resetExpandLevel(): void {
+        this.expandLevel = 0;
     }
 
     setLoading(value: boolean): void {

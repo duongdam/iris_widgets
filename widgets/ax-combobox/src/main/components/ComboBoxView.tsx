@@ -6,13 +6,28 @@ import {
     parseJsonArray,
     updateEditableValue,
 } from "@iris/form-core";
-import { Button, Divider, Select } from "antd";
+import { Button, Divider, Select, Tooltip } from "antd";
 import { useCallback, useMemo, type ReactElement } from "react";
 import type { AxComboBoxProps } from "../../typings/AxComboBoxProps";
 import { useComboboxDatasource } from "../hooks/useComboboxDatasource";
 
 export interface ComboBoxViewProps {
     widgetProps: AxComboBoxProps;
+}
+
+/** Visible tags before collapsing the rest as "+N". */
+const MULTIPLE_MAX_TAG_COUNT = 1;
+
+function renderMaxTagPlaceholder(omittedValues: Array<{ label?: React.ReactNode }>): React.ReactNode {
+    const hiddenLabels = omittedValues
+        .map(item => (typeof item.label === "string" ? item.label : String(item.label ?? "")))
+        .join(", ");
+
+    return (
+        <Tooltip title={hiddenLabels}>
+            <span className="ax-combobox__max-tag">+{omittedValues.length}</span>
+        </Tooltip>
+    );
 }
 
 function resolveSingleValue(
@@ -136,6 +151,8 @@ export function ComboBoxView({ widgetProps }: ComboBoxViewProps): JSX.Element {
                 onChange={handleChange}
                 dropdownRender={dropdownRender}
                 virtual={options.length > 100}
+                maxTagCount={isMultiple ? MULTIPLE_MAX_TAG_COUNT : undefined}
+                maxTagPlaceholder={isMultiple ? renderMaxTagPlaceholder : undefined}
                 status={validationMessage ? "error" : undefined}
             />
             {validationMessage ? (

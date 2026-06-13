@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { gantt } from "../components/GanttConfiguration";
+import { collapseAllBranches, expandNextLevel } from "../components/TreeExpandManager";
 import { fitTimeline, incomingEventToViewMode, scrollToToday, scrollToTask } from "../components/TimelineManager";
 import {
     GanttIncomingEvents,
@@ -49,14 +50,16 @@ export function useEventBusBridge(options: UseEventBusBridgeOptions): void {
                 if (payload.widgetId !== widgetId) {
                     return;
                 }
-                gantt.eachTask(task => gantt.open(task.id));
+                const nextLevel = expandNextLevel(gantt, store.expandLevel);
+                store.setExpandLevel(nextLevel);
             }),
 
             eventBus.on(GanttIncomingEvents.COLLAPSE_ALL, payload => {
                 if (payload.widgetId !== widgetId) {
                     return;
                 }
-                gantt.eachTask(task => gantt.close(task.id));
+                collapseAllBranches(gantt);
+                store.resetExpandLevel();
             }),
 
             eventBus.on(GanttIncomingEvents.ENTER_FULLSCREEN, async payload => {
