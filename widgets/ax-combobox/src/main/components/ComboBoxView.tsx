@@ -113,7 +113,7 @@ export function ComboBoxView({ widgetProps }: ComboBoxViewProps): JSX.Element {
         writeBack(next);
     }, [allSelected, options, writeBack]);
 
-    const dropdownRender = useCallback(
+    const popupRender = useCallback(
         (menu: ReactElement) => {
             if (!isMultiple || !allowSelectAll || options.length === 0) {
                 return menu;
@@ -149,7 +149,7 @@ export function ComboBoxView({ widgetProps }: ComboBoxViewProps): JSX.Element {
                 options={options}
                 value={isMultiple ? multipleValue : singleValue}
                 onChange={handleChange}
-                dropdownRender={dropdownRender}
+                popupRender={popupRender}
                 virtual={options.length > 100}
                 maxTagCount={isMultiple ? MULTIPLE_MAX_TAG_COUNT : undefined}
                 maxTagPlaceholder={isMultiple ? renderMaxTagPlaceholder : undefined}

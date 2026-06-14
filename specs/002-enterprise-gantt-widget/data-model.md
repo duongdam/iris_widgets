@@ -204,3 +204,86 @@ Widget-level display flags from XML (not in MobX store unless toggled via event 
 3. `parent` referencing missing id is treated as root.
 4. `end_date` before `start_date` — swap or drop `end_date` (adapter policy: drop + log warn).
 5. `selectedPayload` JSON MUST include full `GanttTask` object including `metadata`.
+
+---
+
+## Improvement Batch Entities (2026-06-15)
+
+### GanttBrandTokens
+
+SCSS design tokens for Gantt visual identity.
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| `$gantt-brand` | `#009999` | Primary accent (shorthand `#099`) |
+| `$gantt-brand-hover` | `#007a7a` | Add button hover state |
+| `$gantt-brand-muted` | `rgba(0, 153, 153, 0.12)` | Add button background |
+
+**Applied to**: add icon, child count text, default task bar fill, optional selection border accent.
+
+---
+
+### GanttAddTaskContext
+
+Payload emitted when user clicks level-2 `+` button.
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| `task` | `GanttTask` | Yes | Full row task at click time |
+| `level` | `number` | Yes | Always `1` (0-indexed second tier) |
+| `childCount` | `number` | Yes | Descendant count shown in grid |
+
+**Mendix wiring**: `onAddTask` action (onClick); developer reads `selectedPayload`-equivalent from action context or dedicated writable attribute (implementation choice in tasks.md).
+
+---
+
+### GanttExpandState (updated)
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `expandLevel` | `number` | `0` | Target expanded depth (0 = collapsed) |
+| `maxExpandLevel` | `number` | computed | From gantt instance when available |
+
+**State transition**:
+
+```text
+[expandLevel=0] ──EXPAND_ALL click──► expandNextLevel → expandLevel=1 → expandToLevel(1)
+[expandLevel=1] ──EXPAND_ALL click──► expandNextLevel → expandLevel=2 → expandToLevel(2)
+[expandLevel=N] ──COLLAPSE_ALL──► collapseAllBranches → expandLevel=0
+[tasks re-sync] ──if expandLevel>0──► expandToLevel(expandLevel)  // preserve state
+```
+
+---
+
+### ChartCommand
+
+Shared Mendix → chart widget command names (subset; extensible).
+
+| Command | Event | Description |
+|---------|-------|-------------|
+| `ENTER_FULLSCREEN` | `ChartIncomingEvents.ENTER_FULLSCREEN` | Browser fullscreen on chart container |
+| `EXIT_FULLSCREEN` | `ChartIncomingEvents.EXIT_FULLSCREEN` | Exit fullscreen |
+
+**Mendix properties** (per chart widget):
+
+| Property | Type | Notes |
+|----------|------|-------|
+| `command` | writable String/Enum | Command name; clear after execute |
+| `commandPayload` | writable String | Optional JSON (reserved) |
+
+---
+
+### ChartStore Extension
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `fullscreen` | `boolean` | `false` | Browser fullscreen state |
+
+---
+
+### BarChartAxisLabelConfig
+
+| Property | Value | Notes |
+|----------|-------|-------|
+| `rotate` | `-45` | Clock 1:30 upward slant |
+| `gridBottom` | `"15%"` | Accommodate rotated labels |

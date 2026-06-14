@@ -44,7 +44,8 @@ export function GanttProvider({ children, widgetProps, previewTasks }: GanttProv
             onTaskCreated: widgetProps.onTaskCreated,
             onTaskUpdated: widgetProps.onTaskUpdated,
             onTaskDeleted: widgetProps.onTaskDeleted,
-            onSelectionChanged: widgetProps.onSelectionChanged
+            onSelectionChanged: widgetProps.onSelectionChanged,
+            onAddTask: widgetProps.onAddTask
         });
 
         return { store, eventBus, bridge, widgetId, isPreview };
@@ -57,6 +58,7 @@ export function GanttProvider({ children, widgetProps, previewTasks }: GanttProv
         widgetProps.onTaskUpdated,
         widgetProps.onTaskDeleted,
         widgetProps.onSelectionChanged,
+        widgetProps.onAddTask,
         previewTasks
     ]);
 

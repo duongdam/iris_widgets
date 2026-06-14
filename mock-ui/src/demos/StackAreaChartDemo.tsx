@@ -10,6 +10,7 @@ import {
 } from "../../../widgets/ax-stackareachart/src/main/providers/StackAreaChartProvider";
 import type { AxStackAreaChartProps } from "../../../widgets/ax-stackareachart/src/typings/AxStackAreaChartProps";
 import { ChartEventMonitor } from "../components/ChartEventMonitor";
+import { ChartContextExporter } from "../components/ChartContextExporter";
 import { createMockListValue } from "../mocks/listValue";
 import "../../../widgets/ax-stackareachart/src/styles/ax-stackareachart.scss";
 
@@ -23,6 +24,7 @@ export interface StackAreaChartDemoProps {
     selectedName: EditableValue<string>;
     selectedPayload: EditableValue<string>;
     onChartEvent?: (payload: ChartEventPayload) => void;
+    onContextReady?: (context: { eventBus: import("@iris/chart-core").ChartEventBus; widgetId: string }) => void;
     referenceLineValue?: number;
     referenceLineLabel?: string;
 }
@@ -54,10 +56,19 @@ function StackAreaChartEventMonitor({
     return <ChartEventMonitor eventBus={eventBus} onChartEvent={onChartEvent} />;
 }
 
+function StackAreaChartContextBridge({
+    onContextReady,
+}: {
+    onContextReady?: StackAreaChartDemoProps["onContextReady"];
+}): null {
+    const { eventBus, widgetId } = useStackAreaChartContext();
+    return <ChartContextExporter eventBus={eventBus} widgetId={widgetId} onContextReady={onContextReady} />;
+}
+
 export function StackAreaChartDemo(props: StackAreaChartDemoProps): JSX.Element {
     const {
         title, showTitle, showTooltip, height, records,
-        selectedId, selectedName, selectedPayload, onChartEvent,
+        selectedId, selectedName, selectedPayload, onChartEvent, onContextReady,
         referenceLineValue, referenceLineLabel = "",
     } = props;
 
@@ -98,6 +109,7 @@ export function StackAreaChartDemo(props: StackAreaChartDemoProps): JSX.Element 
         <ThemeProvider>
             <StackAreaChartProvider widgetProps={widgetProps}>
                 <StackAreaChartEventMonitor onChartEvent={onChartEvent} />
+                <StackAreaChartContextBridge onContextReady={onContextReady} />
                 <StackAreaChartView widgetProps={widgetProps} />
             </StackAreaChartProvider>
         </ThemeProvider>

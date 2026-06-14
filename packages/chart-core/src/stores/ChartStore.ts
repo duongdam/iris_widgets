@@ -5,6 +5,7 @@ export class ChartStore {
     records: ChartRecord[] = [];
     selectedRecord?: ChartRecord;
     loading = false;
+    fullscreen = false;
 
     constructor() {
         makeAutoObservable(this);
@@ -17,6 +18,10 @@ export class ChartStore {
 
     setLoading(loading: boolean): void {
         this.loading = loading;
+    }
+
+    setFullscreen(fullscreen: boolean): void {
+        this.fullscreen = fullscreen;
     }
 
     selectRecord(record: ChartRecord | undefined): void {

@@ -10,6 +10,7 @@ import {
 } from "../../../widgets/ax-columnchart/src/main/providers/ColumnChartProvider";
 import type { AxColumnChartProps, ColumnStackModeEnum } from "../../../widgets/ax-columnchart/src/typings/AxColumnChartProps";
 import { ChartEventMonitor } from "../components/ChartEventMonitor";
+import { ChartContextExporter } from "../components/ChartContextExporter";
 import { createMockListValue } from "../mocks/listValue";
 import "../../../widgets/ax-columnchart/src/styles/ax-columnchart.scss";
 
@@ -28,6 +29,7 @@ export interface ColumnChartDemoProps {
     selectedName: EditableValue<string>;
     selectedPayload: EditableValue<string>;
     onChartEvent?: (payload: ChartEventPayload) => void;
+    onContextReady?: (context: { eventBus: import("@iris/chart-core").ChartEventBus; widgetId: string }) => void;
 }
 
 function createMockBigValue(value: number): EditableValue<Big> {
@@ -57,6 +59,15 @@ function ColumnChartEventMonitor({
     return <ChartEventMonitor eventBus={eventBus} onChartEvent={onChartEvent} />;
 }
 
+function ColumnChartContextBridge({
+    onContextReady,
+}: {
+    onContextReady?: ColumnChartDemoProps["onContextReady"];
+}): null {
+    const { eventBus, widgetId } = useColumnChartContext();
+    return <ChartContextExporter eventBus={eventBus} widgetId={widgetId} onContextReady={onContextReady} />;
+}
+
 export function ColumnChartDemo(props: ColumnChartDemoProps): JSX.Element {
     const {
         title,
@@ -73,6 +84,7 @@ export function ColumnChartDemo(props: ColumnChartDemoProps): JSX.Element {
         selectedName,
         selectedPayload,
         onChartEvent,
+        onContextReady,
     } = props;
 
     const { datasource, idAttribute, nameAttribute, periodAttribute, valueAttribute } = useMemo(
@@ -133,6 +145,7 @@ export function ColumnChartDemo(props: ColumnChartDemoProps): JSX.Element {
         <ThemeProvider>
             <ColumnChartProvider widgetProps={widgetProps}>
                 <ColumnChartEventMonitor onChartEvent={onChartEvent} />
+                <ColumnChartContextBridge onContextReady={onContextReady} />
                 <ColumnChartView widgetProps={widgetProps} />
             </ColumnChartProvider>
         </ThemeProvider>

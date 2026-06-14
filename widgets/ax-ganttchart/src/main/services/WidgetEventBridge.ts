@@ -15,6 +15,7 @@ export interface WidgetEventBridgeOptions {
     onTaskUpdated?: MendixActionValue;
     onTaskDeleted?: MendixActionValue;
     onSelectionChanged?: MendixActionValue;
+    onAddTask?: MendixActionValue;
 }
 
 export interface WidgetEventBridge {
@@ -24,6 +25,7 @@ export interface WidgetEventBridge {
     handleTaskCreated: (task: GanttTask) => void;
     handleTaskUpdated: (task: GanttTask) => void;
     handleTaskDeleted: (taskId: string) => void;
+    handleAddTaskRequested: (task: GanttTask, childCount: number) => void;
     handleViewChanged: (viewMode: TimelineViewMode) => void;
     handleFullscreenChanged: (fullscreen: boolean) => void;
     handleTimelineChanged: () => void;
@@ -44,7 +46,8 @@ export function createWidgetEventBridge(options: WidgetEventBridgeOptions): Widg
         onTaskCreated,
         onTaskUpdated,
         onTaskDeleted,
-        onSelectionChanged
+        onSelectionChanged,
+        onAddTask
     } = options;
 
     return {
@@ -100,6 +103,15 @@ export function createWidgetEventBridge(options: WidgetEventBridgeOptions): Widg
                 data: { taskId }
             });
             executeAction(onTaskDeleted);
+        },
+
+        handleAddTaskRequested(task: GanttTask, childCount: number): void {
+            eventBus.emit({
+                widgetId,
+                type: GanttOutgoingEvents.ADD_TASK_REQUESTED,
+                data: { task, level: 1, childCount }
+            });
+            executeAction(onAddTask);
         },
 
         handleViewChanged(viewMode: TimelineViewMode): void {

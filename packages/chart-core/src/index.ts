@@ -34,3 +34,12 @@ export {
     type WidgetEventBridgeOptions,
     type MendixActionValue,
 } from "./eventbus/widgetEventBridge";
+
+export {
+    ChartCommand,
+    CHART_COMMAND_NAMES,
+    parseChartCommand,
+    chartCommandToEvent,
+} from "./commands/ChartCommand";
+export { createFullscreenService, type FullscreenService } from "./services/FullscreenService";
+export { useChartCommandSync, type UseChartCommandSyncOptions } from "./hooks/useChartCommandSync";

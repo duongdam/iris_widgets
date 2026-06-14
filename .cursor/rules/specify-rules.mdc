@@ -16,5 +16,5 @@ Related artifacts:
 
 Tech stack: pnpm 10.30.0, @mendix/pluggable-widgets-tools 11.8.1, React 18.2, MobX 6.16, antd 6.4.3, dhtmlx-gantt ^9.1.4, SCSS
 
-Current focus: ax-ganttchart Mendix pluggable widget — Phase 1 planning complete; Phase 2 implementation via /speckit-tasks + /speckit-implement
+Current focus: Widget UX improvements batch — ComboBox popupRender, Gantt brand #099999 + level-2 add button + expand fix, bar chart label rotation, chart fullscreen commands. Phase 2 implementation via /speckit-tasks + /speckit-implement
 <!-- SPECKIT END -->

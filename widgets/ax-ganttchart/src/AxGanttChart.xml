@@ -225,6 +225,10 @@
                 <caption>On selection changed</caption>
                 <description>Action executed when task selection changes</description>
             </property>
+            <property key="onAddTask" type="action" required="false">
+                <caption>On add task</caption>
+                <description>Action executed when the level-2 (+) button is clicked. Selected task ID and payload are updated with the row data.</description>
+            </property>
         </propertyGroup>
     </properties>
 </widget>

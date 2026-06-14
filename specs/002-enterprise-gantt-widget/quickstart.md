@@ -131,3 +131,58 @@ Preview uses `preview/previewConfig.ts` mock tasks — no datasource required. O
 - [data-model.md](./data-model.md) — entities
 - [contracts/](./contracts/) — TypeScript + XML contracts
 - [research.md](./research.md) — technology decisions
+
+---
+
+## Improvement Batch Verification (2026-06-15)
+
+### 1. ComboBox — antd `popupRender`
+
+```bash
+pnpm --filter ax-combobox run build
+pnpm run dev:mock-ui
+```
+
+- Open Form tab → ComboBox with Select-all
+- Open browser DevTools console — **no** `dropdownRender is deprecated` warning
+
+### 2. Gantt — Brand color, level-2 `+`, expand fix
+
+```bash
+pnpm --filter ax-ganttchart run build
+pnpm run dev:mock-ui   # Gantt tab
+```
+
+| Check | Expected |
+|-------|----------|
+| Phase rows (level 2) | `+` button visible in teal `#009999` |
+| Program / Work Package / Task rows | No `+` button |
+| Child count `(N)` | Teal `#009999` |
+| Task bars (no color override) | Teal `#009999` |
+| Click `+` | `onAddTask` fires with row task JSON |
+| Expand toolbar button × N clicks | One hierarchy level per click until fully expanded |
+| Mendix runtime after datasource refresh | Expand level preserved |
+
+Deploy `.mpk` to Mendix; repeat expand test after build — must not stick at first level.
+
+### 3. Bar chart — diagonal labels
+
+```bash
+pnpm --filter ax-barchart run build
+pnpm run dev:mock-ui   # Charts tab
+```
+
+- Category labels on X-axis slant upward at −45° (clock 1:30)
+- Labels do not clip into chart area
+
+### 4. Chart fullscreen commands
+
+Wire writable String attribute `ChartCommand` to chart widget `command` property:
+
+```text
+ChartCommand = "ENTER_FULLSCREEN"  → chart enters fullscreen
+ChartCommand = "EXIT_FULLSCREEN"   → chart exits fullscreen
+(clear attribute after each trigger)
+```
+
+Repeat for all four chart widgets: `ax-barchart`, `ax-columnchart`, `ax-stackareachart`, `ax-reportchart`.

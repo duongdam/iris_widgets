@@ -79,6 +79,7 @@ export function App(): JSX.Element {
     const [ganttReadOnly, setGanttReadOnly] = useState(false);
     const [ganttEvents, setGanttEvents] = useState<GanttEventPayload[]>([]);
     const ganttContextRef = useRef<GanttContextValue | null>(null);
+    const chartContextRef = useRef<{ eventBus: { emit: (payload: ChartEventPayload) => void }; widgetId: string } | null>(null);
     const {
         selectedTaskId: ganttSelectedTaskId,
         selectedPayload: ganttSelectedPayload,
@@ -141,6 +142,13 @@ export function App(): JSX.Element {
         window.__AX_GANTT__?.emit("mock-ganttchart", type, data);
     }, []);
 
+    const emitChartCommand = useCallback((type: ChartEvents) => {
+        const context = chartContextRef.current;
+        if (context) {
+            context.eventBus.emit({ widgetId: context.widgetId, type });
+        }
+    }, []);
+
     const chartTitle = useMemo(() => {
         const labels: Record<ChartTab, string> = {
             bar: "Bar Chart",
@@ -167,6 +175,9 @@ export function App(): JSX.Element {
         selectedName,
         selectedPayload,
         onChartEvent: handleChartEvent,
+        onContextReady: (context: { eventBus: { emit: (payload: ChartEventPayload) => void }; widgetId: string }) => {
+            chartContextRef.current = context;
+        },
     };
 
     const remountKey = `${datasetId}-${showTitle}-${showTooltip}-${columnStackMode}-${columnWidthPercent}-${columnShowSeriesLabels}-${columnRefLineValue}-${columnRefLineLabel}`;
@@ -434,6 +445,21 @@ export function App(): JSX.Element {
                                 <Text strong>Show tooltip</Text>
                                 <Switch checked={showTooltip} onChange={setShowTooltip} />
                             </div>
+
+                            <Text strong style={{ display: "block", marginTop: 12, marginBottom: 8 }}>
+                                Chart commands
+                            </Text>
+                            <Space wrap style={{ marginBottom: 16 }}>
+                                <Button size="small" onClick={() => emitChartCommand(ChartEvents.ENTER_FULLSCREEN)}>
+                                    Fullscreen
+                                </Button>
+                                <Button size="small" onClick={() => emitChartCommand(ChartEvents.EXIT_FULLSCREEN)}>
+                                    Exit fullscreen
+                                </Button>
+                                <Button size="small" onClick={() => emitChartCommand(ChartEvents.CHART_REFRESH)}>
+                                    Refresh
+                                </Button>
+                            </Space>
 
                             {chartTab === "column" && (
                                 <>

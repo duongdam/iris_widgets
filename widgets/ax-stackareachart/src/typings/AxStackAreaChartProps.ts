@@ -30,6 +30,9 @@ export interface AxStackAreaChartProps extends AxStackAreaChartContainerProps {
     onClick?: ActionValue;
     onSelectionChanged?: ActionValue;
 
+    command?: EditableValue<string>;
+    commandPayload?: EditableValue<string>;
+
     referenceLineValue?: EditableValue<Big>;
     referenceLineLabel: string;
 }

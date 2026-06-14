@@ -42,6 +42,7 @@ export enum GanttOutgoingEvents {
     TASK_CREATED = "TASK_CREATED",
     TASK_UPDATED = "TASK_UPDATED",
     TASK_DELETED = "TASK_DELETED",
+    ADD_TASK_REQUESTED = "ADD_TASK_REQUESTED",
     VIEW_CHANGED = "VIEW_CHANGED",
     FULLSCREEN_CHANGED = "FULLSCREEN_CHANGED",
     TIMELINE_CHANGED = "TIMELINE_CHANGED",
@@ -68,6 +69,14 @@ export interface GanttEventBus {
 /** Typed payload shapes */
 export interface TaskEventData {
     task: GanttTask;
+}
+
+/** Emitted when user clicks level-2 (+) add button in grid column */
+export interface AddTaskRequestedData {
+    task: GanttTask;
+    /** Always 1 — 0-indexed second hierarchy tier */
+    level: number;
+    childCount: number;
 }
 
 export interface ViewChangedData {

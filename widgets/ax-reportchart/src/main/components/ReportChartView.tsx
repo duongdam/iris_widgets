@@ -5,6 +5,7 @@ import {
     IRIS_ECHARTS_THEME_NAME,
     registerIrisTheme,
 } from "@iris/chart-echarts";
+import { useChartCommandSync } from "@iris/chart-core";
 import {
     ChartContainer,
     ChartEmptyState,
@@ -16,7 +17,7 @@ import {
 } from "@iris/chart-ui";
 import ReactECharts from "echarts-for-react";
 import { observer } from "mobx-react-lite";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import type { AxReportChartProps } from "../../typings/AxReportChartProps";
 import { useReportChartContext } from "../providers/ReportChartProvider";
 
@@ -27,7 +28,8 @@ export interface ReportChartViewProps {
 export const ReportChartView = observer(function ReportChartView({
     widgetProps,
 }: ReportChartViewProps): JSX.Element {
-    const { store, bridge } = useReportChartContext();
+    const { store, bridge, eventBus, widgetId } = useReportChartContext();
+    const containerRef = useRef<HTMLDivElement>(null);
 
     const aggregationMode = widgetProps.aggregationMode ?? "both";
     const showGrandTotal = widgetProps.showGrandTotal ?? true;
@@ -46,6 +48,15 @@ export const ReportChartView = observer(function ReportChartView({
         selectedName: widgetProps.selectedName,
         selectedPayload: widgetProps.selectedPayload,
         bridge,
+    });
+
+    useChartCommandSync({
+        command: widgetProps.command,
+        commandPayload: widgetProps.commandPayload,
+        eventBus,
+        widgetId,
+        store,
+        containerRef,
     });
 
     const option = useMemo(
@@ -119,9 +130,11 @@ export const ReportChartView = observer(function ReportChartView({
 
     return (
         <ChartContainer
+            ref={containerRef}
             title={widgetProps.showTitle ? widgetProps.title : undefined}
             height={widgetProps.height}
             showHeaderDivider={widgetProps.showTitle}
+            fullscreen={store.fullscreen}
         >
             {store.loading ? <ChartLoadingOverlay /> : null}
             {!store.loading && isEmpty ? <ChartEmptyState message="No chart data available" /> : null}

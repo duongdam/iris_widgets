@@ -27,6 +27,8 @@ export interface AxStackAreaChartContainerProps {
     selectedId?: EditableValue<string>;
     selectedName?: EditableValue<string>;
     selectedPayload?: EditableValue<string>;
+    command?: EditableValue<string>;
+    commandPayload?: EditableValue<string>;
     onClick?: ActionValue;
     onSelectionChanged?: ActionValue;
 }
@@ -57,6 +59,8 @@ export interface AxStackAreaChartPreviewProps {
     selectedId: string;
     selectedName: string;
     selectedPayload: string;
+    command: string;
+    commandPayload: string;
     onClick: {} | null;
     onSelectionChanged: {} | null;
 }

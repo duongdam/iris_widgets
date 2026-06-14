@@ -9,6 +9,7 @@ import {
 } from "../../../widgets/ax-barchart/src/main/providers/BarChartProvider";
 import type { AxBarChartProps } from "../../../widgets/ax-barchart/src/typings/AxBarChartProps";
 import { ChartEventMonitor } from "../components/ChartEventMonitor";
+import { ChartContextExporter } from "../components/ChartContextExporter";
 import { createMockListValue } from "../mocks/listValue";
 import "../../../widgets/ax-barchart/src/styles/ax-barchart.scss";
 
@@ -22,6 +23,7 @@ export interface BarChartDemoProps {
     selectedName: EditableValue<string>;
     selectedPayload: EditableValue<string>;
     onChartEvent?: (payload: ChartEventPayload) => void;
+    onContextReady?: (context: { eventBus: import("@iris/chart-core").ChartEventBus; widgetId: string }) => void;
 }
 
 function BarChartEventMonitor({
@@ -31,6 +33,15 @@ function BarChartEventMonitor({
 }): JSX.Element | null {
     const { eventBus } = useBarChartContext();
     return <ChartEventMonitor eventBus={eventBus} onChartEvent={onChartEvent} />;
+}
+
+function BarChartContextBridge({
+    onContextReady,
+}: {
+    onContextReady?: BarChartDemoProps["onContextReady"];
+}): null {
+    const { eventBus, widgetId } = useBarChartContext();
+    return <ChartContextExporter eventBus={eventBus} widgetId={widgetId} onContextReady={onContextReady} />;
 }
 
 export function BarChartDemo({
@@ -43,6 +54,7 @@ export function BarChartDemo({
     selectedName,
     selectedPayload,
     onChartEvent,
+    onContextReady,
 }: BarChartDemoProps): JSX.Element {
     const { datasource, idAttribute, nameAttribute, periodAttribute, valueAttribute } = useMemo(
         () => createMockListValue(records),
@@ -74,6 +86,7 @@ export function BarChartDemo({
         <ThemeProvider>
             <BarChartProvider widgetProps={widgetProps}>
                 <BarChartEventMonitor onChartEvent={onChartEvent} />
+                <BarChartContextBridge onContextReady={onContextReady} />
                 <BarChartView widgetProps={widgetProps} />
             </BarChartProvider>
         </ThemeProvider>

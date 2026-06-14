@@ -37,4 +37,7 @@ export interface AxColumnChartProps extends AxColumnChartContainerProps {
 
     onClick?: ActionValue;
     onSelectionChanged?: ActionValue;
+
+    command?: EditableValue<string>;
+    commandPayload?: EditableValue<string>;
 }

@@ -81,6 +81,9 @@ function renderChip(tag: string): string {
     return `<span class="gantt-chip ${chipClass}">${escapeHtml(tag)}</span>`;
 }
 
+/** 0-indexed second hierarchy tier (e.g. Phase in Program → Phase → …). */
+export const GANTT_ADD_BUTTON_LEVEL = 1;
+
 function countDescendants(taskId: string, target: GanttStatic): number {
     if (!target.isTaskExists(taskId)) {
         return 0;
@@ -93,12 +96,26 @@ function countDescendants(taskId: string, target: GanttStatic): number {
     return count;
 }
 
+function renderAddButton(taskId: string | number | undefined): string {
+    if (taskId == null) {
+        return "";
+    }
+
+    const safeId = escapeHtml(String(taskId));
+    return (
+        `<button type="button" class="gantt-add-btn" data-task-id="${safeId}" ` +
+        `aria-label="Add task" title="Add task">+</button>`
+    );
+}
+
 function renderTextCell(task: TaskLike, target: GanttStatic): string {
     const text = task.text ?? "";
     const safeText = escapeHtml(text);
     const childCount = countDescendants(String(task.id), target);
     const chips = (task.tags ?? []).map(renderChip).join("");
     const countHtml = childCount > 0 ? `<span class="gantt-text-cell__count">(${childCount})</span>` : "";
+    const level = task.$level ?? 0;
+    const addButtonHtml = level === GANTT_ADD_BUTTON_LEVEL ? renderAddButton(task.id) : "";
 
     return (
         `<div class="gantt-text-cell">` +
@@ -106,6 +123,7 @@ function renderTextCell(task: TaskLike, target: GanttStatic): string {
         `<span class="gantt-text-cell__meta">` +
         (chips ? `<span class="gantt-text-cell__chips">${chips}</span>` : "") +
         countHtml +
+        addButtonHtml +
         `</span>` +
         `</div>`
     );
@@ -127,6 +145,7 @@ type TaskLike = {
     id?: string | number;
     text?: string;
     tags?: string[];
+    $level?: number;
     start_date?: GanttDateValue;
     end_date?: GanttDateValue;
     duration?: number;

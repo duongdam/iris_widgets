@@ -24,6 +24,7 @@ export interface GanttNativeEventHandlers {
     onAfterTaskAdd?: (id: string, task: GanttTask) => void;
     onAfterTaskDelete?: (id: string) => void;
     onMouseMove?: (id: string, event: Event) => void;
+    onAddButtonClick?: (taskId: string, event: Event) => void;
 }
 
 const HOVER_DEBOUNCE_MS = 16;
@@ -236,6 +237,35 @@ export function attachNativeEvents(handlers: GanttNativeEventHandlers, target: G
             clearTimeout(hoverTimer);
         }
     };
+}
+
+/** Delegated click handler for level-2 (+) buttons rendered in grid column templates. */
+export function attachAddButtonDelegation(
+    container: HTMLElement,
+    onAddButtonClick: (taskId: string, event: Event) => void
+): () => void {
+    const listener = (event: Event): void => {
+        const target = event.target;
+        if (!(target instanceof Element)) {
+            return;
+        }
+
+        const button = target.closest(".gantt-add-btn");
+        if (!button) {
+            return;
+        }
+
+        event.stopPropagation();
+        event.preventDefault();
+
+        const taskId = button.getAttribute("data-task-id");
+        if (taskId) {
+            onAddButtonClick(taskId, event);
+        }
+    };
+
+    container.addEventListener("click", listener, true);
+    return () => container.removeEventListener("click", listener, true);
 }
 
 export function updateLayout(

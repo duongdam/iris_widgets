@@ -18,6 +18,16 @@
         padding: 0.625rem;
     }
 
+    .iris-chart-container--fullscreen {
+        position: fixed !important;
+        inset: 0 !important;
+        z-index: 9999;
+        border-radius: 0;
+        border: none;
+        height: 100vh !important;
+        padding: 1rem;
+    }
+
     .iris-chart-container__header {
         @apply mb-0;
     }

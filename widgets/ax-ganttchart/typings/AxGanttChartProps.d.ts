@@ -49,6 +49,7 @@ export interface AxGanttChartContainerProps {
     onTaskUpdated?: ActionValue;
     onTaskDeleted?: ActionValue;
     onSelectionChanged?: ActionValue;
+    onAddTask?: ActionValue;
 }
 
 export interface AxGanttChartPreviewProps {
@@ -97,4 +98,5 @@ export interface AxGanttChartPreviewProps {
     onTaskUpdated: {} | null;
     onTaskDeleted: {} | null;
     onSelectionChanged: {} | null;
+    onAddTask: {} | null;
 }

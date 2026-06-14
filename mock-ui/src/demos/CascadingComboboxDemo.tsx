@@ -48,7 +48,7 @@ export function CascadingComboboxDemo(): JSX.Element {
                     options={options}
                     value={selected}
                     onChange={values => handleDimensionSelectionChange(dimension, values)}
-                    dropdownRender={menu => (
+                    popupRender={menu => (
                         <>
                             <div style={{ padding: "4px 8px 0" }}>
                                 <Button
@@ -94,7 +94,7 @@ export function CascadingComboboxDemo(): JSX.Element {
                         options={dimensionOptions}
                         value={activeDimensions}
                         onChange={handleDimensionChange}
-                        dropdownRender={menu => (
+                        popupRender={menu => (
                             <>
                                 <div style={{ padding: "4px 8px 0" }}>
                                     <Button

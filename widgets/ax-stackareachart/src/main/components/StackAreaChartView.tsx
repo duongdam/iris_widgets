@@ -1,4 +1,5 @@
 import { buildStackAreaChartOption, getSortedPeriods, IRIS_ECHARTS_THEME_NAME, registerIrisTheme } from "@iris/chart-echarts";
+import { useChartCommandSync } from "@iris/chart-core";
 import {
     ChartContainer,
     ChartEmptyState,
@@ -22,7 +23,8 @@ export interface StackAreaChartViewProps {
 export const StackAreaChartView = observer(function StackAreaChartView({
     widgetProps,
 }: StackAreaChartViewProps): JSX.Element {
-    const { store, bridge } = useStackAreaChartContext();
+    const { store, bridge, eventBus, widgetId } = useStackAreaChartContext();
+    const containerRef = useRef<HTMLDivElement>(null);
 
     const { isEmpty } = useChartDatasource(store, widgetProps.datasource, {
         idAttribute: widgetProps.idAttribute,
@@ -37,6 +39,15 @@ export const StackAreaChartView = observer(function StackAreaChartView({
         selectedName: widgetProps.selectedName,
         selectedPayload: widgetProps.selectedPayload,
         bridge,
+    });
+
+    useChartCommandSync({
+        command: widgetProps.command,
+        commandPayload: widgetProps.commandPayload,
+        eventBus,
+        widgetId,
+        store,
+        containerRef,
     });
 
     const referenceLineValue = widgetProps.referenceLineValue?.value != null
@@ -107,9 +118,11 @@ export const StackAreaChartView = observer(function StackAreaChartView({
 
     return (
         <ChartContainer
+            ref={containerRef}
             title={widgetProps.showTitle ? widgetProps.title : undefined}
             height={widgetProps.height}
             showHeaderDivider={widgetProps.showTitle}
+            fullscreen={store.fullscreen}
         >
             {store.loading ? <ChartLoadingOverlay /> : null}
             {!store.loading && isEmpty ? <ChartEmptyState message="No chart data available" /> : null}

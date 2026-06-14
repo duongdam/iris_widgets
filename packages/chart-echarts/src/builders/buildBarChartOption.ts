@@ -67,8 +67,8 @@ export function buildBarChartOption(records: ChartRecord[], options: ChartDispla
         title: resolveChartTitle(options.title, options.showTitle),
         tooltip: buildTooltip(options.showTooltip, defaultTooltipFormatter),
         legend: buildLegend(options.showLegend, legendTop),
-        grid: buildGrid(labels.length > 8 ? "15%" : "3%"),
-        xAxis: buildCategoryAxis(labels, { rotate: labels.length > 8 ? 45 : 0 }),
+        grid: buildGrid("15%"),
+        xAxis: buildCategoryAxis(labels, { rotate: 45 }),
         yAxis: buildValueAxis(),
         series: [
             {

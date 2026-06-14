@@ -9,6 +9,7 @@ import {
 } from "../../../widgets/ax-reportchart/src/main/providers/ReportChartProvider";
 import type { AxReportChartProps } from "../../../widgets/ax-reportchart/src/typings/AxReportChartProps";
 import { ChartEventMonitor } from "../components/ChartEventMonitor";
+import { ChartContextExporter } from "../components/ChartContextExporter";
 import { createMockListValue } from "../mocks/listValue";
 import "../../../widgets/ax-reportchart/src/styles/ax-reportchart.scss";
 
@@ -22,6 +23,7 @@ export interface ReportChartDemoProps {
     selectedName: EditableValue<string>;
     selectedPayload: EditableValue<string>;
     onChartEvent?: (payload: ChartEventPayload) => void;
+    onContextReady?: (context: { eventBus: import("@iris/chart-core").ChartEventBus; widgetId: string }) => void;
 }
 
 function ReportChartEventMonitor({
@@ -33,8 +35,17 @@ function ReportChartEventMonitor({
     return <ChartEventMonitor eventBus={eventBus} onChartEvent={onChartEvent} />;
 }
 
+function ReportChartContextBridge({
+    onContextReady,
+}: {
+    onContextReady?: ReportChartDemoProps["onContextReady"];
+}): null {
+    const { eventBus, widgetId } = useReportChartContext();
+    return <ChartContextExporter eventBus={eventBus} widgetId={widgetId} onContextReady={onContextReady} />;
+}
+
 export function ReportChartDemo(props: ReportChartDemoProps): JSX.Element {
-    const { title, showTitle, showTooltip, height, records, selectedId, selectedName, selectedPayload, onChartEvent } =
+    const { title, showTitle, showTooltip, height, records, selectedId, selectedName, selectedPayload, onChartEvent, onContextReady } =
         props;
 
     const { datasource, idAttribute, nameAttribute, periodAttribute, valueAttribute } = useMemo(
@@ -70,6 +81,7 @@ export function ReportChartDemo(props: ReportChartDemoProps): JSX.Element {
         <ThemeProvider>
             <ReportChartProvider widgetProps={widgetProps}>
                 <ReportChartEventMonitor onChartEvent={onChartEvent} />
+                <ReportChartContextBridge onContextReady={onContextReady} />
                 <ReportChartView widgetProps={widgetProps} />
             </ReportChartProvider>
         </ThemeProvider>

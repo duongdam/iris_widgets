@@ -1,5 +1,5 @@
 import classNames from "classnames";
-import type { CSSProperties, ReactNode } from "react";
+import { forwardRef, type CSSProperties, type ReactNode } from "react";
 
 export interface ChartContainerProps {
     children: ReactNode;
@@ -10,25 +10,32 @@ export interface ChartContainerProps {
     style?: CSSProperties;
     compact?: boolean;
     showHeaderDivider?: boolean;
+    fullscreen?: boolean;
 }
 
-export function ChartContainer({
-    children,
-    title,
-    subtitle,
-    height,
-    className,
-    style,
-    compact = false,
-    showHeaderDivider = true,
-}: ChartContainerProps): JSX.Element {
+export const ChartContainer = forwardRef<HTMLDivElement, ChartContainerProps>(function ChartContainer(
+    {
+        children,
+        title,
+        subtitle,
+        height,
+        className,
+        style,
+        compact = false,
+        showHeaderDivider = true,
+        fullscreen = false,
+    },
+    ref
+): JSX.Element {
     const hasHeader = Boolean(title || subtitle);
 
     return (
         <div
+            ref={ref}
             className={classNames(
                 "iris-chart-container",
                 compact && "iris-chart-container--compact",
+                fullscreen && "iris-chart-container--fullscreen",
                 className
             )}
             style={style}
@@ -44,9 +51,9 @@ export function ChartContainer({
                     {subtitle ? <div className="iris-chart-container__subtitle">{subtitle}</div> : null}
                 </div>
             ) : null}
-            <div className="iris-chart-container__body" style={{ height }}>
+            <div className="iris-chart-container__body" style={{ height: fullscreen ? "100%" : height }}>
                 {children}
             </div>
         </div>
     );
-}
+});

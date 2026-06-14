@@ -11,6 +11,9 @@ export enum ChartEvents {
     CHART_TIME_RANGE_CHANGED = "CHART_TIME_RANGE_CHANGED",
     CHART_DRILLDOWN = "CHART_DRILLDOWN",
     DASHBOARD_REFRESH = "DASHBOARD_REFRESH",
+    ENTER_FULLSCREEN = "ENTER_FULLSCREEN",
+    EXIT_FULLSCREEN = "EXIT_FULLSCREEN",
+    FULLSCREEN_CHANGED = "FULLSCREEN_CHANGED",
 }
 
 export interface ChartEventPayload {
@@ -49,4 +52,8 @@ export interface ChartReadyData {
 export interface ChartDrilldownData {
     record: ChartRecord;
     level: number;
+}
+
+export interface FullscreenChangedData {
+    fullscreen: boolean;
 }

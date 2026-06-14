@@ -232,3 +232,89 @@ for (const item of datasource.items ?? []) {
 | JPEG export | PNG export + conversion fallback |
 
 All NEEDS CLARIFICATION items from Technical Context are resolved.
+
+---
+
+## 16. antd Select `dropdownRender` Deprecation (2026-06-15)
+
+**Decision**: Replace `dropdownRender` with `popupRender` on all `Select` components (`ComboBoxView.tsx`, `CascadingComboboxDemo.tsx`).
+
+**Rationale**:
+- antd 6.x emits Mendix runtime console warning: *"Select `dropdownRender` is deprecated. Please use `popupRender` instead."*
+- `popupRender` is a direct rename with identical signature `(menu: ReactElement) => ReactElement`.
+- No API or UX change; zero risk migration.
+
+**Alternatives considered**:
+- **Suppress warning**: Rejected — does not fix root cause; will break in future antd major.
+- **Custom dropdown overlay**: Rejected — unnecessary complexity.
+
+---
+
+## 17. Gantt Level-2 Add Button & Brand Color `#009999`
+
+**Decision**:
+- Show inline `+` button in grid text column when DHTMLX `task.$level === 1` (second hierarchy tier, 0-indexed: Program=0, Phase=1, …).
+- Introduce SCSS token `$gantt-brand: #009999` applied to: add button icon/border, `.gantt-text-cell__count`, default `.gantt_task_line` background (when no task-level `color` override).
+- Click handler writes row task to Mendix via new `onAddTask` action; payload = full `GanttTask` JSON (same shape as `selectedPayload`).
+
+**Rationale**:
+- User requirement: add affordance only at "cấp 2" (Phase level in 4-tier preview hierarchy).
+- `#009999` (`#099`) is Iris brand teal; centralizing in SCSS prevents drift from hardcoded blues (`#4096ff`, `#1677ff`).
+- Mendix action pattern matches existing `onTaskClick` / `onSelectionChanged` — no REST, no inline CRUD.
+
+**Alternatives considered**:
+- **Show + on all branch nodes**: Rejected — user explicitly limited to level 2.
+- **DHTMLX built-in add button**: Rejected — lacks level filtering and brand styling control.
+- **CSS-only color patch**: Rejected — task bar colors set in JS config/templates need token reference.
+
+---
+
+## 18. Gantt Progressive Expand Regression in Mendix Runtime
+
+**Decision**:
+1. Add MobX `reaction(() => store.expandLevel, level => expandToLevel(gantt, level))` in `useGanttInstance` (or dedicated hook).
+2. After `syncTasks` bulk re-parse, re-call `expandToLevel(gantt, store.expandLevel)` when `expandLevel > 0`.
+3. Align toolbar `getMaxExpandableLevelFromTasks` with `TreeExpandManager.getMaxExpandableLevel(gantt)` — prefer gantt-computed level when instance is initialized.
+
+**Rationale**:
+- **Root cause**: `expandNextLevel` runs synchronously on click (works once), but Mendix datasource re-sync triggers `gantt.clearAll()` + `parse()` which resets branch `open` state. Re-apply only happens in `store.tasks` effect — if tasks reference is stable between clicks, second expand click may update `expandLevel` while DHTMLX tree state diverges.
+- **Secondary issue**: No dedicated listener on `expandLevel` changes independent of task sync.
+- Toolbar max-level from flat `GanttTask[]` can disagree with runtime `$level` after partial parse.
+
+**Alternatives considered**:
+- **Persist `open` on each task in Mendix**: Deferred — requires datasource writeback; out of scope for UI fix.
+- **Disable expand after first click**: Rejected — opposite of user requirement.
+
+---
+
+## 19. Bar Chart Category Label Rotation (Clock 1:30)
+
+**Decision**: Set ECharts `axisLabel.rotate: -45` on X-axis category labels in `buildBarChartOption`. Increase grid `bottom` to `"15%"` when rotation is active (always for bar chart).
+
+**Rationale**:
+- Clock **1:30** position = upward-right diagonal = **−45°** in ECharts (0° = horizontal, negative = counter-clockwise).
+- Current code uses `rotate: 45` (downward slant) only when `labels.length > 8`; user wants consistent upward slant.
+- `buildCategoryAxis` helper already accepts `rotate` option — single parameter change.
+
+**Alternatives considered**:
+- **`rotate: 135`**: Would slant downward-left — opposite of 1:30 upward intent.
+- **Vertical labels (`rotate: 90`)**: Rejected — user specified 1:30 angle specifically.
+
+---
+
+## 20. Chart Widget Fullscreen Commands
+
+**Decision**:
+- Add `ChartCommand` enum with `ENTER_FULLSCREEN`, `EXIT_FULLSCREEN` in `packages/chart-core`.
+- Extract/reuse `FullscreenService` (Browser Fullscreen API) shared between Gantt and charts.
+- Add Mendix XML properties `command` + `commandPayload` to all four chart widgets (mirror Gantt `useCommandSync` clear-after-execute pattern).
+- Extend `ChartEvents` with `FULLSCREEN_CHANGED` outgoing event.
+
+**Rationale**:
+- Gantt already implements proven command bus; charts lack programmatic fullscreen despite dashboard need.
+- Shared service avoids 4 duplicate implementations.
+- Mendix integrators expect consistent command attribute API across widget suite.
+
+**Alternatives considered**:
+- **Toolbar-only fullscreen button per chart**: Rejected — user asked for command API; toolbar can be added later.
+- **CSS `position: fixed` without Fullscreen API**: Rejected — inconsistent with Gantt; doesn't hide browser chrome.

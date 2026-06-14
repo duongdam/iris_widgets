@@ -126,8 +126,33 @@
 .gantt-text-cell__count {
     font-size: 11px;
     font-weight: 500;
-    color: $gantt-text-secondary;
+    color: $gantt-brand;
     white-space: nowrap;
+}
+
+.gantt-add-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    margin-left: 4px;
+    padding: 0;
+    border: 1px solid $gantt-brand;
+    border-radius: 3px;
+    background: $gantt-brand-muted;
+    color: $gantt-brand;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    flex-shrink: 0;
+
+    &:hover {
+        background: $gantt-brand;
+        color: #fff;
+        border-color: $gantt-brand-hover;
+    }
 }
 
 .gantt-chip {

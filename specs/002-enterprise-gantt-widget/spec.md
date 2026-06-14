@@ -172,3 +172,78 @@ As a Mendix developer, I see a representative Gantt in Studio Pro preview using 
 - All 22 incoming and 9 outgoing event bus events are contract-defined
 - Preview renders without datasource in Studio Pro
 - Performance targets met at 1,000 tasks with documented approach for 5,000+
+
+---
+
+## Improvement Batch (2026-06-15)
+
+Cross-suite UX fixes spanning Gantt, ComboBox, and chart widgets.
+
+### User Story 9 - ComboBox antd Deprecation Fix (Priority: P1)
+
+As a Mendix developer, I deploy `ax-combobox` without antd runtime warnings about deprecated `dropdownRender`.
+
+**Acceptance Scenarios**:
+
+1. **Given** ComboBox with Select-all enabled, **When** dropdown opens in Mendix runtime, **Then** no console warning about `dropdownRender`; `popupRender` is used instead.
+2. **Given** existing Select-all behavior, **When** migrated, **Then** UX is unchanged.
+
+---
+
+### User Story 10 - Gantt Level-2 Add Button & Brand Color (Priority: P1)
+
+As an end user, I see a `+` button only on level-2 task rows (second hierarchy tier) styled in brand teal `#009999`, along with child-count and task bar colors using the same palette.
+
+**Acceptance Scenarios**:
+
+1. **Given** a 4-level hierarchy (Program → Phase → Work Package → Task), **When** grid renders, **Then** `+` appears only on Phase rows (`$level === 1`).
+2. **Given** user clicks `+` on a level-2 row, **When** `onAddTask` is configured, **Then** Mendix action fires with full row task JSON (id, text, parent, metadata).
+3. **Given** any task row with children, **When** grid renders, **Then** child count `(N)` displays in `#009999`.
+4. **Given** default task bars, **When** no per-task color override, **Then** bar fill uses `#009999`.
+
+---
+
+### User Story 11 - Gantt Progressive Expand Fix (Priority: P1)
+
+As an end user in Mendix runtime, I click the toolbar expand button repeatedly to reveal one hierarchy level at a time until fully expanded.
+
+**Acceptance Scenarios**:
+
+1. **Given** collapsed Gantt with 4 hierarchy levels, **When** expand clicked once, **Then** level-1 children become visible.
+2. **Given** partially expanded Gantt, **When** expand clicked again, **Then** next level reveals (not stuck at first expansion).
+3. **Given** Mendix datasource refresh after expand, **When** tasks re-sync, **Then** expand level is preserved.
+
+---
+
+### User Story 12 - Bar Chart Diagonal Labels (Priority: P2)
+
+As a dashboard consumer, I read bar chart category labels slanted upward at clock 1:30 (−45°) for better readability.
+
+**Acceptance Scenarios**:
+
+1. **Given** `ax-barchart` with category labels on X-axis, **When** chart renders, **Then** labels rotate −45° (upward-right slant).
+2. **Given** rotated labels, **When** chart has many categories, **Then** labels do not overlap grid area (bottom margin adjusted).
+
+---
+
+### User Story 13 - Chart Fullscreen Commands (Priority: P2)
+
+As a dashboard integrator, I trigger fullscreen on any chart widget via Mendix `command` attribute, consistent with Gantt.
+
+**Acceptance Scenarios**:
+
+1. **Given** `command` attribute set to `ENTER_FULLSCREEN`, **When** chart widget processes command, **Then** chart container enters browser fullscreen.
+2. **Given** fullscreen active, **When** `EXIT_FULLSCREEN` command sent, **Then** chart exits fullscreen.
+3. **Given** all four chart widgets, **When** command API documented, **Then** same command names and clear-after-execute semantics as Gantt.
+
+---
+
+## Improvement Functional Requirements
+
+- **FR-015**: `ax-combobox` MUST use antd `popupRender` instead of deprecated `dropdownRender`.
+- **FR-016**: Gantt grid `+` button MUST render only when task `$level === 1` (0-indexed second tier).
+- **FR-017**: Gantt brand accent color MUST be `#009999` for add icon, child count, and default task bar fill.
+- **FR-018**: Gantt `onAddTask` action MUST receive selected row task payload on `+` click.
+- **FR-019**: Gantt toolbar expand MUST advance one hierarchy level per click until max depth; MUST NOT regress after Mendix build/runtime re-sync.
+- **FR-020**: `ax-barchart` category axis labels MUST use −45° rotation (clock 1:30 slant).
+- **FR-021**: All four chart widgets MUST support `ENTER_FULLSCREEN` and `EXIT_FULLSCREEN` via Mendix `command` attribute.

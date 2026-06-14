@@ -110,6 +110,26 @@
                 </attributeTypes>
             </property>
         </propertyGroup>
+        <propertyGroup caption="Commands">
+            <property key="command" type="attribute" required="false">
+                <caption>Command</caption>
+                <description>
+                    Write a command name to control the chart from Mendix (e.g. ENTER_FULLSCREEN, EXIT_FULLSCREEN, REFRESH).
+                    Clear the attribute after execute to allow re-triggering the same command.
+                </description>
+                <attributeTypes>
+                    <attributeType name="String" />
+                    <attributeType name="Enum" />
+                </attributeTypes>
+            </property>
+            <property key="commandPayload" type="attribute" required="false">
+                <caption>Command payload</caption>
+                <description>Optional JSON payload for future chart commands.</description>
+                <attributeTypes>
+                    <attributeType name="String" />
+                </attributeTypes>
+            </property>
+        </propertyGroup>
         <propertyGroup caption="Events">
             <property key="onClick" type="action" required="false">
                 <caption>On Click</caption>

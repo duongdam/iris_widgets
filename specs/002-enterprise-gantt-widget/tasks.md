@@ -366,3 +366,216 @@ Task T017: "variables.scss"
 - US8 can start after US1 view exists (T026) even though spec priority is P3
 - Commit after each phase checkpoint
 - Run `pnpm --filter ax-ganttchart run build` after Phases 3, 6, and 11
+
+---
+
+# Improvement Batch (2026-06-15)
+
+**Input**: plan.md improvement section, spec.md User Stories 9–13 (FR-015–FR-021)
+
+**Prerequisites**: Original Gantt widget (US1–US8) complete — Phases 1–11 above
+
+**Tests**: Not explicitly requested. Manual validation per specs/002-enterprise-gantt-widget/quickstart.md § Improvement Batch Verification.
+
+**Organization**: Tasks grouped by User Stories US9–US13
+
+---
+
+## Phase 12: User Story 9 — ComboBox antd Deprecation Fix (Priority: P1)
+
+**Goal**: Eliminate Mendix runtime warning by migrating `dropdownRender` → `popupRender`
+
+**Independent Test**: Open ComboBox in mock-ui Form tab; DevTools console shows zero `dropdownRender is deprecated` warnings; Select-all UX unchanged
+
+### Implementation for User Story 9
+
+- [X] T074 [P] [US9] Replace `dropdownRender` with `popupRender` in widgets/ax-combobox/src/main/components/ComboBoxView.tsx
+- [X] T075 [P] [US9] Replace `dropdownRender` with `popupRender` in mock-ui/src/demos/CascadingComboboxDemo.tsx
+
+**Checkpoint**: `pnpm --filter ax-combobox run build` succeeds; Select-all dropdown works in mock-ui
+
+---
+
+## Phase 13: User Story 10 — Gantt Level-2 Add Button & Brand Color (Priority: P1)
+
+**Goal**: Teal `#009999` brand identity; `+` button only on level-2 rows; `onAddTask` Mendix action on click
+
+**Independent Test**: mock-ui Gantt tab — Phase rows show teal `+`; child counts and task bars use `#009999`; click `+` fires action with row JSON
+
+### Implementation for User Story 10
+
+- [X] T076 [P] [US10] Add `$gantt-brand`, `$gantt-brand-hover`, `$gantt-brand-muted` tokens to widgets/ax-ganttchart/src/styles/variables.scss per specs/002-enterprise-gantt-widget/contracts/gantt-theme.ts
+- [X] T077 [P] [US10] Style `.gantt-text-cell__count` and `.gantt-add-btn` with brand tokens in widgets/ax-ganttchart/src/styles/gantt.scss
+- [X] T078 [P] [US10] Update default task bar colors (`.gantt-type-task`, `.gantt-type-project`) to `$gantt-brand` in widgets/ax-ganttchart/src/styles/gantt.scss
+- [X] T079 [US10] Render level-2 `+` button in `renderTextCell` when `task.$level === 1` in widgets/ax-ganttchart/src/main/components/ColumnManager.ts
+- [X] T080 [US10] Attach delegated click handler for `.gantt-add-btn` in `GanttConfiguration.attachNativeEvents()` in widgets/ax-ganttchart/src/main/components/GanttConfiguration.ts
+- [X] T081 [US10] Add `ADD_TASK_REQUESTED` to `GanttOutgoingEvents` and `AddTaskRequestedData` in widgets/ax-ganttchart/src/main/eventbus/eventTypes.ts
+- [X] T082 [US10] Implement `handleAddTaskRequested` executing `onAddTask` Mendix action in widgets/ax-ganttchart/src/main/services/WidgetEventBridge.ts
+- [X] T083 [US10] Add `onAddTask` action property in widgets/ax-ganttchart/src/AxGanttChart.xml and wire in widgets/ax-ganttchart/src/typings/AxGanttChartProps.ts
+
+**Checkpoint**: Brand colors visible; `+` only on `$level === 1` rows; Mendix action receives full task payload
+
+---
+
+## Phase 14: User Story 11 — Gantt Progressive Expand Fix (Priority: P1)
+
+**Goal**: Toolbar expand advances one hierarchy level per click; state preserved after Mendix datasource re-sync
+
+**Independent Test**: Collapsed 4-level Gantt → click expand N times → each click reveals next level; after datasource refresh expand level preserved
+
+### Implementation for User Story 11
+
+- [X] T084 [US11] Add MobX `reaction` on `store.expandLevel` calling `expandToLevel(gantt, level)` in widgets/ax-ganttchart/src/main/hooks/useGanttInstance.ts
+- [X] T085 [US11] Re-apply `expandToLevel(gantt, store.expandLevel)` after `syncTasks` bulk re-parse in widgets/ax-ganttchart/src/main/hooks/useGanttInstance.ts
+- [X] T086 [US11] Use `TreeExpandManager.getMaxExpandableLevel(gantt)` for toolbar max level when gantt initialized in widgets/ax-ganttchart/src/main/components/GanttToolbar.tsx
+- [X] T087 [P] [US11] Export `getMaxExpandableLevel` from widgets/ax-ganttchart/src/main/components/TreeExpandManager.ts for toolbar reuse
+
+**Checkpoint**: Expand button works for all hierarchy levels in mock-ui and Mendix runtime `.mpk`
+
+---
+
+## Phase 15: User Story 12 — Bar Chart Diagonal Labels (Priority: P2)
+
+**Goal**: X-axis category labels slanted upward at clock 1:30 (−45°)
+
+**Independent Test**: mock-ui Charts tab → bar chart labels slant upward-right; no label clipping into chart area
+
+### Implementation for User Story 12
+
+- [X] T088 [US12] Set `xAxis` `rotate: -45` and `grid bottom: "15%"` in packages/chart-echarts/src/builders/buildBarChartOption.ts
+- [X] T089 [P] [US12] Adjust `buildGrid` bottom margin in packages/chart-echarts/src/helpers/chartStyleHelpers.ts if labels still clip with many categories
+
+**Checkpoint**: `pnpm --filter ax-barchart run build` succeeds; labels visible at −45° in mock-ui
+
+---
+
+## Phase 16: User Story 13 — Chart Fullscreen Commands (Priority: P2)
+
+**Goal**: All four chart widgets support `ENTER_FULLSCREEN` / `EXIT_FULLSCREEN` via Mendix `command` attribute
+
+**Independent Test**: Write `ENTER_FULLSCREEN` to chart `command` attribute → container enters browser fullscreen; `EXIT_FULLSCREEN` exits
+
+### Shared infrastructure for User Story 13
+
+- [X] T090 [US13] Implement `ChartCommand` enum and `parseChartCommand` in packages/chart-core/src/commands/ChartCommand.ts per specs/002-enterprise-gantt-widget/contracts/chart-commands.ts
+- [X] T091 [P] [US13] Implement `FullscreenService` in packages/chart-core/src/services/FullscreenService.ts (extract from widgets/ax-ganttchart/src/main/services/FullscreenService.ts)
+- [X] T092 [US13] Add `fullscreen` field and `setFullscreen()` to packages/chart-core/src/stores/ChartStore.ts
+- [X] T093 [US13] Extend `ChartEvents` with `FULLSCREEN_CHANGED` in packages/chart-core/src/eventbus/types.ts
+- [X] T094 [US13] Export command and fullscreen modules from packages/chart-core/src/index.ts
+- [X] T095 [US13] Create `useChartCommandSync` hook in packages/chart-core/src/hooks/useChartCommandSync.ts mirroring widgets/ax-ganttchart/src/main/hooks/useCommandSync.ts pattern
+
+### Widget integration for User Story 13
+
+- [X] T096 [P] [US13] Add `command` and `commandPayload` properties to widgets/ax-barchart/src/AxBarChart.xml
+- [X] T097 [P] [US13] Add `command` and `commandPayload` properties to widgets/ax-columnchart/src/AxColumnChart.xml
+- [X] T098 [P] [US13] Add `command` and `commandPayload` properties to widgets/ax-stackareachart/src/AxStackAreaChart.xml
+- [X] T099 [P] [US13] Add `command` and `commandPayload` properties to widgets/ax-reportchart/src/AxReportChart.xml
+- [X] T100 [US13] Wire `useChartCommandSync` and fullscreen handlers in widgets/ax-barchart/src/main/providers/BarChartProvider.tsx and BarChartView.tsx
+- [X] T101 [US13] Wire `useChartCommandSync` and fullscreen handlers in widgets/ax-columnchart/src/main/providers/ColumnChartProvider.tsx
+- [X] T102 [US13] Wire `useChartCommandSync` and fullscreen handlers in widgets/ax-stackareachart/src/main/providers/StackAreaChartProvider.tsx
+- [X] T103 [US13] Wire `useChartCommandSync` and fullscreen handlers in widgets/ax-reportchart/src/main/providers/ReportChartProvider.tsx
+- [X] T104 [P] [US13] Add fullscreen CSS class to packages/chart-ui/src/components/ChartContainer.tsx for fixed inset styling
+- [X] T105 [P] [US13] Add chart fullscreen command buttons to mock-ui/src/App.tsx Charts section
+
+**Checkpoint**: All four chart widgets build; fullscreen enter/exit works via mock-ui and Mendix command attribute
+
+---
+
+## Phase 17: Polish — Improvement Batch Validation
+
+**Purpose**: Cross-widget build verification and quickstart acceptance
+
+- [X] T106 Run `pnpm --filter ax-combobox --filter ax-ganttchart --filter ax-barchart --filter ax-columnchart --filter ax-stackareachart --filter ax-reportchart run build`
+- [X] T107 [P] Validate improvement acceptance scenarios from specs/002-enterprise-gantt-widget/quickstart.md § Improvement Batch Verification
+- [X] T108 [P] Verify FR-015–FR-021 compliance (grep: no `dropdownRender`; brand `#009999`; chart command XML on all 4 widgets)
+
+---
+
+## Dependencies & Execution Order (Improvement Batch)
+
+### Phase Dependencies
+
+- **Phase 12 (US9)**: No dependencies — can start immediately
+- **Phase 13 (US10)**: No dependencies — can run parallel with US9
+- **Phase 14 (US11)**: No dependencies on US10 — can run parallel with US9/US10
+- **Phase 15 (US12)**: No dependencies — can run parallel with US9–US11
+- **Phase 16 (US13)**: T090–T095 block T100–T103; XML tasks T096–T099 parallel after T095
+- **Phase 17**: Depends on Phases 12–16
+
+### User Story Dependencies
+
+| Story | Depends on | Independent |
+|-------|------------|-------------|
+| US9 ComboBox | — | ✅ |
+| US10 Gantt brand/add | — | ✅ |
+| US11 Gantt expand | — | ✅ |
+| US12 Bar labels | — | ✅ |
+| US13 Chart fullscreen | chart-core T090–T095 | ✅ after foundation |
+
+### Parallel Opportunities
+
+```bash
+# Phase 12 — both files independent:
+T074: ComboBoxView.tsx
+T075: CascadingComboboxDemo.tsx
+
+# Phase 13 — SCSS tasks parallel before ColumnManager:
+T076: variables.scss
+T077: gantt.scss (count/add styles)
+T078: gantt.scss (task bar colors)
+
+# Phase 16 — all four XML files in parallel:
+T096: AxBarChart.xml
+T097: AxColumnChart.xml
+T098: AxStackAreaChart.xml
+T099: AxReportChart.xml
+
+# Cross-story parallelism (different widgets):
+Developer A: US9 + US12
+Developer B: US10 + US11
+Developer C: US13 (after T090–T095)
+```
+
+---
+
+## Implementation Strategy (Improvement Batch)
+
+### MVP First (US9 + US12 — quickest wins)
+
+1. Phase 12: US9 ComboBox popupRender (T074–T075)
+2. Phase 15: US12 bar label rotation (T088–T089)
+3. **STOP and VALIDATE** in mock-ui
+
+### Full P1 Delivery
+
+4. Phase 13: US10 Gantt brand + add button (T076–T083)
+5. Phase 14: US11 Gantt expand fix (T084–T087)
+6. **STOP and VALIDATE** Gantt in mock-ui + Mendix `.mpk`
+
+### P2 Delivery
+
+7. Phase 16: US13 chart fullscreen (T090–T105)
+8. Phase 17: Polish (T106–T108)
+
+### Improvement Batch Task Count Summary
+
+| Phase | Story | Tasks | Parallel tasks |
+|-------|-------|-------|----------------|
+| 12 US9 ComboBox | P1 | 2 | 2 |
+| 13 US10 Gantt brand/add | P1 | 8 | 3 |
+| 14 US11 Gantt expand | P1 | 4 | 1 |
+| 15 US12 Bar labels | P2 | 2 | 1 |
+| 16 US13 Chart fullscreen | P2 | 16 | 6 |
+| 17 Polish | — | 3 | 2 |
+| **Improvement total** | | **35** | **15** |
+| **Grand total (incl. original)** | | **108** | **36** |
+
+---
+
+## Notes (Improvement Batch)
+
+- [Story] labels US9–US13 map to spec.md improvement user stories
+- US10 and US11 both touch Gantt but modify different files — can run in parallel with care
+- US13 T091 should extract shared FullscreenService; optionally refactor Gantt to import from `@iris/chart-core` (follow-up, not blocking)
+- Mendix runtime verification for US11 expand fix is mandatory — mock-ui alone may not reproduce datasource re-sync
+- Suggested MVP scope for improvement batch: **US9 + US12** (4 tasks, ~30 min)

@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import type { GanttStore } from "../../stores/GanttStore";
 import {
     applyEditingConfig,
+    attachAddButtonDelegation,
     attachNativeEvents,
     enablePlugins,
     gantt,
@@ -31,6 +32,7 @@ export interface UseGanttInstanceOptions {
     editing: GanttEditingConfig;
     bridge?: WidgetEventBridge;
     onHoverTask?: (taskId: string | undefined) => void;
+    onAddTaskClick?: (taskId: string) => void;
 }
 
 let previousHoverRow: HTMLElement | null = null;
@@ -83,7 +85,8 @@ export function useGanttInstance(options: UseGanttInstanceOptions): void {
         showBaseline,
         editing,
         bridge,
-        onHoverTask
+        onHoverTask,
+        onAddTaskClick
     } = options;
 
     const initializedRef = useRef(false);
@@ -92,8 +95,11 @@ export function useGanttInstance(options: UseGanttInstanceOptions): void {
     const showTodayMarkerRef = useRef(showTodayMarker);
     const teardownTodayMarkerRef = useRef<(() => void) | null>(null);
     const teardownEditingRef = useRef<(() => void) | null>(null);
+    const teardownAddButtonRef = useRef<(() => void) | null>(null);
+    const onAddTaskClickRef = useRef(onAddTaskClick);
     bridgeRef.current = bridge;
     showTodayMarkerRef.current = showTodayMarker;
+    onAddTaskClickRef.current = onAddTaskClick;
 
     useEffect(() => {
         const container = containerRef.current;
@@ -150,6 +156,11 @@ export function useGanttInstance(options: UseGanttInstanceOptions): void {
             }
         });
 
+        teardownAddButtonRef.current = attachAddButtonDelegation(container, (taskId, event) => {
+            event.stopPropagation();
+            onAddTaskClickRef.current?.(taskId);
+        });
+
         if (store.tasks.length > 0) {
             syncTasks([], store.tasks);
             previousTasksRef.current = store.tasks;
@@ -162,6 +173,8 @@ export function useGanttInstance(options: UseGanttInstanceOptions): void {
             teardownTodayMarkerRef.current = null;
             teardownEditingRef.current?.();
             teardownEditingRef.current = null;
+            teardownAddButtonRef.current?.();
+            teardownAddButtonRef.current = null;
             detachEvents();
             clearCrossHighlight();
             resetGantt();
@@ -211,6 +224,21 @@ export function useGanttInstance(options: UseGanttInstanceOptions): void {
             scheduleTodayMarkerRefresh(gantt, showTodayMarkerRef.current);
         }
     }, [store.tasks]);
+
+    useEffect(() => {
+        if (!initializedRef.current) {
+            return undefined;
+        }
+
+        const dispose = reaction(
+            () => store.expandLevel,
+            level => {
+                expandToLevel(gantt, level);
+            }
+        );
+
+        return dispose;
+    }, [store]);
 
     useEffect(() => {
         if (!initializedRef.current) {

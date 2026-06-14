@@ -20,8 +20,13 @@ $gantt-text-secondary: #595959;
 // Weekend tint
 $gantt-weekend-bg: #f7f7f7;
 
+// Brand accent — Iris teal (#099)
+$gantt-brand: #099;
+$gantt-brand-hover: #007a7a;
+$gantt-brand-muted: rgba(0, 153, 153, 0.12);
+
 // Task type semantic colors
-$gantt-task-regular: #4096ff;
-$gantt-task-project: #0958d9;
+$gantt-task-regular: $gantt-brand;
+$gantt-task-project: $gantt-brand;
 $gantt-task-milestone: #722ed1;
 $gantt-task-progress: rgba(0, 0, 0, 0.15);

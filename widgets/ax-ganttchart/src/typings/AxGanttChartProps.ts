@@ -50,6 +50,7 @@ export interface AxGanttChartProps extends AxGanttChartContainerProps {
     onTaskUpdated?: ActionValue;
     onTaskDeleted?: ActionValue;
     onSelectionChanged?: ActionValue;
+    onAddTask?: ActionValue;
 }
 
 export type { ObjectItem };

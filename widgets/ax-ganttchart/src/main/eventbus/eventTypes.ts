@@ -57,6 +57,7 @@ export enum GanttOutgoingEvents {
     TASK_CREATED = "TASK_CREATED",
     TASK_UPDATED = "TASK_UPDATED",
     TASK_DELETED = "TASK_DELETED",
+    ADD_TASK_REQUESTED = "ADD_TASK_REQUESTED",
     VIEW_CHANGED = "VIEW_CHANGED",
     FULLSCREEN_CHANGED = "FULLSCREEN_CHANGED",
     TIMELINE_CHANGED = "TIMELINE_CHANGED"
@@ -82,6 +83,12 @@ export interface GanttEventBus {
 
 export interface TaskEventData {
     task: GanttTask;
+}
+
+export interface AddTaskRequestedData {
+    task: GanttTask;
+    level: number;
+    childCount: number;
 }
 
 export interface ViewChangedData {

@@ -35,4 +35,7 @@ export interface AxReportChartProps extends AxReportChartContainerProps {
 
     onClick?: ActionValue;
     onSelectionChanged?: ActionValue;
+
+    command?: EditableValue<string>;
+    commandPayload?: EditableValue<string>;
 }

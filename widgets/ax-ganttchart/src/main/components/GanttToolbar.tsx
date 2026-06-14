@@ -6,6 +6,8 @@ import { observer } from "mobx-react-lite";
 import type { GanttTask } from "../eventbus/eventTypes";
 import { useGanttContext } from "../providers/GanttProvider";
 import { GanttIncomingEvents, type SetDateData, TimelineViewMode } from "../eventbus/eventTypes";
+import { gantt } from "./GanttConfiguration";
+import { getMaxExpandableLevel } from "./TreeExpandManager";
 
 const VIEW_OPTIONS = [
     { label: "Day", value: TimelineViewMode.DAY },
@@ -205,6 +207,15 @@ function getMaxExpandableLevelFromTasks(tasks: GanttTask[]): number {
     return Math.max(...roots.map(root => subtreeDepth(root.id)));
 }
 
+function resolveMaxExpandLevel(tasks: GanttTask[]): number {
+    const ganttInstance = gantt as typeof gantt & { $destroyed?: boolean };
+    if (!ganttInstance.$destroyed && ganttInstance.$root) {
+        return getMaxExpandableLevel(gantt);
+    }
+
+    return getMaxExpandableLevelFromTasks(tasks);
+}
+
 function getExpandTooltip(expandLevel: number, maxLevel: number): string {
     if (maxLevel === 0) {
         return "No expandable rows";
@@ -219,7 +230,7 @@ function getExpandTooltip(expandLevel: number, maxLevel: number): string {
 
 export const GanttToolbar = observer(function GanttToolbar(): JSX.Element {
     const { store, eventBus, widgetId } = useGanttContext();
-    const maxExpandLevel = getMaxExpandableLevelFromTasks(store.tasks);
+    const maxExpandLevel = resolveMaxExpandLevel(store.tasks);
     const canExpandFurther = maxExpandLevel > 0 && store.expandLevel < maxExpandLevel;
 
     function emit(type: GanttIncomingEvents, data?: SetDateData): void {
