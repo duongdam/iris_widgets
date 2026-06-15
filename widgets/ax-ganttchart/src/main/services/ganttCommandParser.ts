@@ -20,7 +20,7 @@ function parsePayload(payloadJson?: string): unknown {
     try {
         return JSON.parse(payloadJson) as unknown;
     } catch {
-        return undefined;
+        return payloadJson;
     }
 }
 

@@ -33,6 +33,7 @@ export interface UseGanttInstanceOptions {
     bridge?: WidgetEventBridge;
     onHoverTask?: (taskId: string | undefined) => void;
     onAddTaskClick?: (taskId: string) => void;
+    writeSelectionContext?: (task: GanttTask) => void;
 }
 
 let previousHoverRow: HTMLElement | null = null;
@@ -86,7 +87,8 @@ export function useGanttInstance(options: UseGanttInstanceOptions): void {
         editing,
         bridge,
         onHoverTask,
-        onAddTaskClick
+        onAddTaskClick,
+        writeSelectionContext
     } = options;
 
     const initializedRef = useRef(false);
@@ -97,9 +99,11 @@ export function useGanttInstance(options: UseGanttInstanceOptions): void {
     const teardownEditingRef = useRef<(() => void) | null>(null);
     const teardownAddButtonRef = useRef<(() => void) | null>(null);
     const onAddTaskClickRef = useRef(onAddTaskClick);
+    const writeSelectionContextRef = useRef(writeSelectionContext);
     bridgeRef.current = bridge;
     showTodayMarkerRef.current = showTodayMarker;
     onAddTaskClickRef.current = onAddTaskClick;
+    writeSelectionContextRef.current = writeSelectionContext;
 
     useEffect(() => {
         const container = containerRef.current;
@@ -129,6 +133,7 @@ export function useGanttInstance(options: UseGanttInstanceOptions): void {
             onTaskClick: (id: string) => {
                 const task = store.taskById.get(id);
                 if (task) {
+                    writeSelectionContextRef.current?.(task);
                     store.selectTask(task);
                     bridgeRef.current?.handleTaskClick(task);
                     bridgeRef.current?.handleSelectionChanged(task);
@@ -137,6 +142,8 @@ export function useGanttInstance(options: UseGanttInstanceOptions): void {
             onTaskDblClick: (id: string) => {
                 const task = store.taskById.get(id);
                 if (task) {
+                    writeSelectionContextRef.current?.(task);
+                    store.selectTask(task);
                     bridgeRef.current?.handleTaskDoubleClick(task);
                 }
             },

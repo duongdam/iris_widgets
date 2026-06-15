@@ -66,14 +66,24 @@ export function useEventBusBridge(options: UseEventBusBridgeOptions): void {
                 if (payload.widgetId !== widgetId || !containerRef.current) {
                     return;
                 }
-                await fullscreenService.enter(containerRef.current);
+                const enteredNativeFullscreen = await fullscreenService.enter(containerRef.current);
+                if (!enteredNativeFullscreen) {
+                    store.setFullscreen(true);
+                    bridge.handleFullscreenChanged(true);
+                }
             }),
 
             eventBus.on(GanttIncomingEvents.EXIT_FULLSCREEN, async payload => {
                 if (payload.widgetId !== widgetId) {
                     return;
                 }
-                await fullscreenService.exit();
+                if (fullscreenService.isFullscreen()) {
+                    await fullscreenService.exit();
+                }
+                if (store.fullscreen) {
+                    store.setFullscreen(false);
+                    bridge.handleFullscreenChanged(false);
+                }
             }),
 
             eventBus.on(GanttIncomingEvents.ENTER_EXPAND_HEIGHT, payload => {

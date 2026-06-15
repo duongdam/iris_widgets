@@ -5,12 +5,9 @@ import type { EditableValue } from "mendix";
 import type { GanttStore } from "../../stores/GanttStore";
 import type { GanttTask } from "../eventbus/eventTypes";
 import type { WidgetEventBridge } from "../services/WidgetEventBridge";
+import { writeTaskSelectionContext } from "../services/writeTaskSelectionContext";
 
 type WritableTaskId = EditableValue<string | Big>;
-
-function isWritable(attr?: WritableTaskId): attr is WritableTaskId {
-    return attr?.status === "available" && attr.readOnly !== true;
-}
 
 function syncSelectionToMendix(
     task: GanttTask | undefined,
@@ -18,23 +15,7 @@ function syncSelectionToMendix(
     selectedPayload?: EditableValue<string>,
     bridge?: WidgetEventBridge
 ): void {
-    if (!task) {
-        if (isWritable(selectedTaskId)) {
-            selectedTaskId.setValue(undefined);
-        }
-        if (selectedPayload?.status === "available" && selectedPayload.readOnly !== true) {
-            selectedPayload.setValue(undefined);
-        }
-        bridge?.handleSelectionChanged(undefined);
-        return;
-    }
-
-    if (isWritable(selectedTaskId)) {
-        selectedTaskId.setValue(task.id);
-    }
-    if (selectedPayload?.status === "available" && selectedPayload.readOnly !== true) {
-        selectedPayload.setValue(JSON.stringify(task));
-    }
+    writeTaskSelectionContext(task, selectedTaskId, selectedPayload);
     bridge?.handleSelectionChanged(task);
 }
 

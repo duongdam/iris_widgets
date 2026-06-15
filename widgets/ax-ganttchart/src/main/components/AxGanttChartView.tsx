@@ -13,26 +13,12 @@ import { useGanttInstance } from "../hooks/useGanttInstance";
 import { useSelectionSync } from "../hooks/useSelectionSync";
 import { useGanttContext } from "../providers/GanttProvider";
 import { isDatasourceAvailable, mapMendixDatasourceToGanttTasks } from "../services/MendixTaskAdapter";
+import { writeTaskSelectionContext } from "../services/writeTaskSelectionContext";
 import type { GanttTask } from "../eventbus/eventTypes";
-import type { Big } from "big.js";
-import type { EditableValue } from "mendix";
 
 function countDescendants(taskId: string, tasks: GanttTask[]): number {
     const children = tasks.filter(task => task.parent === taskId);
     return children.reduce((sum, child) => sum + 1 + countDescendants(child.id, tasks), 0);
-}
-
-function writeAddTaskContext(
-    task: GanttTask,
-    selectedTaskId?: EditableValue<string | Big>,
-    selectedPayload?: EditableValue<string>
-): void {
-    if (selectedTaskId?.status === "available" && selectedTaskId.readOnly !== true) {
-        selectedTaskId.setValue(task.id);
-    }
-    if (selectedPayload?.status === "available" && selectedPayload.readOnly !== true) {
-        selectedPayload.setValue(JSON.stringify(task));
-    }
 }
 
 export interface AxGanttChartViewProps {
@@ -75,6 +61,13 @@ export const AxGanttChartView = observer(function AxGanttChartView({
         ]
     );
 
+    const handleWriteSelectionContext = useCallback(
+        (task: GanttTask) => {
+            writeTaskSelectionContext(task, widgetProps.selectedTaskId, widgetProps.selectedPayload);
+        },
+        [widgetProps.selectedPayload, widgetProps.selectedTaskId]
+    );
+
     const handleAddTaskClick = useCallback(
         (taskId: string) => {
             const task = store.taskById.get(taskId);
@@ -82,10 +75,10 @@ export const AxGanttChartView = observer(function AxGanttChartView({
                 return;
             }
 
-            writeAddTaskContext(task, widgetProps.selectedTaskId, widgetProps.selectedPayload);
+            handleWriteSelectionContext(task);
             bridge.handleAddTaskRequested(task, countDescendants(taskId, store.tasks));
         },
-        [bridge, store.taskById, store.tasks, widgetProps.selectedPayload, widgetProps.selectedTaskId]
+        [bridge, handleWriteSelectionContext, store.taskById, store.tasks]
     );
 
     useGanttInstance({
@@ -99,7 +92,8 @@ export const AxGanttChartView = observer(function AxGanttChartView({
         showBaseline: widgetProps.showBaseline,
         editing: editingConfig,
         bridge,
-        onAddTaskClick: handleAddTaskClick
+        onAddTaskClick: handleAddTaskClick,
+        writeSelectionContext: handleWriteSelectionContext
     });
 
     const handleRefresh = useCallback(() => {
