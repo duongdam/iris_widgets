@@ -14,14 +14,13 @@ export interface AxGanttChartContainerProps {
     class: string;
     style?: CSSProperties;
     tabIndex?: number;
+    height: number;
     defaultViewMode: DefaultViewModeEnum;
     showToolbar: boolean;
     showGrid: boolean;
     showTimeline: boolean;
     showProgress: boolean;
     showTodayMarker: boolean;
-    showCriticalPath: boolean;
-    showBaseline: boolean;
     tasksDatasource: ListValue;
     idAttribute: ListAttributeValue<string | Big>;
     textAttribute: ListAttributeValue<string>;
@@ -43,6 +42,8 @@ export interface AxGanttChartContainerProps {
     command?: EditableValue<string>;
     commandPayload?: EditableValue<string>;
     onEvent?: ActionValue;
+    eventType?: EditableValue<string>;
+    eventPayload?: EditableValue<string>;
 }
 
 export interface AxGanttChartPreviewProps {
@@ -56,14 +57,13 @@ export interface AxGanttChartPreviewProps {
     readOnly: boolean;
     renderMode: "design" | "xray" | "structure";
     translate: (text: string) => string;
+    height: number | null;
     defaultViewMode: DefaultViewModeEnum;
     showToolbar: boolean;
     showGrid: boolean;
     showTimeline: boolean;
     showProgress: boolean;
     showTodayMarker: boolean;
-    showCriticalPath: boolean;
-    showBaseline: boolean;
     tasksDatasource: {} | { caption: string } | { type: string } | null;
     idAttribute: string;
     textAttribute: string;
@@ -85,4 +85,6 @@ export interface AxGanttChartPreviewProps {
     command: string;
     commandPayload: string;
     onEvent: {} | null;
+    eventType: string;
+    eventPayload: string;
 }

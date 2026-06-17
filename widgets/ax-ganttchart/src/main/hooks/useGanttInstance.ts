@@ -32,8 +32,6 @@ export interface UseGanttInstanceOptions {
     showTimeline: boolean;
     showProgress: boolean;
     showTodayMarker: boolean;
-    showCriticalPath: boolean;
-    showBaseline: boolean;
     editing: GanttEditingConfig;
     allowGridReorder?: boolean;
     bridge?: WidgetEventBridge;
@@ -121,8 +119,6 @@ export function useGanttInstance(options: UseGanttInstanceOptions): void {
         showTimeline,
         showProgress,
         showTodayMarker,
-        showCriticalPath,
-        showBaseline,
         editing,
         allowGridReorder = true,
         bridge,
@@ -156,8 +152,7 @@ export function useGanttInstance(options: UseGanttInstanceOptions): void {
             viewMode: store.viewMode,
             taskCount: store.tasks.length,
             timelineStart: store.timelineStart,
-            timelineEnd: store.timelineEnd,
-            appearance: { showCriticalPath, showBaseline }
+            timelineEnd: store.timelineEnd
         });
         runtime.teardownLayout = installGanttLayoutSync(container);
 
@@ -183,9 +178,6 @@ export function useGanttInstance(options: UseGanttInstanceOptions): void {
             onAfterTaskAdd: (_id: string, task: GanttTask) => {
                 runtimeRef.current.bridge?.handleTaskCreated(task);
             },
-            onAfterTaskUpdate: (_id: string, task: GanttTask) => {
-                runtimeRef.current.bridge?.handleTaskUpdated(task);
-            },
             onAfterTaskDelete: (id: string) => {
                 runtimeRef.current.bridge?.handleTaskDeleted(id);
             },
@@ -194,6 +186,13 @@ export function useGanttInstance(options: UseGanttInstanceOptions): void {
                 onHoverTask?.(id);
                 applyCrossHighlight(id);
             }
+        });
+
+        // Emit TASK_UPDATED after user finishes dragging or resizing a bar on the timeline.
+        const dragEventId = gantt.attachEvent("onAfterTaskDrag", (id: string | number, mode: string) => {
+            const task = gantt.getTask(id) as GanttTask;
+            runtimeRef.current.bridge?.handleTaskUpdated(task, mode as "move" | "resize" | "progress");
+            return true;
         });
 
         runtime.teardownAddButton = attachAddButtonDelegation(container, (taskId, event) => {
@@ -221,21 +220,13 @@ export function useGanttInstance(options: UseGanttInstanceOptions): void {
             runtime.teardownAddButton = null;
             runtime.teardownLayout?.();
             runtime.teardownLayout = null;
+            gantt.detachEvent(dragEventId);
             detachEvents();
             clearCrossHighlight();
             resetGantt();
             runtime.initialized = false;
         };
-    }, [
-        containerRef,
-        showProgress,
-        showCriticalPath,
-        showBaseline,
-        store.viewMode,
-        store.showGrid,
-        store.showTimeline,
-        onHoverTask
-    ]);
+    }, [containerRef, showProgress, store.viewMode, store.showGrid, store.showTimeline, onHoverTask]);
 
     useEffect(() => {
         const runtime = runtimeRef.current;
@@ -265,13 +256,9 @@ export function useGanttInstance(options: UseGanttInstanceOptions): void {
             }),
             ({ enabled, readOnly }) => {
                 runtime.teardownGridReorder?.();
-                runtime.teardownGridReorder = applyGridReorderConfig(
-                    enabled,
-                    store,
-                    runtimeRef.current.bridge,
-                    gantt,
-                    { readOnly }
-                );
+                runtime.teardownGridReorder = applyGridReorderConfig(enabled, store, runtimeRef.current.bridge, gantt, {
+                    readOnly
+                });
             },
             { fireImmediately: true }
         );

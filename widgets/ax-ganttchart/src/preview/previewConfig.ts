@@ -1,8 +1,5 @@
 import type { GanttTask } from "../main/eventbus/eventTypes";
-import {
-    computeEventDatesFromMilestone,
-    normalizeGanttTasks,
-} from "../shared/utils/mtoDate";
+import { computeEventDatesFromMilestone, normalizeGanttTasks } from "../shared/utils/mtoDate";
 
 export const PREVIEW_HEIGHT = 600;
 export const PREVIEW_VIEW_MODE = "month" as const;

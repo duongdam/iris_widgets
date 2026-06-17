@@ -37,8 +37,6 @@ const previewProps: AxGanttChartProps = {
     showTimeline: true,
     showProgress: false,
     showTodayMarker: true,
-    showCriticalPath: false,
-    showBaseline: false,
     allowDrag: true,
     allowResize: false,
     allowGridReorder: true,

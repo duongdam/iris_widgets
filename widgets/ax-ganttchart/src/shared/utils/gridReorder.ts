@@ -48,10 +48,8 @@ export function syncTaskParentFromGantt(
 
     const ganttTask = gantt.getTask(taskId) as GanttTask;
     const parentRaw = ganttTask.parent;
-    const parent =
-        parentRaw != null && String(parentRaw) !== "0" && String(parentRaw) !== ""
-            ? String(parentRaw)
-            : undefined;
+    const newParentId = parentRaw != null ? String(parentRaw) : "0";
+    const parent = newParentId !== "0" && newParentId !== "" ? newParentId : undefined;
     const existing = store.taskById.get(taskId);
 
     if (!existing || existing.parent === parent) {
@@ -59,7 +57,9 @@ export function syncTaskParentFromGantt(
     }
 
     store.updateTaskParent(taskId, parent);
-    bridge?.handleTaskUpdated({ ...existing, parent });
+
+    const newOrderNo = gantt.getTaskIndex(taskId) + 1;
+    bridge?.handleTaskReordered({ ...existing, parent }, newParentId, newOrderNo);
 }
 
 type GanttWithDom = GanttStatic & { $task_data?: HTMLElement; $grid_data?: HTMLElement };

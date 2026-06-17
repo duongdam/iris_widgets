@@ -20,14 +20,13 @@ export interface UseEventBusBridgeOptions {
     widgetId: string;
     bridge: WidgetEventBridge;
     containerRef: React.RefObject<HTMLDivElement>;
-    exportServerUrl?: string;
     onRefresh?: () => void;
 }
 
 export function useEventBusBridge(options: UseEventBusBridgeOptions): void {
-    const { store, eventBus, widgetId, bridge, containerRef, exportServerUrl, onRefresh } = options;
+    const { store, eventBus, widgetId, bridge, containerRef, onRefresh } = options;
 
-    const exportService: ExportService = useMemo(() => createExportService(exportServerUrl), [exportServerUrl]);
+    const exportService: ExportService = useMemo(() => createExportService(), []);
     const fullscreenService = useMemo(() => createFullscreenService(), []);
 
     useEffect(() => {
@@ -214,6 +213,7 @@ export function useEventBusBridge(options: UseEventBusBridgeOptions): void {
                     const mode = incomingEventToViewMode(zoomEvent);
                     if (mode) {
                         store.setViewMode(mode);
+                        bridge.handleViewChanged(mode);
                     }
                 })
             );
@@ -221,6 +221,7 @@ export function useEventBusBridge(options: UseEventBusBridgeOptions): void {
 
         const removeFullscreenListener = fullscreenService.onChange(fullscreen => {
             store.setFullscreen(fullscreen);
+            bridge.handleFullscreenChanged(fullscreen);
         });
 
         installGanttGlobalApi();

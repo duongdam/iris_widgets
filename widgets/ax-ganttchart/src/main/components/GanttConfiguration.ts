@@ -4,7 +4,7 @@ import { applyTimelineRange, getScales } from "./TimelineManager";
 import { installTodayMarkerSync } from "./TodayMarker";
 import { installMtoMarkerSync } from "./MtoMarker";
 import { TimelineViewMode, type GanttTask } from "../eventbus/eventTypes";
-import type { GanttAppearanceConfig, GanttEditingConfig } from "../../shared/types/editingConfig";
+import type { GanttEditingConfig } from "../../shared/types/editingConfig";
 import { shouldShowTimelineEventBar, getEventTypeTag } from "../../shared/utils/mtoDate";
 import { canDragGridRow } from "../../shared/utils/gridReorder";
 import { applyGanttLayoutConfig } from "../../shared/constants/ganttLayout";
@@ -18,7 +18,6 @@ export interface GanttDisplayConfig {
     taskCount?: number;
     timelineStart?: Date;
     timelineEnd?: Date;
-    appearance?: GanttAppearanceConfig;
 }
 
 export interface GanttNativeEventHandlers {
@@ -101,7 +100,6 @@ export function initGantt(container: HTMLElement, display: GanttDisplayConfig): 
     applyColumns(gantt, getDefaultColumns());
     gantt.config.scales = getScales(display.viewMode) as typeof gantt.config.scales;
     applyTimelineRange(gantt, display.viewMode, display.timelineStart, display.timelineEnd);
-    applyAppearanceConfig(display.appearance, gantt);
 
     gantt.init(container);
     blockTaskLinking(gantt);
@@ -116,16 +114,6 @@ function blockTaskLinking(target: GanttStatic): void {
     target.attachEvent("onBeforeLinkAdd", () => false);
     target.attachEvent("onBeforeLinkDelete", () => false);
     linkBlockingEnabled = true;
-}
-
-function applyAppearanceConfig(appearance: GanttAppearanceConfig | undefined, target: GanttStatic): void {
-    if (!appearance) {
-        return;
-    }
-
-    // Reserved for critical_path / baseline plugins (future).
-    (target.config as Record<string, unknown>).show_critical_path = appearance.showCriticalPath;
-    (target.config as Record<string, unknown>).show_baseline = appearance.showBaseline;
 }
 
 /** Apply Mendix editing flags to DHTMLX Gantt. Returns detach function for event handlers. */

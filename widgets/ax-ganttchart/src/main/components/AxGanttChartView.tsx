@@ -14,10 +14,7 @@ import { useSelectionBridge } from "../hooks/useSelectionBridge";
 import { useGanttContext } from "../providers/GanttProvider";
 import { isDatasourceAvailable, mapMendixDatasourceToGanttTasks } from "../services/MendixTaskAdapter";
 import { createGanttEditingConfig } from "../../shared/types/editingConfig";
-import {
-    resolveGanttContainerHeight,
-    resolveGanttShellHeight
-} from "./GanttConfiguration";
+import { resolveGanttContainerHeight, resolveGanttShellHeight } from "./GanttConfiguration";
 import type { GanttTask } from "../eventbus/eventTypes";
 
 function countDescendants(taskId: string, tasks: GanttTask[]): number {
@@ -83,7 +80,6 @@ export const AxGanttChartView = observer(function AxGanttChartView({
         widgetId,
         bridge,
         containerRef: rootRef,
-        exportServerUrl: widgetProps.exportServerUrl,
         onRefresh: handleRefresh
     });
 
@@ -102,8 +98,6 @@ export const AxGanttChartView = observer(function AxGanttChartView({
         showTimeline: widgetProps.showTimeline,
         showProgress: widgetProps.showProgress,
         showTodayMarker: widgetProps.showTodayMarker,
-        showCriticalPath: widgetProps.showCriticalPath,
-        showBaseline: widgetProps.showBaseline,
         editing: editingConfig,
         allowGridReorder: widgetProps.allowGridReorder,
         bridge,
@@ -163,8 +157,7 @@ export const AxGanttChartView = observer(function AxGanttChartView({
                     className="ax-ganttchart__gantt"
                     style={{
                         height: ganttContainerHeight,
-                        minHeight:
-                            typeof ganttContainerHeight === "number" ? ganttContainerHeight : undefined,
+                        minHeight: typeof ganttContainerHeight === "number" ? ganttContainerHeight : undefined,
                         display: hideGantt ? "none" : "block",
                         visibility: store.loading ? "hidden" : "visible"
                     }}

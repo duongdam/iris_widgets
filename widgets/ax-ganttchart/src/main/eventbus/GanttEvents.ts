@@ -2,7 +2,9 @@ export {
     GanttIncomingEvents,
     GanttOutgoingEvents,
     TimelineViewMode,
+    type AddTaskRequestedData,
     type ExportResultData,
+    type FullscreenChangedData,
     type GanttEventBus,
     type GanttEventHandler,
     type GanttEventPayload,
@@ -10,7 +12,10 @@ export {
     type GanttTask,
     type ScrollToTaskData,
     type SetDateData,
-    type TaskEventData
+    type TaskEventData,
+    type TaskReorderedData,
+    type TaskUpdatedData,
+    type ViewChangedData
 } from "./eventTypes";
 
 export {

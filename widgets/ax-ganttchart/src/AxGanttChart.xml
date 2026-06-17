@@ -16,7 +16,6 @@
                 <caption>Height</caption>
                 <description>Gantt widget height in pixels</description>
             </property>
-            <propertyGroup caption="Timeline">
             <property key="defaultViewMode" type="enumeration" required="true" defaultValue="month">
                 <caption>Default view mode</caption>
                 <description>Initial timeline scale granularity</description>
@@ -27,7 +26,7 @@
                 </enumerationValues>
             </property>
         </propertyGroup>
-            <propertyGroup caption="Display">
+        <propertyGroup caption="Display">
             <property key="showToolbar" type="boolean" required="true" defaultValue="true">
                 <caption>Show toolbar</caption>
                 <description>Display built-in view mode and action toolbar</description>
@@ -48,15 +47,6 @@
                 <caption>Show today marker</caption>
                 <description>Display vertical marker for current date</description>
             </property>
-            <property key="showCriticalPath" type="boolean" required="true" defaultValue="false">
-                <caption>Show critical path</caption>
-                <description>Highlight critical path tasks (future feature)</description>
-            </property>
-            <property key="showBaseline" type="boolean" required="true" defaultValue="false">
-                <caption>Show baseline</caption>
-                <description>Display baseline bars (future feature)</description>
-            </property>
-        </propertyGroup>
         </propertyGroup>
         <propertyGroup caption="Data Source">
             <property key="tasksDatasource" type="datasource" isList="true" required="true">
@@ -209,9 +199,33 @@
             <property key="onEvent" type="action" required="false">
                 <caption>On event</caption>
                 <description>
-                    Nanoflow or microflow executed when the Gantt emits an outgoing event (task click, selection, add task, etc.).
-                    Read event details in nanoflow JavaScript via window.__AX_GANTT__.getLastEvent(widgetName).
+                    Nanoflow or microflow executed when the Gantt emits an outgoing event (task click, add task, drag, reorder, etc.).
+                    Read $eventType and $eventPayload attributes directly — no JavaScript required.
                 </description>
+            </property>
+            <property key="eventType" type="attribute" required="false">
+                <caption>Event type (out)</caption>
+                <description>
+                    Widget writes the event name here before calling On event.
+                    Use in nanoflow to route logic:
+                    TASK_CLICKED | TASK_DOUBLE_CLICKED | ADD_TASK_REQUESTED |
+                    TASK_UPDATED | TASK_REORDERED | TASK_CREATED | TASK_DELETED |
+                    VIEW_CHANGED | FULLSCREEN_CHANGED
+                </description>
+                <attributeTypes>
+                    <attributeType name="String" />
+                </attributeTypes>
+            </property>
+            <property key="eventPayload" type="attribute" required="false">
+                <caption>Event payload (out)</caption>
+                <description>
+                    Widget writes JSON payload here before calling On event.
+                    Parse in nanoflow: JSON.parse($eventPayload) gives { widgetId, type, data }.
+                    data.task contains full GanttTask object for task events.
+                </description>
+                <attributeTypes>
+                    <attributeType name="String" />
+                </attributeTypes>
             </property>
         </propertyGroup>
     </properties>

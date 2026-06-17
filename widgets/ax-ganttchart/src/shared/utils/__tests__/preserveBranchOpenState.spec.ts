@@ -36,19 +36,19 @@ describe("preserveBranchOpenState", () => {
 });
 
 describe("mergeGanttOpenState", () => {
-  it("uses live gantt open state when datasource omits open", () => {
-    const previous: GanttTask[] = [{ id: "1", text: "Program", start_date: "2026-01-01" }];
-    const next: GanttTask[] = [
-      { id: "1", text: "Program", start_date: "2026-01-01" },
-      { id: "2", text: "Phase", parent: "1", start_date: "2026-02-01" }
-    ];
+    it("uses live gantt open state when datasource omits open", () => {
+        const previous: GanttTask[] = [{ id: "1", text: "Program", start_date: "2026-01-01" }];
+        const next: GanttTask[] = [
+            { id: "1", text: "Program", start_date: "2026-01-01" },
+            { id: "2", text: "Phase", parent: "1", start_date: "2026-02-01" }
+        ];
 
-    const gantt = {
-      isTaskExists: (id: string) => id === "1",
-      hasChild: (id: string) => id === "1",
-      getTask: () => ({ $open: true })
-    };
+        const gantt = {
+            isTaskExists: (id: string) => id === "1",
+            hasChild: (id: string) => id === "1",
+            getTask: () => ({ $open: true })
+        };
 
-    expect(mergeGanttOpenState(previous, next, gantt)[0].open).toBe(true);
-  });
+        expect(mergeGanttOpenState(previous, next, gantt)[0].open).toBe(true);
+    });
 });

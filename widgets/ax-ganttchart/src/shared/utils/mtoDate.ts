@@ -132,7 +132,9 @@ export function computeEventDatesFromMilestone(
     };
 }
 
-export function computeMtoDate(task: Pick<GanttTask, "start_date" | "end_date" | "tags" | "mto_date">): string | undefined {
+export function computeMtoDate(
+    task: Pick<GanttTask, "start_date" | "end_date" | "tags" | "mto_date">
+): string | undefined {
     if (task.mto_date) {
         const explicit = parseGanttDate(task.mto_date);
         return explicit ? formatGanttDateTime(explicit) : undefined;
@@ -192,8 +194,7 @@ export function applyEventDefaults(
     const eventType: GanttEventTypeTag = existingType ?? (index % 2 === 0 ? "MTO" : "K/O");
     const otherTags = (task.tags ?? []).filter(tag => !EVENT_TYPE_TAGS.includes(tag as GanttEventTypeTag));
 
-    const milestone =
-        parseGanttDate(task.mto_date) ?? parseGanttDate(task.start_date) ?? new Date();
+    const milestone = parseGanttDate(task.mto_date) ?? parseGanttDate(task.start_date) ?? new Date();
 
     const span = computeEventDatesFromMilestone(milestone, eventType, config);
 

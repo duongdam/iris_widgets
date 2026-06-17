@@ -172,9 +172,7 @@ export function mapMendixDatasourceToGanttTasks(props: MendixTaskMappingProps): 
         const tags = props.tagsAttribute ? parseTags(readAttributeString(item, props.tagsAttribute)) : undefined;
         const mtoDate = readDate(item, props.mtoDateAttribute);
         const mto_date = convertDateToGanttString(mtoDate);
-        const eventTypeRaw = props.eventTypeAttribute
-            ? readAttributeString(item, props.eventTypeAttribute)
-            : undefined;
+        const eventTypeRaw = props.eventTypeAttribute ? readAttributeString(item, props.eventTypeAttribute) : undefined;
         const eventTypeTag = normalizeEventTypeTag(eventTypeRaw);
 
         const task: GanttTask = {

@@ -1,12 +1,10 @@
 import { JSX, createContext, useContext, useMemo, type ReactNode } from "react";
 import { createGanttEventBus } from "../eventbus/GanttEventBus";
-import type { GanttEventBus } from "../eventbus/eventTypes";
-import { TimelineViewMode } from "../eventbus/eventTypes";
+import { TimelineViewMode, type GanttEventBus, type GanttTask } from "../eventbus/eventTypes";
 import { createWidgetEventBridge, type WidgetEventBridge } from "../services/WidgetEventBridge";
 import { createGanttStore, type GanttStore } from "../../stores/GanttStore";
 import type { AxGanttChartProps } from "../../typings/AxGanttChartProps";
 import { parseViewMode } from "../components/TimelineManager";
-import type { GanttTask } from "../eventbus/eventTypes";
 
 export interface GanttContextValue {
     store: GanttStore;
@@ -40,11 +38,21 @@ export function GanttProvider({ children, widgetProps, previewTasks }: GanttProv
         const bridge = createWidgetEventBridge({
             widgetId,
             eventBus,
-            onEvent: widgetProps.onEvent
+            onEvent: widgetProps.onEvent,
+            eventType: widgetProps.eventType,
+            eventPayload: widgetProps.eventPayload
         });
 
         return { store, eventBus, bridge, widgetId, isPreview, allowGridReorder: widgetProps.allowGridReorder };
-    }, [widgetProps.name, widgetProps.defaultViewMode, widgetProps.onEvent, widgetProps.allowGridReorder, previewTasks]);
+    }, [
+        widgetProps.name,
+        widgetProps.defaultViewMode,
+        widgetProps.onEvent,
+        widgetProps.eventType,
+        widgetProps.eventPayload,
+        widgetProps.allowGridReorder,
+        previewTasks
+    ]);
 
     return <GanttContext.Provider value={value}>{children}</GanttContext.Provider>;
 }

@@ -54,10 +54,17 @@ export enum GanttIncomingEvents {
 export enum GanttOutgoingEvents {
     TASK_CLICKED = "TASK_CLICKED",
     TASK_DOUBLE_CLICKED = "TASK_DOUBLE_CLICKED",
-    TASK_CREATED = "TASK_CREATED",
+    ADD_TASK_REQUESTED = "ADD_TASK_REQUESTED",
+    /** Emitted after drag/resize on timeline bar. Use to commit new dates to Mendix. */
     TASK_UPDATED = "TASK_UPDATED",
+    /** Emitted after grid row is reordered to a new parent. Use to commit parent/orderNo to Mendix. */
+    TASK_REORDERED = "TASK_REORDERED",
+    TASK_CREATED = "TASK_CREATED",
     TASK_DELETED = "TASK_DELETED",
-    TASK_REQUEST_ADD = "TASK_REQUEST_ADD"
+    /** Emitted when the timeline zoom/view mode changes. */
+    VIEW_CHANGED = "VIEW_CHANGED",
+    /** Emitted when fullscreen state changes. */
+    FULLSCREEN_CHANGED = "FULLSCREEN_CHANGED"
 }
 
 export type GanttEventType = GanttIncomingEvents | GanttOutgoingEvents;
@@ -83,9 +90,36 @@ export interface TaskEventData {
 }
 
 export interface AddTaskRequestedData {
+    /** Parent row that was clicked — use task.id to pre-fill parent when creating a new task. */
     task: GanttTask;
+    /** Always 1 — 0-indexed second hierarchy tier. */
     level: number;
+    /** Current number of descendant tasks under this parent. */
     childCount: number;
+}
+
+export interface TaskUpdatedData {
+    /** Task with updated dates after drag/resize. */
+    task: GanttTask;
+    /** How the task was changed on the timeline. */
+    changeType?: "move" | "resize" | "progress";
+}
+
+export interface TaskReorderedData {
+    /** Task with updated parent reference after grid drag-and-drop. */
+    task: GanttTask;
+    /** New parent task ID. "0" means moved to root level. */
+    newParentId: string;
+    /** New 1-indexed sibling position within the new parent. */
+    newOrderNo: number;
+}
+
+export interface ViewChangedData {
+    viewMode: "day" | "week" | "month";
+}
+
+export interface FullscreenChangedData {
+    fullscreen: boolean;
 }
 
 export interface ScrollToTaskData {

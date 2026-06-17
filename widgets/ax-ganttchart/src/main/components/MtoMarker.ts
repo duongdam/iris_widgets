@@ -1,7 +1,16 @@
 import type { GanttStatic } from "dhtmlx-gantt";
 import type { GanttTask } from "../eventbus/eventTypes";
-import { computeMtoDate, getEventTypeTag, parseGanttDate, shouldShowTimelineEventBar } from "../../shared/utils/mtoDate";
-import { GANTT_BAR_HEIGHT, GANTT_ROW_HEIGHT, resolveBarTopOffset as computeBarTopOffset } from "../../shared/constants/ganttLayout";
+import {
+    computeMtoDate,
+    getEventTypeTag,
+    parseGanttDate,
+    shouldShowTimelineEventBar
+} from "../../shared/utils/mtoDate";
+import {
+    GANTT_BAR_HEIGHT,
+    GANTT_ROW_HEIGHT,
+    resolveBarTopOffset as computeBarTopOffset
+} from "../../shared/constants/ganttLayout";
 
 const MTO_MARKER_LAYER_CLASS = "gantt-mto-marker-layer";
 const MARKER_WIDTH = 12;

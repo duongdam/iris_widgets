@@ -10,6 +10,9 @@ export function useSelectionBridge(store: GanttStore, bridge?: WidgetEventBridge
     useEffect(() => {
         // Selection is handled via click/double-click events only (TASK_CLICKED, TASK_DOUBLE_CLICKED).
         // Keep store.selectedTask for internal UI (e.g. tooltip), but do not emit a separate outgoing event.
-        return reaction(() => store.selectedTask, () => undefined);
+        return reaction(
+            () => store.selectedTask,
+            () => undefined
+        );
     }, [store, bridge]);
 }

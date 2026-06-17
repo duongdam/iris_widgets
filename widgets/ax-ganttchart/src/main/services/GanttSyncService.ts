@@ -2,7 +2,11 @@ import { gantt } from "../components/GanttConfiguration";
 import type { GanttTask } from "../eventbus/eventTypes";
 
 function cloneTask(task: GanttTask): GanttTask {
-    return { ...task, tags: task.tags ? [...task.tags] : undefined, metadata: task.metadata ? { ...task.metadata } : undefined };
+    return {
+        ...task,
+        tags: task.tags ? [...task.tags] : undefined,
+        metadata: task.metadata ? { ...task.metadata } : undefined
+    };
 }
 
 function cloneTasksForGantt(tasks: GanttTask[]): GanttTask[] {

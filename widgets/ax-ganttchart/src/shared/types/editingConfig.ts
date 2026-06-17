@@ -25,9 +25,3 @@ export function createGanttEditingConfig(props: GanttEditingProps): GanttEditing
         readOnly: props.readOnly
     };
 }
-
-/** Future appearance flags (plugins not yet wired). */
-export interface GanttAppearanceConfig {
-    showCriticalPath: boolean;
-    showBaseline: boolean;
-}

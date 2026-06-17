@@ -36,8 +36,6 @@ export interface AxGanttChartProps extends AxGanttChartContainerProps {
     showTimeline: boolean;
     showProgress: boolean;
     showTodayMarker: boolean;
-    showCriticalPath: boolean;
-    showBaseline: boolean;
     allowDrag: boolean;
     allowResize: boolean;
     allowGridReorder: boolean;
@@ -45,7 +43,10 @@ export interface AxGanttChartProps extends AxGanttChartContainerProps {
     defaultViewMode: TimelineViewModeEnum;
     command?: EditableValue<string>;
     commandPayload?: EditableValue<string>;
-    exportServerUrl?: string;
+    /** Widget writes the outgoing event name here before calling onEvent. */
+    eventType?: EditableValue<string>;
+    /** Widget writes JSON-serialised GanttEventPayload here before calling onEvent. */
+    eventPayload?: EditableValue<string>;
     onEvent?: ActionValue;
 }
 
