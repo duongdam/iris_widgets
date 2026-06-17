@@ -11,10 +11,14 @@ Related artifacts:
 - Spec: `specs/002-enterprise-gantt-widget/spec.md`
 - Research: `specs/002-enterprise-gantt-widget/research.md`
 - Data model: `specs/002-enterprise-gantt-widget/data-model.md`
-- Contracts: `specs/002-enterprise-gantt-widget/contracts/`
+- Contracts: `specs/002-enterprise-gantt-widget/contracts/event-bridge.ts`
 - Quickstart: `specs/002-enterprise-gantt-widget/quickstart.md`
 
 Tech stack: pnpm 10.30.0, @mendix/pluggable-widgets-tools 11.8.1, React 18.2, MobX 6.16, antd 6.4.3, dhtmlx-gantt ^9.1.4, SCSS
 
-Current focus: Widget UX improvements batch — ComboBox popupRender, Gantt brand #099999 + level-2 add button + expand fix, bar chart label rotation, chart fullscreen commands. Phase 2 implementation via /speckit-tasks + /speckit-implement
+Current focus: Gantt refactor — Unified Event Bridge. Key changes:
+1. Thêm `eventType` + `eventPayload` EditableValue<string> props để nanoflow đọc trực tiếp
+2. Xóa `showCriticalPath`, `showBaseline`, `exportServerUrl` (unused)
+3. Thêm TASK_UPDATED (drag/resize) + TASK_REORDERED (grid DnD) outgoing events
+4. Phase 2 via /speckit-tasks + /speckit-implement
 <!-- SPECKIT END -->

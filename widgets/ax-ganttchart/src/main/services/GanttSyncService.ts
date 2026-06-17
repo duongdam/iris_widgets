@@ -26,10 +26,14 @@ export function syncTasks(currentTasks: GanttTask[], nextTasks: GanttTask[]): vo
 
     const currentIds = new Set(currentTasks.map(task => task.id));
     const nextIds = new Set(nextTasks.map(task => task.id));
+
+    const sameIdSet =
+        currentIds.size === nextIds.size && [...currentIds].every(id => nextIds.has(id));
+    const structuralChangeCount = [...nextIds].filter(id => !currentIds.has(id)).length;
+
     const isBulkChange =
         currentTasks.length === 0 ||
-        nextTasks.length / Math.max(currentTasks.length, 1) > 0.5 ||
-        [...nextIds].filter(id => !currentIds.has(id)).length > nextTasks.length * 0.3;
+        (!sameIdSet && structuralChangeCount > nextTasks.length * 0.3);
 
     if (isBulkChange) {
         gantt.silent(() => {

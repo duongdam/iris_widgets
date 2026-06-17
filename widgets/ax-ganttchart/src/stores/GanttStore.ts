@@ -79,6 +79,10 @@ export class GanttStore {
         this.tasks = this.tasks.map(task => (task.id === taskId ? { ...task, parent: parentId } : task));
     }
 
+    setTaskOpen(taskId: string, open: boolean): void {
+        this.tasks = this.tasks.map(task => (task.id === taskId ? { ...task, open } : task));
+    }
+
     setExpandLevel(level: number): void {
         this.expandLevel = level;
     }

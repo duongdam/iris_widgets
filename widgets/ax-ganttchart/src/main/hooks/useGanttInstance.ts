@@ -5,6 +5,7 @@ import {
     applyEditingConfig,
     attachAddButtonDelegation,
     attachNativeEvents,
+    attachTaskInteractionDelegation,
     enablePlugins,
     gantt,
     initGantt,
@@ -52,7 +53,41 @@ interface GanttInstanceRuntime {
     teardownGridReorder: (() => void) | null;
     teardownEditing: (() => void) | null;
     teardownAddButton: (() => void) | null;
+    teardownTaskInteraction: (() => void) | null;
     teardownLayout: (() => void) | null;
+}
+
+function resolveTask(taskId: string, store: GanttStore): GanttTask | undefined {
+    const fromStore = store.taskById.get(taskId);
+    if (fromStore) {
+        return fromStore;
+    }
+
+    if (gantt.isTaskExists(taskId)) {
+        return gantt.getTask(taskId) as GanttTask;
+    }
+
+    return undefined;
+}
+
+function emitTaskClick(taskId: string, store: GanttStore, bridge?: WidgetEventBridge): void {
+    const task = resolveTask(taskId, store);
+    if (!task) {
+        return;
+    }
+
+    store.selectTask(task);
+    bridge?.handleTaskClick(task);
+}
+
+function emitTaskDoubleClick(taskId: string, store: GanttStore, bridge?: WidgetEventBridge): void {
+    const task = resolveTask(taskId, store);
+    if (!task) {
+        return;
+    }
+
+    store.selectTask(task);
+    bridge?.handleTaskDoubleClick(task);
 }
 
 let previousHoverRow: HTMLElement | null = null;
@@ -107,6 +142,7 @@ function createRuntimeState(options: UseGanttInstanceOptions): GanttInstanceRunt
         teardownGridReorder: null,
         teardownEditing: null,
         teardownAddButton: null,
+        teardownTaskInteraction: null,
         teardownLayout: null
     };
 }
@@ -161,20 +197,6 @@ export function useGanttInstance(options: UseGanttInstanceOptions): void {
         runtime.teardownEditing = applyEditingConfig(editing);
 
         const detachEvents = attachNativeEvents({
-            onTaskClick: (id: string) => {
-                const task = store.taskById.get(id);
-                if (task) {
-                    store.selectTask(task);
-                    runtimeRef.current.bridge?.handleTaskClick(task);
-                }
-            },
-            onTaskDblClick: (id: string) => {
-                const task = store.taskById.get(id);
-                if (task) {
-                    store.selectTask(task);
-                    runtimeRef.current.bridge?.handleTaskDoubleClick(task);
-                }
-            },
             onAfterTaskAdd: (_id: string, task: GanttTask) => {
                 runtimeRef.current.bridge?.handleTaskCreated(task);
             },
@@ -188,12 +210,32 @@ export function useGanttInstance(options: UseGanttInstanceOptions): void {
             }
         });
 
+        runtime.teardownTaskInteraction = attachTaskInteractionDelegation(container, {
+            onTaskClick: (taskId: string) => {
+                emitTaskClick(taskId, store, runtimeRef.current.bridge);
+            },
+            onTaskDblClick: (taskId: string) => {
+                emitTaskDoubleClick(taskId, store, runtimeRef.current.bridge);
+            }
+        });
+
         // Emit TASK_UPDATED after user finishes dragging or resizing a bar on the timeline.
         const dragEventId = gantt.attachEvent("onAfterTaskDrag", (id: string | number, mode: string) => {
             const task = gantt.getTask(id) as GanttTask;
             runtimeRef.current.bridge?.handleTaskUpdated(task, mode as "move" | "resize" | "progress");
             return true;
         });
+
+        const branchEventIds = [
+            gantt.attachEvent("onTaskOpened", (id: string | number) => {
+                store.setTaskOpen(String(id), true);
+                return true;
+            }),
+            gantt.attachEvent("onTaskClosed", (id: string | number) => {
+                store.setTaskOpen(String(id), false);
+                return true;
+            })
+        ];
 
         runtime.teardownAddButton = attachAddButtonDelegation(container, (taskId, event) => {
             event.stopPropagation();
@@ -218,9 +260,14 @@ export function useGanttInstance(options: UseGanttInstanceOptions): void {
             runtime.teardownEditing = null;
             runtime.teardownAddButton?.();
             runtime.teardownAddButton = null;
+            runtime.teardownTaskInteraction?.();
+            runtime.teardownTaskInteraction = null;
             runtime.teardownLayout?.();
             runtime.teardownLayout = null;
             gantt.detachEvent(dragEventId);
+            for (const branchEventId of branchEventIds) {
+                gantt.detachEvent(branchEventId);
+            }
             detachEvents();
             clearCrossHighlight();
             resetGantt();
@@ -286,10 +333,6 @@ export function useGanttInstance(options: UseGanttInstanceOptions): void {
         const tasksToSync = mergeGanttOpenState(runtime.previousTasks, store.tasks, gantt);
         syncTasks(runtime.previousTasks, tasksToSync);
         runtime.previousTasks = tasksToSync;
-
-        if (store.expandLevel > 0) {
-            expandToLevel(gantt, store.expandLevel);
-        }
 
         if (!hadTasks && store.tasks.length > 0) {
             scheduleFocusOnToday(runtimeRef.current.showTodayMarker);

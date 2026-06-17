@@ -125,7 +125,8 @@ export function applyEditingConfig(config: GanttEditingConfig, target: GanttStat
     target.config.drag_resize = config.allowResize && editable;
     target.config.drag_progress = config.allowUpdate && editable;
     target.config.details_on_create = config.allowCreate && editable;
-    target.config.details_on_dblclick = config.allowUpdate && editable;
+    // Mendix nanoflow handles edit via TASK_DOUBLE_CLICKED — keep DHTMLX lightbox off.
+    target.config.details_on_dblclick = false;
 
     const eventIds: string[] = [];
 
@@ -328,6 +329,85 @@ export function attachNativeEvents(handlers: GanttNativeEventHandlers, target: G
         }
         if (hoverTimer !== undefined) {
             clearTimeout(hoverTimer);
+        }
+    };
+}
+
+export interface TaskInteractionHandlers {
+    onTaskClick?: (taskId: string, event: Event) => void;
+    onTaskDblClick?: (taskId: string, event: Event) => void;
+}
+
+const TASK_CLICK_DELAY_MS = 250;
+
+function resolveTaskIdFromDom(target: EventTarget | null): string | undefined {
+    if (!(target instanceof Element)) {
+        return undefined;
+    }
+
+    if (target.closest(".gantt-add-btn")) {
+        return undefined;
+    }
+
+    const row = target.closest(".gantt_row, .gantt_task_row");
+    if (!row) {
+        return undefined;
+    }
+
+    const taskId = row.getAttribute("task_id");
+    if (!taskId || taskId === "0") {
+        return undefined;
+    }
+
+    return taskId;
+}
+
+/**
+ * Delegated click/dblclick on grid rows and timeline rows.
+ * Required because custom HTML column templates do not reliably trigger DHTMLX onTaskClick.
+ */
+export function attachTaskInteractionDelegation(container: HTMLElement, handlers: TaskInteractionHandlers): () => void {
+    let clickTimer: ReturnType<typeof setTimeout> | undefined;
+
+    const onClick = (event: Event): void => {
+        const taskId = resolveTaskIdFromDom(event.target);
+        if (!taskId || !handlers.onTaskClick) {
+            return;
+        }
+
+        if (clickTimer) {
+            clearTimeout(clickTimer);
+        }
+
+        clickTimer = setTimeout(() => {
+            clickTimer = undefined;
+            handlers.onTaskClick?.(taskId, event);
+        }, TASK_CLICK_DELAY_MS);
+    };
+
+    const onDblClick = (event: Event): void => {
+        if (clickTimer) {
+            clearTimeout(clickTimer);
+            clickTimer = undefined;
+        }
+
+        const taskId = resolveTaskIdFromDom(event.target);
+        if (!taskId || !handlers.onTaskDblClick) {
+            return;
+        }
+
+        event.preventDefault();
+        handlers.onTaskDblClick(taskId, event);
+    };
+
+    container.addEventListener("click", onClick);
+    container.addEventListener("dblclick", onDblClick);
+
+    return () => {
+        container.removeEventListener("click", onClick);
+        container.removeEventListener("dblclick", onDblClick);
+        if (clickTimer) {
+            clearTimeout(clickTimer);
         }
     };
 }

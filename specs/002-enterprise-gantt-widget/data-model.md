@@ -1,289 +1,239 @@
-# Data Model: Mendix Enterprise Gantt Widget (ax-ganttchart)
+# Data Model: Gantt Refactor — Unified Event Bridge
 
-**Branch**: `002-enterprise-gantt-widget` | **Date**: 2026-06-10
+**Date**: 2026-06-18 | **Plan**: [plan.md](./plan.md)
 
-## Entity Relationship Overview
+---
 
-```text
-┌─────────────────────┐     map        ┌──────────────┐
-│ Mendix ListValue    │ ─────────────► │ GanttTask[]  │
-│ (datasource.items)  │  Adapter       └──────┬───────┘
-└─────────────────────┘                       │
-                                              ▼
-                                       ┌──────────────┐
-                                       │  GanttStore  │
-                                       └──────┬───────┘
-                    ┌──────────────────────────┼──────────────────────────┐
-                    ▼                          ▼                          ▼
-            ┌──────────────┐          ┌──────────────┐          ┌─────────────────┐
-            │ taskById     │          │ viewMode     │          │ selectedTask    │
-            │ (computed)   │          │ fullscreen   │          │ (optional)      │
-            └──────────────┘          │ loading      │          └────────┬────────┘
-                                      └──────────────┘                   │
-                                                                         ▼
-                                                              ┌──────────────────┐
-                                                              │ Mendix Attributes │
-                                                              │ selectedTaskId    │
-                                                              │ selectedPayload   │
-                                                              └──────────────────┘
+## Widget Props Changes
+
+### Props thêm mới
+
+```typescript
+// AxGanttChartProps.ts (thêm vào interface AxGanttChartProps)
+eventType?: EditableValue<string>;      // Widget writes event name here
+eventPayload?: EditableValue<string>;   // Widget writes JSON payload here
+```
+
+### Props xóa
+
+```typescript
+// Xóa khỏi AxGanttChartProps.ts
+showCriticalPath: boolean;   // ← XÓA
+showBaseline: boolean;       // ← XÓA
+exportServerUrl?: string;    // ← XÓA (không có trong XML, dead code)
 ```
 
 ---
 
-## Core Entities
+## Outgoing Events (Updated Enum)
 
-### GanttTask
+```typescript
+// eventTypes.ts — GanttOutgoingEvents enum
+export enum GanttOutgoingEvents {
+    // Interactions — user clicks/double-clicks task row or bar
+    TASK_CLICKED = "TASK_CLICKED",
+    TASK_DOUBLE_CLICKED = "TASK_DOUBLE_CLICKED",
 
-Normalized task consumed by DHTMLX Gantt and MobX store.
+    // Add task — user clicks (+) button on level-2 row
+    ADD_TASK_REQUESTED = "ADD_TASK_REQUESTED",   // was: TASK_REQUEST_ADD
 
-| Field | Type | Required | Validation | Notes |
-|-------|------|----------|------------|-------|
-| `id` | `string` | Yes | Non-empty, unique within dataset | Mapped from `idAttribute` |
-| `text` | `string` | Yes | Non-empty | Task label |
-| `start_date` | `string` | Yes | Parseable date | DHTMLX format `YYYY-MM-DD` or `YYYY-MM-DD HH:mm` |
-| `end_date` | `string` | No | Parseable date | Mutually optional with `duration` |
-| `duration` | `number` | No | Positive | Days; used when `end_date` absent |
-| `progress` | `number` | No | 0–1 | Task completion fraction |
-| `parent` | `string` | No | Must reference existing `id` or `0`/root | Hierarchy parent |
-| `open` | `boolean` | No | — | Branch expanded state |
-| `type` | `string` | No | DHTMLX task type | e.g. `task`, `project`, `milestone` |
-| `color` | `string` | No | CSS color | Bar color override |
-| `metadata` | `Record<string, unknown>` | No | Opaque | Pass-through; never inspected by widget logic |
+    // Data mutations — require Mendix commit
+    TASK_UPDATED = "TASK_UPDATED",     // NEW: drag/resize bar → new dates
+    TASK_REORDERED = "TASK_REORDERED", // NEW: grid DnD → new parent/order
 
-**Invariants**:
-- Adapter MUST produce valid DHTMLX task objects; invalid rows are skipped with console warn (dev only).
-- `metadata` MUST survive adapter → store → selection → Mendix attribute → event payload unchanged.
-- Circular parent references MUST be broken (child promoted to root).
+    // CRUD (less common)
+    TASK_CREATED = "TASK_CREATED",
+    TASK_DELETED = "TASK_DELETED",
 
----
-
-### TimelineViewMode
-
-| Value | Mendix XML enum key | Description |
-|-------|---------------------|-------------|
-| `DAY` | `day` | Hour + day scales |
-| `WEEK` | `week` | Day + week scales |
-| `MONTH` | `month` | Week + month scales |
-| `QUARTER` | `quarter` | Month + quarter scales |
-
-Mapped to Mendix XML `defaultViewMode` enumeration.
-
----
-
-### GanttStore State
-
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `tasks` | `GanttTask[]` | `[]` | Current task dataset |
-| `selectedTask` | `GanttTask \| undefined` | `undefined` | Active selection |
-| `viewMode` | `TimelineViewMode` | `WEEK` | Active timeline scale |
-| `fullscreen` | `boolean` | `false` | Browser fullscreen state |
-| `loading` | `boolean` | `false` | Datasource loading indicator |
-| `showGrid` | `boolean` | `true` | Grid panel visibility |
-| `showTimeline` | `boolean` | `true` | Timeline panel visibility |
-| `hoveredTaskId` | `string \| undefined` | `undefined` | Cross-highlight target |
-
-**Computed properties**:
-
-| Property | Type | Derivation |
-|----------|------|------------|
-| `taskById` | `Map<string, GanttTask>` | Index of `tasks` by `id` |
-| `hasTasks` | `boolean` | `tasks.length > 0` |
-| `rootTasks` | `GanttTask[]` | Tasks with no `parent` or `parent === "0"` |
-
-**Actions**:
-
-| Action | Parameters | Effect |
-|--------|------------|--------|
-| `setTasks` | `GanttTask[]` | Replace task array |
-| `selectTask` | `GanttTask \| undefined` | Update selection |
-| `setViewMode` | `TimelineViewMode` | Update view mode |
-| `setFullscreen` | `boolean` | Update fullscreen flag |
-| `setLoading` | `boolean` | Update loading flag |
-| `setShowGrid` | `boolean` | Toggle grid visibility |
-| `setShowTimeline` | `boolean` | Toggle timeline visibility |
-| `setHoveredTaskId` | `string \| undefined` | Cross-highlight state |
-
----
-
-### GanttDatasourceMapping
-
-Configuration derived from Mendix XML attribute property keys.
-
-| Config Key | Maps To | Required |
-|------------|---------|----------|
-| `idAttribute` | `GanttTask.id` | Yes |
-| `textAttribute` | `GanttTask.text` | Yes |
-| `startDateAttribute` | `GanttTask.start_date` | Yes |
-| `endDateAttribute` | `GanttTask.end_date` | No |
-| `durationAttribute` | `GanttTask.duration` | No |
-| `progressAttribute` | `GanttTask.progress` | No |
-| `parentAttribute` | `GanttTask.parent` | No |
-| `openAttribute` | `GanttTask.open` | No |
-| `typeAttribute` | `GanttTask.type` | No |
-
-Optional `colorAttribute` may be added in v1.1; v1 uses `color` only if mapped via metadata pass-through.
-
----
-
-### GanttEventPayload
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `widgetId` | `string` | Mendix widget `name` prop |
-| `type` | `GanttIncomingEvents \| GanttOutgoingEvents` | Event discriminator |
-| `data` | `unknown` | Typed per event (see contracts/event-bus.ts) |
-
----
-
-## State Transitions
-
-### Selection Lifecycle
-
-```text
-[No selection] ──click task──► [selectedTask set]
-[selectedTask set] ──click same──► [No selection] (toggle optional — default: reselect)
-[selectedTask set] ──click other──► [selectedTask updated]
-[selectedTask set] ──datasource refresh──► [selectedTask preserved if id exists, else cleared]
-```
-
-### View Mode Lifecycle
-
-```text
-[viewMode=WEEK] ──ZOOM_DAY / setViewMode(DAY)──► [scales updated, VIEW_CHANGED emitted]
-```
-
-### Fullscreen Lifecycle
-
-```text
-[fullscreen=false] ──ENTER_FULLSCREEN──► [requestFullscreen → fullscreen=true → FULLSCREEN_CHANGED]
-[fullscreen=true] ──EXIT_FULLSCREEN / Esc──► [exitFullscreen → fullscreen=false → FULLSCREEN_CHANGED]
-```
-
-### Loading Lifecycle
-
-```text
-[datasource.status=Loading] ──► [loading=true]
-[datasource.status=Available] ──adapter──► [setTasks, loading=false]
-[datasource.status=Unavailable] ──► [tasks=[], loading=false, empty state]
+    // State changes (Phase C)
+    VIEW_CHANGED = "VIEW_CHANGED",
+    FULLSCREEN_CHANGED = "FULLSCREEN_CHANGED",
+}
 ```
 
 ---
 
-## DHTMLX Sync Model
+## Event Payload Shapes (TypeScript)
 
-| Store change | DHTMLX operation |
-|--------------|------------------|
-| Full datasource replace | `gantt.clearAll()` + `silent(parse)` + `render()` |
-| Single task update | `gantt.updateTask(id, task)` |
-| Bulk insert | `gantt.batchUpdate(() => { … })` |
-| View mode change | `config.scales = …` + `render()` |
-| Grid/timeline toggle | `gantt.config.show_grid` / layout API + `render()` |
+Tất cả payloads tuân theo `GanttEventPayload` wrapper:
 
----
+```typescript
+interface GanttEventPayload {
+    widgetId: string;       // Mendix widget name (e.g., "ganttChart1")
+    type: GanttOutgoingEvents;
+    data: TaskEventData | AddTaskRequestedData | TaskReorderedData | ViewChangedData | FullscreenChangedData;
+}
+```
 
-## Display Configuration Entity
+### TASK_CLICKED / TASK_DOUBLE_CLICKED
 
-Widget-level display flags from XML (not in MobX store unless toggled via event bus).
+```typescript
+interface TaskEventData {
+    task: GanttTask;  // Full task object at time of click
+}
 
-| Property | Type | Default | Store mirror |
-|----------|------|---------|--------------|
-| `height` | `integer` | `600` | N/A (CSS) |
-| `showToolbar` | `boolean` | `true` | N/A |
-| `showGrid` | `boolean` | `true` | `showGrid` when bus toggles |
-| `showTimeline` | `boolean` | `true` | `showTimeline` when bus toggles |
-| `showProgress` | `boolean` | `true` | DHTMLX config |
-| `showTodayMarker` | `boolean` | `true` | DHTMLX config |
+// JSON example:
+// {
+//   "widgetId": "ganttChart1",
+//   "type": "TASK_CLICKED",
+//   "data": {
+//     "task": {
+//       "id": "123",
+//       "text": "Phase A",
+//       "start_date": "2026-07-01",
+//       "end_date": "2026-07-31",
+//       "parent": "100",
+//       "metadata": { "mendixGuid": "abc123..." }
+//     }
+//   }
+// }
+```
 
----
+### ADD_TASK_REQUESTED
 
-## Validation Rules
+```typescript
+interface AddTaskRequestedData {
+    task: GanttTask;      // Parent task that was clicked
+    level: number;        // Always 1 (0-indexed second tier)
+    childCount: number;   // Current number of descendants
+}
 
-1. `id`, `text`, `start_date` MUST be present after mapping or row is excluded.
-2. `progress` outside 0–1 is clamped.
-3. `parent` referencing missing id is treated as root.
-4. `end_date` before `start_date` — swap or drop `end_date` (adapter policy: drop + log warn).
-5. `selectedPayload` JSON MUST include full `GanttTask` object including `metadata`.
+// JSON example:
+// {
+//   "widgetId": "ganttChart1",
+//   "type": "ADD_TASK_REQUESTED",
+//   "data": {
+//     "task": { "id": "456", "text": "Phase B", "parent": "100", ... },
+//     "level": 1,
+//     "childCount": 3
+//   }
+// }
+```
 
----
+### TASK_UPDATED (NEW — drag/resize)
 
-## Improvement Batch Entities (2026-06-15)
+```typescript
+interface TaskUpdatedData {
+    task: GanttTask;              // Task with updated dates
+    changeType: "move" | "resize" | "progress";
+}
 
-### GanttBrandTokens
+// JSON example (drag):
+// {
+//   "widgetId": "ganttChart1",
+//   "type": "TASK_UPDATED",
+//   "data": {
+//     "task": {
+//       "id": "789",
+//       "text": "Work Package 1",
+//       "start_date": "2026-07-15",
+//       "end_date": "2026-07-28",
+//       "duration": 13,
+//       "parent": "456",
+//       "metadata": { "mendixGuid": "xyz789..." }
+//     },
+//     "changeType": "move"
+//   }
+// }
+```
 
-SCSS design tokens for Gantt visual identity.
+### TASK_REORDERED (NEW — grid drag-and-drop)
 
-| Token | Value | Usage |
-|-------|-------|-------|
-| `$gantt-brand` | `#009999` | Primary accent (shorthand `#099`) |
-| `$gantt-brand-hover` | `#007a7a` | Add button hover state |
-| `$gantt-brand-muted` | `rgba(0, 153, 153, 0.12)` | Add button background |
+```typescript
+interface TaskReorderedData {
+    task: GanttTask;      // Task that was moved (with updated parent)
+    newParentId: string;  // New parent task ID ("0" nếu root)
+    newOrderNo: number;   // New sibling position (1-indexed)
+}
 
-**Applied to**: add icon, child count text, default task bar fill, optional selection border accent.
+// JSON example:
+// {
+//   "widgetId": "ganttChart1",
+//   "type": "TASK_REORDERED",
+//   "data": {
+//     "task": { "id": "789", "text": "Work Package 1", "parent": "789_new_parent", ... },
+//     "newParentId": "999",
+//     "newOrderNo": 2
+//   }
+// }
+```
 
----
+### VIEW_CHANGED
 
-### GanttAddTaskContext
+```typescript
+interface ViewChangedData {
+    viewMode: "day" | "week" | "month";
+}
+```
 
-Payload emitted when user clicks level-2 `+` button.
+### FULLSCREEN_CHANGED
 
-| Field | Type | Required | Notes |
-|-------|------|----------|-------|
-| `task` | `GanttTask` | Yes | Full row task at click time |
-| `level` | `number` | Yes | Always `1` (0-indexed second tier) |
-| `childCount` | `number` | Yes | Descendant count shown in grid |
-
-**Mendix wiring**: `onAddTask` action (onClick); developer reads `selectedPayload`-equivalent from action context or dedicated writable attribute (implementation choice in tasks.md).
-
----
-
-### GanttExpandState (updated)
-
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `expandLevel` | `number` | `0` | Target expanded depth (0 = collapsed) |
-| `maxExpandLevel` | `number` | computed | From gantt instance when available |
-
-**State transition**:
-
-```text
-[expandLevel=0] ──EXPAND_ALL click──► expandNextLevel → expandLevel=1 → expandToLevel(1)
-[expandLevel=1] ──EXPAND_ALL click──► expandNextLevel → expandLevel=2 → expandToLevel(2)
-[expandLevel=N] ──COLLAPSE_ALL──► collapseAllBranches → expandLevel=0
-[tasks re-sync] ──if expandLevel>0──► expandToLevel(expandLevel)  // preserve state
+```typescript
+interface FullscreenChangedData {
+    fullscreen: boolean;
+}
 ```
 
 ---
 
-### ChartCommand
+## GanttTask Model (unchanged)
 
-Shared Mendix → chart widget command names (subset; extensible).
-
-| Command | Event | Description |
-|---------|-------|-------------|
-| `ENTER_FULLSCREEN` | `ChartIncomingEvents.ENTER_FULLSCREEN` | Browser fullscreen on chart container |
-| `EXIT_FULLSCREEN` | `ChartIncomingEvents.EXIT_FULLSCREEN` | Exit fullscreen |
-
-**Mendix properties** (per chart widget):
-
-| Property | Type | Notes |
-|----------|------|-------|
-| `command` | writable String/Enum | Command name; clear after execute |
-| `commandPayload` | writable String | Optional JSON (reserved) |
-
----
-
-### ChartStore Extension
-
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `fullscreen` | `boolean` | `false` | Browser fullscreen state |
+```typescript
+interface GanttTask {
+    id: string;
+    text: string;
+    start_date: string | Date;
+    end_date?: string | Date;
+    duration?: number;
+    progress?: number;
+    parent?: string;
+    open?: boolean;
+    type?: string;
+    color?: string;
+    tags?: string[];
+    mto_date?: string | Date;
+    orderNo?: number;
+    metadata?: Record<string, unknown>;  // Mendix GUID stored here
+}
+```
 
 ---
 
-### BarChartAxisLabelConfig
+## WidgetEventBridge Interface (updated)
 
-| Property | Value | Notes |
-|----------|-------|-------|
-| `rotate` | `-45` | Clock 1:30 upward slant |
-| `gridBottom` | `"15%"` | Accommodate rotated labels |
+```typescript
+interface WidgetEventBridgeOptions {
+    widgetId: string;
+    eventBus: GanttEventBus;
+    onEvent?: ActionValue;
+    eventType?: EditableValue<string>;    // NEW
+    eventPayload?: EditableValue<string>; // NEW
+}
+
+interface WidgetEventBridge {
+    handleTaskClick: (task: GanttTask) => void;
+    handleTaskDoubleClick: (task: GanttTask) => void;
+    handleTaskCreated: (task: GanttTask) => void;
+    handleTaskUpdated: (task: GanttTask, changeType: "move" | "resize" | "progress") => void; // NEW
+    handleTaskDeleted: (taskId: string) => void;
+    handleAddTaskRequested: (task: GanttTask, childCount: number) => void;
+    handleTaskReordered: (task: GanttTask, newParentId: string, newOrderNo: number) => void;  // NEW
+    handleViewChanged: (viewMode: string) => void;          // NEW
+    handleFullscreenChanged: (fullscreen: boolean) => void; // NEW
+}
+```
+
+---
+
+## Mendix Non-Persistent Entity Schema
+
+```
+Entity: GanttEventContext (non-persistent, 1 instance per page session)
+  Attributes:
+    EventType    : String(200)    ← widget writes event name
+    EventPayload : String(unlimited) ← widget writes JSON string
+
+  Generalization: System.Session (optional, không bắt buộc)
+```
+
+Không cần persist, không cần association — chỉ cần tồn tại đủ lâu cho nanoflow đọc.

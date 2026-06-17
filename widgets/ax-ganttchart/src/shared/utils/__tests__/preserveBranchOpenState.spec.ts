@@ -51,4 +51,20 @@ describe("mergeGanttOpenState", () => {
 
         expect(mergeGanttOpenState(previous, next, gantt)[0].open).toBe(true);
     });
+
+    it("prefers live gantt open state over stale datasource open=false", () => {
+        const previous: GanttTask[] = [{ id: "1", text: "Program", open: true, start_date: "2026-01-01" }];
+        const next: GanttTask[] = [
+            { id: "1", text: "Program", open: false, start_date: "2026-01-01" },
+            { id: "2", text: "Phase", parent: "1", start_date: "2026-02-01" }
+        ];
+
+        const gantt = {
+            isTaskExists: (id: string) => id === "1",
+            hasChild: (id: string) => id === "1",
+            getTask: () => ({ $open: true })
+        };
+
+        expect(mergeGanttOpenState(previous, next, gantt)[0].open).toBe(true);
+    });
 });

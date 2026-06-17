@@ -56,17 +56,19 @@ export function mergeGanttOpenState(
             return task;
         }
 
-        if (task.open === true || task.open === false) {
-            return task;
-        }
-
         if (!gantt.isTaskExists(task.id) || !gantt.hasChild(task.id)) {
             return task;
         }
 
         const liveTask = gantt.getTask(task.id);
+
+        // Live DHTMLX branch state wins over stale datasource `open` flags after refresh.
         if (liveTask.$open === true) {
             return { ...task, open: true };
+        }
+
+        if (liveTask.$open === false) {
+            return { ...task, open: false };
         }
 
         return task;
