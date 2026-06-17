@@ -1,4 +1,7 @@
 $gantt-row-height: 30px;
+$gantt-cell-size: 35px;
+$gantt-scale-height: 70px;
+$gantt-font-size: 13px;
 $gantt-border-color: #f0f0f0;
 $gantt-header-bg: #fafafa;
 
@@ -30,3 +33,6 @@ $gantt-task-regular: $gantt-brand;
 $gantt-task-project: $gantt-brand;
 $gantt-task-milestone: #722ed1;
 $gantt-task-progress: rgba(0, 0, 0, 0.15);
+
+// MTO / K/O milestone marker (silver)
+$gantt-mto-marker: #b8b8b8;

@@ -1,5 +1,5 @@
 import classNames from "classnames";
-import { forwardRef, type CSSProperties, type ReactNode } from "react";
+import { JSX, forwardRef, type CSSProperties, type ReactNode } from "react";
 
 export interface ChartContainerProps {
     children: ReactNode;

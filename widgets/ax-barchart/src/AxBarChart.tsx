@@ -1,3 +1,4 @@
+import { JSX } from "react";
 import { ThemeProvider } from "@iris/chart-ui";
 import { BarChartView } from "./main/components/BarChartView";
 import { BarChartProvider } from "./main/providers/BarChartProvider";

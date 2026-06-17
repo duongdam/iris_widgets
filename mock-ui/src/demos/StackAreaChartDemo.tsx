@@ -2,7 +2,7 @@ import { ThemeProvider } from "@iris/chart-ui";
 import type { ChartEventPayload, ChartRecord } from "@iris/chart-core";
 import type { Big } from "big.js";
 import type { EditableValue } from "mendix";
-import { useMemo } from "react";
+import { JSX, useMemo } from "react";
 import { StackAreaChartView } from "../../../widgets/ax-stackareachart/src/main/components/StackAreaChartView";
 import {
     StackAreaChartProvider,
@@ -60,7 +60,7 @@ function StackAreaChartContextBridge({
     onContextReady,
 }: {
     onContextReady?: StackAreaChartDemoProps["onContextReady"];
-}): null {
+}): JSX.Element | null {
     const { eventBus, widgetId } = useStackAreaChartContext();
     return <ChartContextExporter eventBus={eventBus} widgetId={widgetId} onContextReady={onContextReady} />;
 }

@@ -2,7 +2,7 @@ import type { ActionValue, EditableValue, ListAttributeValue, ListValue, ObjectI
 import type { CSSProperties } from "react";
 import type { Big } from "big.js";
 
-export type TimelineViewModeEnum = "day" | "week" | "month" | "quarter";
+export type TimelineViewModeEnum = "day" | "week" | "month";
 
 export interface AxGanttChartContainerProps {
     name: string;
@@ -21,10 +21,16 @@ export interface AxGanttChartProps extends AxGanttChartContainerProps {
     durationAttribute?: ListAttributeValue<Big>;
     progressAttribute?: ListAttributeValue<Big>;
     parentAttribute?: ListAttributeValue<string | Big>;
+    /** Sibling sort order within the same parent branch. */
+    orderNoAttribute?: ListAttributeValue<Big>;
     openAttribute?: ListAttributeValue<boolean>;
     typeAttribute?: ListAttributeValue<string>;
     /** Optional JSON array or comma-separated tag labels (e.g. Manual, Process). */
     tagsAttribute?: ListAttributeValue<string>;
+    /** MTO/K/O milestone date (MTO = midpoint, K/O = bar start). */
+    mtoDateAttribute?: ListAttributeValue<Date>;
+    /** Event marker type: MTO or K/O. */
+    eventTypeAttribute?: ListAttributeValue<string>;
     showToolbar: boolean;
     showGrid: boolean;
     showTimeline: boolean;
@@ -32,25 +38,15 @@ export interface AxGanttChartProps extends AxGanttChartContainerProps {
     showTodayMarker: boolean;
     showCriticalPath: boolean;
     showBaseline: boolean;
-    allowCreate: boolean;
-    allowUpdate: boolean;
-    allowDelete: boolean;
     allowDrag: boolean;
     allowResize: boolean;
+    allowGridReorder: boolean;
     readOnly: boolean;
     defaultViewMode: TimelineViewModeEnum;
-    selectedTaskId?: EditableValue<string | Big>;
-    selectedPayload?: EditableValue<string>;
     command?: EditableValue<string>;
     commandPayload?: EditableValue<string>;
     exportServerUrl?: string;
-    onTaskClick?: ActionValue;
-    onTaskDoubleClick?: ActionValue;
-    onTaskCreated?: ActionValue;
-    onTaskUpdated?: ActionValue;
-    onTaskDeleted?: ActionValue;
-    onSelectionChanged?: ActionValue;
-    onAddTask?: ActionValue;
+    onEvent?: ActionValue;
 }
 
 export type { ObjectItem };

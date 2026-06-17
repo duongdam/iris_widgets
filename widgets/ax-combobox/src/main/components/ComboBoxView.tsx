@@ -7,7 +7,7 @@ import {
     updateEditableValue,
 } from "@iris/form-core";
 import { Button, Divider, Select, Tooltip } from "antd";
-import { useCallback, useMemo, type ReactElement } from "react";
+import { JSX, useCallback, useMemo, type ReactElement } from "react";
 import type { AxComboBoxProps } from "../../typings/AxComboBoxProps";
 import { useComboboxDatasource } from "../hooks/useComboboxDatasource";
 

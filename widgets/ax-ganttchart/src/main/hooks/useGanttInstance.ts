@@ -8,17 +8,22 @@ import {
     enablePlugins,
     gantt,
     initGantt,
+    installGanttLayoutSync,
     resetGantt,
     setupTodayMarkerSync,
+    setupMtoMarkerSync,
     updateLayout
 } from "../components/GanttConfiguration";
 import { expandToLevel } from "../components/TreeExpandManager";
 import { applyMode, applyTimelineRange, scrollToToday } from "../components/TimelineManager";
-import { scheduleTodayMarkerRefresh, syncTodayMarker } from "../components/todayMarker";
+import { scheduleTodayMarkerRefresh, syncTodayMarker } from "../components/TodayMarker";
+import { scheduleMtoMarkerRefresh } from "../components/MtoMarker";
+import { applyGridReorderConfig } from "../../shared/utils/gridReorder";
 import type { GanttTask } from "../eventbus/eventTypes";
 import type { WidgetEventBridge } from "../services/WidgetEventBridge";
 import { syncTasks } from "../services/GanttSyncService";
 import type { GanttEditingConfig } from "../../shared/types/editingConfig";
+import { mergeGanttOpenState } from "../../shared/utils/preserveBranchOpenState";
 
 export interface UseGanttInstanceOptions {
     store: GanttStore;
@@ -30,10 +35,26 @@ export interface UseGanttInstanceOptions {
     showCriticalPath: boolean;
     showBaseline: boolean;
     editing: GanttEditingConfig;
+    allowGridReorder?: boolean;
     bridge?: WidgetEventBridge;
     onHoverTask?: (taskId: string | undefined) => void;
     onAddTaskClick?: (taskId: string) => void;
-    writeSelectionContext?: (task: GanttTask) => void;
+}
+
+interface GanttInstanceRuntime {
+    initialized: boolean;
+    previousTasks: GanttTask[];
+    bridge?: WidgetEventBridge;
+    showTodayMarker: boolean;
+    allowGridReorder: boolean;
+    editing: GanttEditingConfig;
+    onAddTaskClick?: (taskId: string) => void;
+    teardownTodayMarker: (() => void) | null;
+    teardownMtoMarker: (() => void) | null;
+    teardownGridReorder: (() => void) | null;
+    teardownEditing: (() => void) | null;
+    teardownAddButton: (() => void) | null;
+    teardownLayout: (() => void) | null;
 }
 
 let previousHoverRow: HTMLElement | null = null;
@@ -74,6 +95,24 @@ function scheduleFocusOnToday(showMarker: boolean): void {
     });
 }
 
+function createRuntimeState(options: UseGanttInstanceOptions): GanttInstanceRuntime {
+    return {
+        initialized: false,
+        previousTasks: [],
+        bridge: options.bridge,
+        showTodayMarker: options.showTodayMarker,
+        allowGridReorder: options.allowGridReorder ?? true,
+        editing: options.editing,
+        onAddTaskClick: options.onAddTaskClick,
+        teardownTodayMarker: null,
+        teardownMtoMarker: null,
+        teardownGridReorder: null,
+        teardownEditing: null,
+        teardownAddButton: null,
+        teardownLayout: null
+    };
+}
+
 export function useGanttInstance(options: UseGanttInstanceOptions): void {
     const {
         store,
@@ -85,33 +124,28 @@ export function useGanttInstance(options: UseGanttInstanceOptions): void {
         showCriticalPath,
         showBaseline,
         editing,
+        allowGridReorder = true,
         bridge,
         onHoverTask,
-        onAddTaskClick,
-        writeSelectionContext
+        onAddTaskClick
     } = options;
 
-    const initializedRef = useRef(false);
-    const previousTasksRef = useRef<GanttTask[]>([]);
-    const bridgeRef = useRef(bridge);
-    const showTodayMarkerRef = useRef(showTodayMarker);
-    const teardownTodayMarkerRef = useRef<(() => void) | null>(null);
-    const teardownEditingRef = useRef<(() => void) | null>(null);
-    const teardownAddButtonRef = useRef<(() => void) | null>(null);
-    const onAddTaskClickRef = useRef(onAddTaskClick);
-    const writeSelectionContextRef = useRef(writeSelectionContext);
-    bridgeRef.current = bridge;
-    showTodayMarkerRef.current = showTodayMarker;
-    onAddTaskClickRef.current = onAddTaskClick;
-    writeSelectionContextRef.current = writeSelectionContext;
+    const runtimeRef = useRef<GanttInstanceRuntime>(createRuntimeState(options));
+
+    runtimeRef.current.bridge = bridge;
+    runtimeRef.current.showTodayMarker = showTodayMarker;
+    runtimeRef.current.onAddTaskClick = onAddTaskClick;
+    runtimeRef.current.allowGridReorder = allowGridReorder;
+    runtimeRef.current.editing = editing;
 
     useEffect(() => {
+        const runtime = runtimeRef.current;
         const container = containerRef.current;
-        if (!container || initializedRef.current) {
+        if (!container || runtime.initialized) {
             return undefined;
         }
 
-        initializedRef.current = true;
+        runtime.initialized = true;
         enablePlugins();
 
         initGantt(container, {
@@ -125,36 +159,35 @@ export function useGanttInstance(options: UseGanttInstanceOptions): void {
             timelineEnd: store.timelineEnd,
             appearance: { showCriticalPath, showBaseline }
         });
+        runtime.teardownLayout = installGanttLayoutSync(container);
 
-        teardownTodayMarkerRef.current = setupTodayMarkerSync(() => showTodayMarkerRef.current);
-        teardownEditingRef.current = applyEditingConfig(editing);
+        runtime.teardownTodayMarker = setupTodayMarkerSync(() => runtimeRef.current.showTodayMarker);
+        runtime.teardownMtoMarker = setupMtoMarkerSync();
+        runtime.teardownEditing = applyEditingConfig(editing);
 
         const detachEvents = attachNativeEvents({
             onTaskClick: (id: string) => {
                 const task = store.taskById.get(id);
                 if (task) {
-                    writeSelectionContextRef.current?.(task);
                     store.selectTask(task);
-                    bridgeRef.current?.handleTaskClick(task);
-                    bridgeRef.current?.handleSelectionChanged(task);
+                    runtimeRef.current.bridge?.handleTaskClick(task);
                 }
             },
             onTaskDblClick: (id: string) => {
                 const task = store.taskById.get(id);
                 if (task) {
-                    writeSelectionContextRef.current?.(task);
                     store.selectTask(task);
-                    bridgeRef.current?.handleTaskDoubleClick(task);
+                    runtimeRef.current.bridge?.handleTaskDoubleClick(task);
                 }
             },
             onAfterTaskAdd: (_id: string, task: GanttTask) => {
-                bridgeRef.current?.handleTaskCreated(task);
+                runtimeRef.current.bridge?.handleTaskCreated(task);
             },
             onAfterTaskUpdate: (_id: string, task: GanttTask) => {
-                bridgeRef.current?.handleTaskUpdated(task);
+                runtimeRef.current.bridge?.handleTaskUpdated(task);
             },
             onAfterTaskDelete: (id: string) => {
-                bridgeRef.current?.handleTaskDeleted(id);
+                runtimeRef.current.bridge?.handleTaskDeleted(id);
             },
             onMouseMove: (id: string) => {
                 store.setHoveredTaskId(id);
@@ -163,29 +196,35 @@ export function useGanttInstance(options: UseGanttInstanceOptions): void {
             }
         });
 
-        teardownAddButtonRef.current = attachAddButtonDelegation(container, (taskId, event) => {
+        runtime.teardownAddButton = attachAddButtonDelegation(container, (taskId, event) => {
             event.stopPropagation();
-            onAddTaskClickRef.current?.(taskId);
+            runtimeRef.current.onAddTaskClick?.(taskId);
         });
 
         if (store.tasks.length > 0) {
             syncTasks([], store.tasks);
-            previousTasksRef.current = store.tasks;
+            runtime.previousTasks = store.tasks;
         }
 
-        scheduleFocusOnToday(showTodayMarkerRef.current);
+        scheduleFocusOnToday(runtimeRef.current.showTodayMarker);
 
         return () => {
-            teardownTodayMarkerRef.current?.();
-            teardownTodayMarkerRef.current = null;
-            teardownEditingRef.current?.();
-            teardownEditingRef.current = null;
-            teardownAddButtonRef.current?.();
-            teardownAddButtonRef.current = null;
+            runtime.teardownTodayMarker?.();
+            runtime.teardownTodayMarker = null;
+            runtime.teardownMtoMarker?.();
+            runtime.teardownMtoMarker = null;
+            runtime.teardownGridReorder?.();
+            runtime.teardownGridReorder = null;
+            runtime.teardownEditing?.();
+            runtime.teardownEditing = null;
+            runtime.teardownAddButton?.();
+            runtime.teardownAddButton = null;
+            runtime.teardownLayout?.();
+            runtime.teardownLayout = null;
             detachEvents();
             clearCrossHighlight();
             resetGantt();
-            initializedRef.current = false;
+            runtime.initialized = false;
         };
     }, [
         containerRef,
@@ -199,41 +238,84 @@ export function useGanttInstance(options: UseGanttInstanceOptions): void {
     ]);
 
     useEffect(() => {
-        if (!initializedRef.current) {
+        const runtime = runtimeRef.current;
+        if (!runtime.initialized) {
             return undefined;
         }
 
-        teardownEditingRef.current?.();
-        teardownEditingRef.current = applyEditingConfig(editing);
+        runtime.teardownEditing?.();
+        runtime.teardownEditing = applyEditingConfig(editing);
 
         return () => {
-            teardownEditingRef.current?.();
-            teardownEditingRef.current = null;
+            runtime.teardownEditing?.();
+            runtime.teardownEditing = null;
         };
     }, [editing]);
 
     useEffect(() => {
-        if (!initializedRef.current) {
+        const runtime = runtimeRef.current;
+        if (!runtime.initialized) {
+            return undefined;
+        }
+
+        const dispose = reaction(
+            () => ({
+                enabled: runtimeRef.current.allowGridReorder && store.gridReorderMode,
+                readOnly: runtimeRef.current.editing.readOnly
+            }),
+            ({ enabled, readOnly }) => {
+                runtime.teardownGridReorder?.();
+                runtime.teardownGridReorder = applyGridReorderConfig(
+                    enabled,
+                    store,
+                    runtimeRef.current.bridge,
+                    gantt,
+                    { readOnly }
+                );
+            },
+            { fireImmediately: true }
+        );
+
+        return () => {
+            dispose();
+            runtime.teardownGridReorder?.();
+            runtime.teardownGridReorder = null;
+        };
+    }, [store]);
+
+    useEffect(() => {
+        if (!allowGridReorder && store.gridReorderMode) {
+            store.setGridReorderMode(false);
+        }
+    }, [allowGridReorder, store]);
+
+    useEffect(() => {
+        const runtime = runtimeRef.current;
+        if (!runtime.initialized) {
             return;
         }
 
-        const hadTasks = previousTasksRef.current.length > 0;
-        syncTasks(previousTasksRef.current, store.tasks);
-        previousTasksRef.current = store.tasks;
+        const hadTasks = runtime.previousTasks.length > 0;
+        const tasksToSync = mergeGanttOpenState(runtime.previousTasks, store.tasks, gantt);
+        syncTasks(runtime.previousTasks, tasksToSync);
+        runtime.previousTasks = tasksToSync;
 
         if (store.expandLevel > 0) {
             expandToLevel(gantt, store.expandLevel);
         }
 
         if (!hadTasks && store.tasks.length > 0) {
-            scheduleFocusOnToday(showTodayMarkerRef.current);
+            scheduleFocusOnToday(runtimeRef.current.showTodayMarker);
         } else {
-            scheduleTodayMarkerRefresh(gantt, showTodayMarkerRef.current);
+            scheduleTodayMarkerRefresh(gantt, runtimeRef.current.showTodayMarker);
         }
+
+        scheduleMtoMarkerRefresh(gantt);
     }, [store.tasks]);
 
     useEffect(() => {
-        if (!initializedRef.current) {
+        const runtime = runtimeRef.current;
+        if (!runtime.initialized) {
             return undefined;
         }
 
@@ -248,29 +330,31 @@ export function useGanttInstance(options: UseGanttInstanceOptions): void {
     }, [store]);
 
     useEffect(() => {
-        if (!initializedRef.current) {
+        const runtime = runtimeRef.current;
+        if (!runtime.initialized) {
             return;
         }
 
         applyMode(gantt, store.viewMode, store.timelineStart, store.timelineEnd);
-        scheduleTodayMarkerRefresh(gantt, showTodayMarkerRef.current);
-        bridgeRef.current?.handleViewChanged(store.viewMode);
+        scheduleTodayMarkerRefresh(gantt, runtimeRef.current.showTodayMarker);
     }, [store.viewMode]);
 
     useEffect(() => {
-        if (!initializedRef.current) {
+        const runtime = runtimeRef.current;
+        if (!runtime.initialized) {
             return;
         }
 
         applyTimelineRange(gantt, store.viewMode, store.timelineStart, store.timelineEnd);
         gantt.render();
-        scheduleTodayMarkerRefresh(gantt, showTodayMarkerRef.current);
+        scheduleTodayMarkerRefresh(gantt, runtimeRef.current.showTodayMarker);
     }, [store.timelineStart, store.timelineEnd]);
 
     useEffect(() => {
-        showTodayMarkerRef.current = showTodayMarker;
+        runtimeRef.current.showTodayMarker = showTodayMarker;
 
-        if (!initializedRef.current) {
+        const runtime = runtimeRef.current;
+        if (!runtime.initialized) {
             return;
         }
 
@@ -278,7 +362,8 @@ export function useGanttInstance(options: UseGanttInstanceOptions): void {
     }, [showTodayMarker]);
 
     useEffect(() => {
-        if (!initializedRef.current) {
+        const runtime = runtimeRef.current;
+        if (!runtime.initialized) {
             return;
         }
 

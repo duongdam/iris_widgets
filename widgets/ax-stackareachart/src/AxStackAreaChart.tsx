@@ -1,3 +1,4 @@
+import { JSX } from "react";
 import { ThemeProvider } from "@iris/chart-ui";
 import { StackAreaChartView } from "./main/components/StackAreaChartView";
 import { StackAreaChartProvider } from "./main/providers/StackAreaChartProvider";

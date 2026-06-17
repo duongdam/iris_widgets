@@ -1,5 +1,4 @@
-import type { EditableValue } from "mendix";
-import { useEffect, useMemo } from "react";
+import { JSX, useEffect, useMemo } from "react";
 import { AxGanttChartView } from "../../../widgets/ax-ganttchart/src/main/components/AxGanttChartView";
 import type { GanttEventPayload } from "../../../widgets/ax-ganttchart/src/main/eventbus/eventTypes";
 import {
@@ -25,14 +24,10 @@ export interface GanttChartDemoProps {
     showTodayMarker: boolean;
     showCriticalPath: boolean;
     showBaseline: boolean;
-    allowCreate: boolean;
-    allowUpdate: boolean;
-    allowDelete: boolean;
     allowDrag: boolean;
     allowResize: boolean;
+    allowGridReorder: boolean;
     readOnly: boolean;
-    selectedTaskId: EditableValue<string>;
-    selectedPayload: EditableValue<string>;
     onGanttEvent?: (payload: GanttEventPayload) => void;
     onContextReady?: (context: GanttContextValue) => void;
 }
@@ -71,14 +66,10 @@ export function GanttChartDemo({
     showTodayMarker,
     showCriticalPath,
     showBaseline,
-    allowCreate,
-    allowUpdate,
-    allowDelete,
     allowDrag,
     allowResize,
+    allowGridReorder,
     readOnly,
-    selectedTaskId,
-    selectedPayload,
     onGanttEvent,
     onContextReady,
 }: GanttChartDemoProps): JSX.Element {
@@ -97,14 +88,10 @@ export function GanttChartDemo({
             showTodayMarker,
             showCriticalPath,
             showBaseline,
-            allowCreate,
-            allowUpdate,
-            allowDelete,
             allowDrag,
             allowResize,
+            allowGridReorder,
             readOnly,
-            selectedTaskId: selectedTaskId as AxGanttChartProps["selectedTaskId"],
-            selectedPayload,
             ...datasourceProps,
         }),
         [
@@ -117,14 +104,10 @@ export function GanttChartDemo({
             showTodayMarker,
             showCriticalPath,
             showBaseline,
-            allowCreate,
-            allowUpdate,
-            allowDelete,
             allowDrag,
             allowResize,
+            allowGridReorder,
             readOnly,
-            selectedTaskId,
-            selectedPayload,
             datasourceProps,
         ]
     );

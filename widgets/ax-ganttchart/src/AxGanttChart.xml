@@ -16,6 +16,47 @@
                 <caption>Height</caption>
                 <description>Gantt widget height in pixels</description>
             </property>
+            <propertyGroup caption="Timeline">
+            <property key="defaultViewMode" type="enumeration" required="true" defaultValue="month">
+                <caption>Default view mode</caption>
+                <description>Initial timeline scale granularity</description>
+                <enumerationValues>
+                    <enumerationValue key="day">Day</enumerationValue>
+                    <enumerationValue key="week">Week</enumerationValue>
+                    <enumerationValue key="month">Month</enumerationValue>
+                </enumerationValues>
+            </property>
+        </propertyGroup>
+            <propertyGroup caption="Display">
+            <property key="showToolbar" type="boolean" required="true" defaultValue="true">
+                <caption>Show toolbar</caption>
+                <description>Display built-in view mode and action toolbar</description>
+            </property>
+            <property key="showGrid" type="boolean" required="true" defaultValue="true">
+                <caption>Show grid</caption>
+                <description>Display task grid panel</description>
+            </property>
+            <property key="showTimeline" type="boolean" required="true" defaultValue="true">
+                <caption>Show timeline</caption>
+                <description>Display timeline panel</description>
+            </property>
+            <property key="showProgress" type="boolean" required="true" defaultValue="false">
+                <caption>Show progress</caption>
+                <description>Display progress bars on tasks</description>
+            </property>
+            <property key="showTodayMarker" type="boolean" required="true" defaultValue="true">
+                <caption>Show today marker</caption>
+                <description>Display vertical marker for current date</description>
+            </property>
+            <property key="showCriticalPath" type="boolean" required="true" defaultValue="false">
+                <caption>Show critical path</caption>
+                <description>Highlight critical path tasks (future feature)</description>
+            </property>
+            <property key="showBaseline" type="boolean" required="true" defaultValue="false">
+                <caption>Show baseline</caption>
+                <description>Display baseline bars (future feature)</description>
+            </property>
+        </propertyGroup>
         </propertyGroup>
         <propertyGroup caption="Data Source">
             <property key="tasksDatasource" type="datasource" isList="true" required="true">
@@ -76,6 +117,15 @@
                     <attributeType name="AutoNumber" />
                 </attributeTypes>
             </property>
+            <property key="orderNoAttribute" type="attribute" dataSource="tasksDatasource" required="false">
+                <caption>Order number attribute</caption>
+                <description>Sibling sort order within the same parent (lower values appear first)</description>
+                <attributeTypes>
+                    <attributeType name="Integer" />
+                    <attributeType name="Long" />
+                    <attributeType name="Decimal" />
+                </attributeTypes>
+            </property>
             <property key="openAttribute" type="attribute" dataSource="tasksDatasource" required="false">
                 <caption>Open attribute</caption>
                 <description>Whether child tasks are expanded</description>
@@ -91,90 +141,45 @@
                     <attributeType name="Enum" />
                 </attributeTypes>
             </property>
-        </propertyGroup>
-        <propertyGroup caption="Display">
-            <property key="showToolbar" type="boolean" required="true" defaultValue="true">
-                <caption>Show toolbar</caption>
-                <description>Display built-in view mode and action toolbar</description>
+            <property key="tagsAttribute" type="attribute" dataSource="tasksDatasource" required="false">
+                <caption>Tags attribute</caption>
+                <description>JSON array or comma-separated labels (e.g. Manual, Process)</description>
+                <attributeTypes>
+                    <attributeType name="String" />
+                </attributeTypes>
             </property>
-            <property key="showGrid" type="boolean" required="true" defaultValue="true">
-                <caption>Show grid</caption>
-                <description>Display task grid panel</description>
+            <property key="mtoDateAttribute" type="attribute" dataSource="tasksDatasource" required="false">
+                <caption>Milestone date attribute</caption>
+                <description>MTO/K/O milestone date on the timeline (MTO = midpoint, K/O = bar start)</description>
+                <attributeTypes>
+                    <attributeType name="DateTime" />
+                </attributeTypes>
             </property>
-            <property key="showTimeline" type="boolean" required="true" defaultValue="true">
-                <caption>Show timeline</caption>
-                <description>Display timeline panel</description>
-            </property>
-            <property key="showProgress" type="boolean" required="true" defaultValue="true">
-                <caption>Show progress</caption>
-                <description>Display progress bars on tasks</description>
-            </property>
-            <property key="showTodayMarker" type="boolean" required="true" defaultValue="true">
-                <caption>Show today marker</caption>
-                <description>Display vertical marker for current date</description>
-            </property>
-            <property key="showCriticalPath" type="boolean" required="true" defaultValue="false">
-                <caption>Show critical path</caption>
-                <description>Highlight critical path tasks (future feature)</description>
-            </property>
-            <property key="showBaseline" type="boolean" required="true" defaultValue="false">
-                <caption>Show baseline</caption>
-                <description>Display baseline bars (future feature)</description>
+            <property key="eventTypeAttribute" type="attribute" dataSource="tasksDatasource" required="false">
+                <caption>Event type attribute</caption>
+                <description>Event marker type: MTO or K/O</description>
+                <attributeTypes>
+                    <attributeType name="String" />
+                    <attributeType name="Enum" />
+                </attributeTypes>
             </property>
         </propertyGroup>
         <propertyGroup caption="Editing">
-            <property key="allowCreate" type="boolean" required="true" defaultValue="true">
-                <caption>Allow create</caption>
-                <description>Allow creating new tasks in the Gantt</description>
-            </property>
-            <property key="allowUpdate" type="boolean" required="true" defaultValue="true">
-                <caption>Allow update</caption>
-                <description>Allow updating existing tasks</description>
-            </property>
-            <property key="allowDelete" type="boolean" required="true" defaultValue="true">
-                <caption>Allow delete</caption>
-                <description>Allow deleting tasks</description>
-            </property>
             <property key="allowDrag" type="boolean" required="true" defaultValue="true">
                 <caption>Allow drag</caption>
                 <description>Allow dragging tasks on the timeline</description>
             </property>
-            <property key="allowResize" type="boolean" required="true" defaultValue="true">
+            <property key="allowResize" type="boolean" required="true" defaultValue="false">
                 <caption>Allow resize</caption>
-                <description>Allow resizing task bars</description>
+                <description>Allow resizing task bars (MTO/K/O events are always move-only)</description>
+            </property>
+            <property key="allowGridReorder" type="boolean" required="true" defaultValue="true">
+                <caption>Allow grid reorder</caption>
+                <description>Show toolbar mode to drag child rows onto different parents in the grid</description>
             </property>
             <property key="readOnly" type="boolean" required="true" defaultValue="false">
                 <caption>Read only</caption>
                 <description>Disable all Gantt editing interactions</description>
-            </property>
-        </propertyGroup>
-        <propertyGroup caption="Timeline">
-            <property key="defaultViewMode" type="enumeration" required="true" defaultValue="week">
-                <caption>Default view mode</caption>
-                <description>Initial timeline scale granularity</description>
-                <enumerationValues>
-                    <enumerationValue key="day">Day</enumerationValue>
-                    <enumerationValue key="week">Week</enumerationValue>
-                    <enumerationValue key="month">Month</enumerationValue>
-                    <enumerationValue key="quarter">Quarter</enumerationValue>
-                </enumerationValues>
-            </property>
-        </propertyGroup>
-        <propertyGroup caption="Selection">
-            <property key="selectedTaskId" type="attribute" required="false">
-                <caption>Selected task ID</caption>
-                <description>Writable attribute for the selected task identifier</description>
-                <attributeTypes>
-                    <attributeType name="String" />
-                    <attributeType name="AutoNumber" />
-                </attributeTypes>
-            </property>
-            <property key="selectedPayload" type="attribute" required="false">
-                <caption>Selected payload</caption>
-                <description>Complete selected GanttTask as JSON string including metadata</description>
-                <attributeTypes>
-                    <attributeType name="String" />
-                </attributeTypes>
             </property>
         </propertyGroup>
         <propertyGroup caption="Commands">
@@ -201,33 +206,12 @@
             </property>
         </propertyGroup>
         <propertyGroup caption="Events">
-            <property key="onTaskClick" type="action" required="false">
-                <caption>On task click</caption>
-                <description>Action executed when a task is clicked</description>
-            </property>
-            <property key="onTaskDoubleClick" type="action" required="false">
-                <caption>On task double click</caption>
-                <description>Action executed when a task is double-clicked</description>
-            </property>
-            <property key="onTaskCreated" type="action" required="false">
-                <caption>On task created</caption>
-                <description>Action executed when a task is created in the Gantt</description>
-            </property>
-            <property key="onTaskUpdated" type="action" required="false">
-                <caption>On task updated</caption>
-                <description>Action executed when a task is updated in the Gantt</description>
-            </property>
-            <property key="onTaskDeleted" type="action" required="false">
-                <caption>On task deleted</caption>
-                <description>Action executed when a task is deleted in the Gantt</description>
-            </property>
-            <property key="onSelectionChanged" type="action" required="false">
-                <caption>On selection changed</caption>
-                <description>Action executed when task selection changes</description>
-            </property>
-            <property key="onAddTask" type="action" required="false">
-                <caption>On add task</caption>
-                <description>Action executed when the level-2 (+) button is clicked. Selected task ID and payload are updated with the row data.</description>
+            <property key="onEvent" type="action" required="false">
+                <caption>On event</caption>
+                <description>
+                    Nanoflow or microflow executed when the Gantt emits an outgoing event (task click, selection, add task, etc.).
+                    Read event details in nanoflow JavaScript via window.__AX_GANTT__.getLastEvent(widgetName).
+                </description>
             </property>
         </propertyGroup>
     </properties>

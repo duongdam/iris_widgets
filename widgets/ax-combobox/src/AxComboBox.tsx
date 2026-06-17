@@ -1,3 +1,4 @@
+import { JSX } from "react";
 import { ThemeProvider } from "@iris/chart-ui";
 import { ComboBoxView } from "./main/components/ComboBoxView";
 import type { AxComboBoxContainerProps, AxComboBoxProps } from "./typings/AxComboBoxProps";

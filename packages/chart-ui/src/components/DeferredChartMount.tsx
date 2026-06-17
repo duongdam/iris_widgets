@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { JSX, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
 export interface DeferredChartMountProps {
     children: ReactNode;

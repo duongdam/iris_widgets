@@ -1,5 +1,5 @@
 import type { ChartEventBus } from "@iris/chart-core";
-import { useEffect } from "react";
+import { JSX, useEffect } from "react";
 
 export interface ChartDemoContext {
     eventBus: ChartEventBus;
@@ -16,7 +16,7 @@ export function ChartContextExporter({
     eventBus,
     widgetId,
     onContextReady,
-}: ChartContextExporterProps): null {
+}: ChartContextExporterProps): JSX.Element | null {
     useEffect(() => {
         onContextReady?.({ eventBus, widgetId });
     }, [eventBus, onContextReady, widgetId]);

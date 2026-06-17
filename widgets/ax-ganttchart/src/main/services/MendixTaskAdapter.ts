@@ -6,6 +6,8 @@ import { convertDate, convertDateToGanttString } from "../../shared/converters/c
 import { convertProgress } from "../../shared/converters/convertProgress";
 import { convertTaskId } from "../../shared/converters/convertTaskId";
 import { validateDatasourceMapping } from "../../shared/validators/validateDatasourceMapping";
+import { withComputedMtoDate, normalizeEventTypeTag } from "../../shared/utils/mtoDate";
+import { sortTasksByOrderNo } from "../../shared/utils/sortTasksByOrderNo";
 
 export interface AdapterResult {
     tasks: GanttTask[];
@@ -24,9 +26,12 @@ export type MendixTaskMappingProps = Pick<
     | "durationAttribute"
     | "progressAttribute"
     | "parentAttribute"
+    | "orderNoAttribute"
     | "openAttribute"
     | "typeAttribute"
     | "tagsAttribute"
+    | "mtoDateAttribute"
+    | "eventTypeAttribute"
 >;
 
 function parseTags(value: string | undefined): string[] | undefined {
@@ -161,9 +166,16 @@ export function mapMendixDatasourceToGanttTasks(props: MendixTaskMappingProps): 
         const duration = readDuration(item, props.durationAttribute);
         const progress = readNumber(item, props.progressAttribute);
         const parent = props.parentAttribute ? readTaskId(item, props.parentAttribute) : undefined;
+        const orderNo = readDuration(item, props.orderNoAttribute);
         const open = readBoolean(item, props.openAttribute);
         const type = props.typeAttribute ? readAttributeString(item, props.typeAttribute) : undefined;
         const tags = props.tagsAttribute ? parseTags(readAttributeString(item, props.tagsAttribute)) : undefined;
+        const mtoDate = readDate(item, props.mtoDateAttribute);
+        const mto_date = convertDateToGanttString(mtoDate);
+        const eventTypeRaw = props.eventTypeAttribute
+            ? readAttributeString(item, props.eventTypeAttribute)
+            : undefined;
+        const eventTypeTag = normalizeEventTypeTag(eventTypeRaw);
 
         const task: GanttTask = {
             id,
@@ -190,6 +202,10 @@ export function mapMendixDatasourceToGanttTasks(props: MendixTaskMappingProps): 
             task.parent = parent;
         }
 
+        if (orderNo != null) {
+            task.orderNo = orderNo;
+        }
+
         if (open != null) {
             task.open = open;
         }
@@ -202,7 +218,15 @@ export function mapMendixDatasourceToGanttTasks(props: MendixTaskMappingProps): 
             task.tags = tags;
         }
 
-        tasks.push(task);
+        if (eventTypeTag) {
+            task.tags = [...(task.tags ?? []).filter(tag => tag !== "MTO" && tag !== "K/O"), eventTypeTag];
+        }
+
+        if (mto_date) {
+            task.mto_date = mto_date;
+        }
+
+        tasks.push(withComputedMtoDate(task));
     }
 
     const validIds = new Set(tasks.map(task => task.id));
@@ -213,7 +237,7 @@ export function mapMendixDatasourceToGanttTasks(props: MendixTaskMappingProps): 
         }
     }
 
-    return { tasks, skippedCount, warnings, mappingValid: true };
+    return { tasks: sortTasksByOrderNo(tasks), skippedCount, warnings, mappingValid: true };
 }
 
 export function isDatasourceLoading(datasource: ListValue): boolean {

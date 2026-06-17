@@ -1,5 +1,5 @@
 import { ConfigProvider, theme as antdTheme, type ThemeConfig } from "antd";
-import { useMemo, type ReactNode } from "react";
+import { JSX, useMemo, type ReactNode } from "react";
 
 export interface ThemeProviderProps {
     children: ReactNode;

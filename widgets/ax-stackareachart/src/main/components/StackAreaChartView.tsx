@@ -12,7 +12,7 @@ import {
 import type { EChartsType } from "echarts";
 import ReactECharts from "echarts-for-react";
 import { observer } from "mobx-react-lite";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { JSX, useCallback, useEffect, useMemo, useRef } from "react";
 import type { AxStackAreaChartProps } from "../../typings/AxStackAreaChartProps";
 import { useStackAreaChartContext } from "../providers/StackAreaChartProvider";
 

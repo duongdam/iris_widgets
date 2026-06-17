@@ -14,8 +14,8 @@ export interface GanttDataset {
 export const GANTT_DATASETS: GanttDataset[] = [
     {
         id: "default",
-        label: "Enterprise rollout (4-level, 38 tasks)",
-        description: "Program → Phase → Work Package → Task with milestones. All tasks ≤ 3 months.",
+        label: "Enterprise rollout (3-level, 21 tasks)",
+        description: "Program → Phase → Task. MTO ±10 months from milestone; K/O +20 months.",
         tasks: MOCK_GANTT_TASKS,
     },
     {

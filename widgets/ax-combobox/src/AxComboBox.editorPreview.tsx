@@ -1,3 +1,4 @@
+import { JSX } from "react";
 import { ThemeProvider } from "@iris/chart-ui";
 import type { EditableValue } from "mendix";
 import { ComboBoxView } from "./main/components/ComboBoxView";

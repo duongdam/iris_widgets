@@ -1,3 +1,4 @@
+import { JSX } from "react";
 import { Empty } from "antd";
 
 export interface ChartEmptyStateProps {

@@ -9,7 +9,7 @@ import {
 import { DatePicker } from "antd";
 import dayjs, { type Dayjs } from "dayjs";
 import weekOfYear from "dayjs/plugin/weekOfYear";
-import { useCallback, useMemo } from "react";
+import { JSX, useCallback, useMemo } from "react";
 import type { AxDatePickerProps } from "../../typings/AxDatePickerProps";
 
 dayjs.extend(weekOfYear);

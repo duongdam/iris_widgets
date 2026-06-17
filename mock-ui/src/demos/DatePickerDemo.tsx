@@ -1,6 +1,6 @@
 import { Segmented, Space, Typography } from "antd";
 import type { EditableValue } from "mendix";
-import { useMemo, useState } from "react";
+import { JSX, useMemo, useState } from "react";
 import { DatePickerView } from "../../../widgets/ax-datepicker/src/main/components/DatePickerView";
 import type { PickerModeEnum } from "../../../widgets/ax-datepicker/src/typings/AxDatePickerProps";
 import { ThemeProvider } from "@iris/chart-ui";

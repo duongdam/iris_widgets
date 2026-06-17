@@ -1,5 +1,5 @@
 import { ChartEvents, type ChartEventBus, type ChartEventPayload } from "@iris/chart-core";
-import { useEffect } from "react";
+import { JSX, useEffect } from "react";
 
 export interface ChartEventMonitorProps {
     eventBus: ChartEventBus;

@@ -10,10 +10,14 @@ import { useDatasourceSync } from "../hooks/useDatasourceSync";
 import { useCommandSync } from "../hooks/useCommandSync";
 import { useEventBusBridge } from "../hooks/useEventBusBridge";
 import { useGanttInstance } from "../hooks/useGanttInstance";
-import { useSelectionSync } from "../hooks/useSelectionSync";
+import { useSelectionBridge } from "../hooks/useSelectionBridge";
 import { useGanttContext } from "../providers/GanttProvider";
 import { isDatasourceAvailable, mapMendixDatasourceToGanttTasks } from "../services/MendixTaskAdapter";
-import { writeTaskSelectionContext } from "../services/writeTaskSelectionContext";
+import { createGanttEditingConfig } from "../../shared/types/editingConfig";
+import {
+    resolveGanttContainerHeight,
+    resolveGanttShellHeight
+} from "./GanttConfiguration";
 import type { GanttTask } from "../eventbus/eventTypes";
 
 function countDescendants(taskId: string, tasks: GanttTask[]): number {
@@ -40,32 +44,16 @@ export const AxGanttChartView = observer(function AxGanttChartView({
     const [tooltipPos, setTooltipPos] = useState<TooltipPos>({ x: 0, y: 0 });
 
     const mappingValid = useDatasourceSync(store, widgetProps, !isPreview);
-    useSelectionSync(store, widgetProps.selectedTaskId, widgetProps.selectedPayload, bridge);
+    useSelectionBridge(store, bridge);
 
     const editingConfig = useMemo(
-        () => ({
-            allowCreate: widgetProps.allowCreate,
-            allowUpdate: widgetProps.allowUpdate,
-            allowDelete: widgetProps.allowDelete,
-            allowDrag: widgetProps.allowDrag,
-            allowResize: widgetProps.allowResize,
-            readOnly: widgetProps.readOnly
-        }),
-        [
-            widgetProps.allowCreate,
-            widgetProps.allowUpdate,
-            widgetProps.allowDelete,
-            widgetProps.allowDrag,
-            widgetProps.allowResize,
-            widgetProps.readOnly
-        ]
-    );
-
-    const handleWriteSelectionContext = useCallback(
-        (task: GanttTask) => {
-            writeTaskSelectionContext(task, widgetProps.selectedTaskId, widgetProps.selectedPayload);
-        },
-        [widgetProps.selectedPayload, widgetProps.selectedTaskId]
+        () =>
+            createGanttEditingConfig({
+                allowDrag: widgetProps.allowDrag,
+                allowResize: widgetProps.allowResize,
+                readOnly: widgetProps.readOnly
+            }),
+        [widgetProps.allowDrag, widgetProps.allowResize, widgetProps.readOnly]
     );
 
     const handleAddTaskClick = useCallback(
@@ -75,26 +63,11 @@ export const AxGanttChartView = observer(function AxGanttChartView({
                 return;
             }
 
-            handleWriteSelectionContext(task);
+            store.selectTask(task);
             bridge.handleAddTaskRequested(task, countDescendants(taskId, store.tasks));
         },
-        [bridge, handleWriteSelectionContext, store.taskById, store.tasks]
+        [bridge, store]
     );
-
-    useGanttInstance({
-        store,
-        containerRef,
-        showGrid: widgetProps.showGrid,
-        showTimeline: widgetProps.showTimeline,
-        showProgress: widgetProps.showProgress,
-        showTodayMarker: widgetProps.showTodayMarker,
-        showCriticalPath: widgetProps.showCriticalPath,
-        showBaseline: widgetProps.showBaseline,
-        editing: editingConfig,
-        bridge,
-        onAddTaskClick: handleAddTaskClick,
-        writeSelectionContext: handleWriteSelectionContext
-    });
 
     const handleRefresh = useCallback(() => {
         if (isPreview || !isDatasourceAvailable(widgetProps.tasksDatasource) || !mappingValid) {
@@ -122,10 +95,31 @@ export const AxGanttChartView = observer(function AxGanttChartView({
         enabled: !isPreview
     });
 
+    useGanttInstance({
+        store,
+        containerRef,
+        showGrid: widgetProps.showGrid,
+        showTimeline: widgetProps.showTimeline,
+        showProgress: widgetProps.showProgress,
+        showTodayMarker: widgetProps.showTodayMarker,
+        showCriticalPath: widgetProps.showCriticalPath,
+        showBaseline: widgetProps.showBaseline,
+        editing: editingConfig,
+        allowGridReorder: widgetProps.allowGridReorder,
+        bridge,
+        onAddTaskClick: handleAddTaskClick
+    });
+
     const hoveredTask = store.hoveredTaskId ? store.taskById.get(store.hoveredTaskId) : undefined;
     const showConfigError = !isPreview && !mappingValid;
     const showEmpty = !showConfigError && !store.loading && !store.hasTasks;
-    const height = store.expandHeight ? "100vh" : widgetProps.height;
+    const shellHeight = resolveGanttShellHeight(widgetProps.height, store.expandHeight);
+    const ganttContainerHeight = resolveGanttContainerHeight(
+        widgetProps.height,
+        store.expandHeight,
+        widgetProps.showToolbar
+    );
+    const hideGantt = showEmpty || showConfigError;
 
     function handleMouseMove(e: React.MouseEvent<HTMLDivElement>): void {
         setTooltipPos({ x: e.clientX, y: e.clientY });
@@ -142,7 +136,7 @@ export const AxGanttChartView = observer(function AxGanttChartView({
                 "ax-ganttchart--fullscreen": store.fullscreen,
                 "ax-ganttchart--expand-height": store.expandHeight
             })}
-            style={{ height }}
+            style={{ height: shellHeight }}
         >
             {widgetProps.showToolbar && <GanttToolbar />}
 
@@ -167,7 +161,13 @@ export const AxGanttChartView = observer(function AxGanttChartView({
                 <div
                     ref={containerRef}
                     className="ax-ganttchart__gantt"
-                    style={{ display: showEmpty || showConfigError ? "none" : store.loading ? "none" : "block" }}
+                    style={{
+                        height: ganttContainerHeight,
+                        minHeight:
+                            typeof ganttContainerHeight === "number" ? ganttContainerHeight : undefined,
+                        display: hideGantt ? "none" : "block",
+                        visibility: store.loading ? "hidden" : "visible"
+                    }}
                 />
 
                 {hoveredTask && <GanttTooltip task={hoveredTask} pos={tooltipPos} containerRef={rootRef} />}

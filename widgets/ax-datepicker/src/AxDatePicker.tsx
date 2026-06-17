@@ -1,3 +1,4 @@
+import { JSX } from "react";
 import { ThemeProvider } from "@iris/chart-ui";
 import { DatePickerView } from "./main/components/DatePickerView";
 import type { AxDatePickerContainerProps, AxDatePickerProps } from "./typings/AxDatePickerProps";

@@ -1,3 +1,4 @@
+import { JSX } from "react";
 import { Spin } from "antd";
 
 export interface ChartLoadingOverlayProps {

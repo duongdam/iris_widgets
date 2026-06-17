@@ -20,20 +20,13 @@ pnpm --filter mock-ui run build
 
 ## Cấu trúc tab
 
-| Tab | Widget(s) | Demo | Sidebar controls |
-|-----|-----------|------|------------------|
-| Bar Chart | `ax-barchart` | `BarChartDemo.tsx` | Dataset, title, tooltip, ref line |
-| Column Chart | `ax-columnchart` | `ColumnChartDemo.tsx` | Stack mode, width, ref line, series labels |
-| Stack Area | `ax-stackareachart` | `StackAreaChartDemo.tsx` | Dataset, selection |
-| Report | `ax-reportchart` | `ReportChartDemo.tsx` | Dataset, selection |
-| Negative Bar | `ax-negativebarchart` | `NegativeBarChartDemo.tsx` | Baseline, selection |
-| Gantt Chart | `ax-ganttchart` | `GanttChartDemo.tsx` | Dataset, view mode, display, **Editing**, commands, selection |
+| Tab | Widget | Demo | Sidebar controls |
+|-----|--------|------|------------------|
+| Gantt Chart | `ax-ganttchart` | `GanttChartDemo.tsx` | Dataset, view mode, display, editing, commands, selection, event log |
 | Date Picker | `ax-datepicker` | `DatePickerDemo.tsx` | Trong panel demo |
 | Combo Box | `ax-combobox` | `ComboBoxDemo.tsx` | Trong panel demo |
-| Cascading | `ax-combobox` (×N) | `CascadingComboboxDemo.tsx` | Filter Site → Team → … |
-| Form | `ax-input`, `ax-numberinput`, `ax-switch`, `ax-textarea`, `ax-checkboxgroup` | `FormWidgetsDemo.tsx` | Trong panel demo |
 
-**Lưu ý:** Date Picker và Combo Box có tab riêng; tab **Form** gom 5 widget phase 2 và dẫn link sang các tab kia.
+Demo chart khác (`StackAreaChartDemo.tsx`, v.v.) vẫn có trong `mock-ui/src/demos/` để tái sử dụng khi cần; tab chart chưa được gắn lại vào shell chính.
 
 ## Dev server từng widget (Mendix live preview)
 
@@ -58,11 +51,9 @@ mock-ui mô phỏng Mendix props bằng helper trong `mock-ui/src/mocks/`:
 
 | Mock | Dùng cho |
 |------|----------|
-| `editableValue.ts` | Chart selection (String) |
 | `ganttListValue.ts` | Gantt ListValue + attribute mapping |
-| `ganttSelection.ts` | Gantt selectedTaskId / payload |
+| `ganttSelection.ts` | Selection state trong sidebar (event bus, không ghi Mendix attribute) |
 | `ganttDatasets.ts` | Bộ task Gantt mẫu |
-| `datasets.ts` | Chart records |
 | `@iris/form-core` | `createMockStringValue`, `createMockComboboxDatasource`, … |
 
 Form widget demos import trực tiếp `*View.tsx` từ `widgets/ax-*/src/main/components/` — thay đổi runtime trong widget tự phản ánh vào mock-ui.
@@ -76,6 +67,18 @@ window.__AX_GANTT__.emit("mock-ganttchart", "FIT_TIMELINE")
 ```
 
 Widget name mặc định trong demo: `mock-ganttchart`.
+
+Trong Mendix, dùng **một** action `onEvent` trên widget. Nanoflow JavaScript đọc payload:
+
+```javascript
+const event = window.__AX_GANTT__?.getLastEvent("YourWidgetName");
+// event.type — TASK_CLICKED, TASK_DOUBLE_CLICKED, TASK_REQUEST_ADD, …
+// event.data — { task }, { taskId }, …
+```
+
+Sidebar mock-ui hiển thị selection từ event bus, log sự kiện, và nút **Refresh from registry** để mô phỏng `getLastEvent`.
+
+Create / update / delete luôn bật trong widget (trừ khi `readOnly`). Sidebar chỉ điều khiển `allowDrag`, `allowResize`, và `readOnly`.
 
 ## Liên quan
 

@@ -2,7 +2,7 @@
  * Contract: ThemeProvider — antd ConfigProvider wrapper for Gantt chrome.
  */
 
-import type { ReactNode } from "react";
+import type { JSX, ReactNode } from "react";
 
 export interface GanttThemeTokens {
     colorPrimary?: string;

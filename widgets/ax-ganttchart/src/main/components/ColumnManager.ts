@@ -73,7 +73,9 @@ function escapeHtml(value: string): string {
 
 const CHIP_CLASS_MAP: Record<string, string> = {
     Manual: "gantt-chip--manual",
-    Process: "gantt-chip--process"
+    Process: "gantt-chip--process",
+    MTO: "gantt-chip--mto",
+    "K/O": "gantt-chip--ko"
 };
 
 function renderChip(tag: string): string {

@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { JSX, createContext, useContext, useMemo, useState, type ReactNode } from "react";
 import type { ChartContextState, ChartContextValue } from "./types";
 
 const ChartContext = createContext<ChartContextValue | null>(null);

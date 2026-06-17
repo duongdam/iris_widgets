@@ -1,5 +1,6 @@
 import type { GanttStatic } from "dhtmlx-gantt";
 import { TimelineViewMode } from "../eventbus/eventTypes";
+import { applyGanttLayoutConfig, GANTT_CELL_SIZE } from "../../shared/constants/ganttLayout";
 
 export interface GanttScaleConfig {
     unit: string;
@@ -13,17 +14,12 @@ export interface GanttScaleConfig {
  * One full year is shown by default; use SET_START_DATE / SET_END_DATE to extend.
  */
 export function getDefaultTimelineStart(): Date {
-    return new Date(new Date().getFullYear(), 0, 1);
+    return new Date(2023, 6, 1, 0, 0, 0, 0);
 }
 
 export function getDefaultTimelineEnd(): Date {
-    return new Date(new Date().getFullYear(), 11, 31, 23, 59, 59);
+    return new Date(2035, 8, 30, 23, 59, 59, 999);
 }
-
-/** @deprecated Use getDefaultTimelineStart / getDefaultTimelineEnd */
-export const MOCK_TIMELINE_START = getDefaultTimelineStart();
-/** @deprecated Use getDefaultTimelineStart / getDefaultTimelineEnd */
-export const MOCK_TIMELINE_END = getDefaultTimelineEnd();
 
 function parseGanttDateMs(value: string): number {
     const normalized = value.length === 10 ? `${value}T00:00:00` : value.replace(" ", "T");
@@ -76,11 +72,6 @@ const SCALE_PRESETS: Record<TimelineViewMode, GanttScaleConfig[]> = {
     [TimelineViewMode.MONTH]: [
         { unit: "year", step: 1, format: "%Y" },
         { unit: "month", step: 1, format: (d: Date) => String(d.getMonth() + 1).padStart(2, "0") }
-    ],
-    /** Quarter kept in enum for API compatibility; not exposed in toolbar UI */
-    [TimelineViewMode.QUARTER]: [
-        { unit: "year", step: 1, format: "%Y" },
-        { unit: "month", step: 3, format: (d: Date) => `Q${Math.floor(d.getMonth() / 3) + 1}` }
     ]
 };
 
@@ -140,9 +131,9 @@ export function applyTimelineRange(gantt: GanttStatic, mode: TimelineViewMode, s
 export function applyMode(gantt: GanttStatic, mode: TimelineViewMode, startDate?: Date, endDate?: Date): void {
     gantt.config.scales = getScales(mode) as typeof gantt.config.scales;
     applyTimelineRange(gantt, mode, startDate, endDate);
-    // Re-apply after scale change to prevent DHTMLX from reverting to its default 70px
-    gantt.config.min_column_width = 30;
-    gantt.config.column_width = 32;
+    applyGanttLayoutConfig(gantt);
+    gantt.config.min_column_width = GANTT_CELL_SIZE;
+    gantt.config.column_width = GANTT_CELL_SIZE;
     gantt.render();
 }
 
@@ -205,8 +196,6 @@ export function incomingEventToViewMode(event: string): TimelineViewMode | undef
             return TimelineViewMode.WEEK;
         case "ZOOM_MONTH":
             return TimelineViewMode.MONTH;
-        case "ZOOM_QUARTER":
-            return TimelineViewMode.QUARTER;
         default:
             return undefined;
     }
@@ -217,9 +206,8 @@ export function parseViewMode(value: string): TimelineViewMode {
         case TimelineViewMode.DAY:
         case TimelineViewMode.WEEK:
         case TimelineViewMode.MONTH:
-        case TimelineViewMode.QUARTER:
             return value;
         default:
-            return TimelineViewMode.WEEK;
+            return TimelineViewMode.MONTH;
     }
 }

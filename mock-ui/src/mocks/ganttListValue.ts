@@ -1,6 +1,7 @@
 import type { ListValue, ObjectItem } from "mendix";
 import type { GanttTask } from "../../../widgets/ax-ganttchart/src/main/eventbus/eventTypes";
 import type { AxGanttChartProps } from "../../../widgets/ax-ganttchart/src/typings/AxGanttChartProps";
+import { getEventTypeTag } from "../../../widgets/ax-ganttchart/src/shared/utils/mtoDate";
 
 interface MockGanttEntity {
     item: ObjectItem;
@@ -70,9 +71,12 @@ export function createMockGanttDatasource(tasks: GanttTask[]): Pick<
     | "durationAttribute"
     | "progressAttribute"
     | "parentAttribute"
+    | "orderNoAttribute"
     | "openAttribute"
     | "typeAttribute"
     | "tagsAttribute"
+    | "mtoDateAttribute"
+    | "eventTypeAttribute"
 > {
     const entities = ganttTasksToEntities(tasks);
 
@@ -106,11 +110,20 @@ export function createMockGanttDatasource(tasks: GanttTask[]): Pick<
         durationAttribute: createListAttribute(entities, task => task.duration),
         progressAttribute: createListAttribute(entities, task => task.progress),
         parentAttribute: createListAttribute(entities, task => task.parent) as unknown as AxGanttChartProps["parentAttribute"],
+        orderNoAttribute: createListAttribute(entities, task => task.orderNo) as unknown as AxGanttChartProps["orderNoAttribute"],
         openAttribute: createListAttribute(entities, task => task.open),
         typeAttribute: createListAttribute(entities, task => task.type),
         tagsAttribute: createListAttribute(entities, task =>
             task.tags && task.tags.length > 0 ? JSON.stringify(task.tags) : undefined
         ),
+        mtoDateAttribute: createListAttribute(entities, task =>
+            task.mto_date
+                ? task.mto_date instanceof Date
+                    ? task.mto_date
+                    : parseGanttDate(task.mto_date as string)
+                : undefined
+        ) as unknown as AxGanttChartProps["mtoDateAttribute"],
+        eventTypeAttribute: createListAttribute(entities, task => getEventTypeTag(task.tags)),
     } as unknown as Pick<
         AxGanttChartProps,
         | "tasksDatasource"
@@ -121,8 +134,11 @@ export function createMockGanttDatasource(tasks: GanttTask[]): Pick<
         | "durationAttribute"
         | "progressAttribute"
         | "parentAttribute"
+        | "orderNoAttribute"
         | "openAttribute"
         | "typeAttribute"
         | "tagsAttribute"
+        | "mtoDateAttribute"
+        | "eventTypeAttribute"
     >;
 }

@@ -4,7 +4,7 @@ import {
     type GanttEventBus,
     type GanttEventPayload,
 } from "../../../widgets/ax-ganttchart/src/main/eventbus/eventTypes";
-import { useEffect } from "react";
+import { JSX, useEffect } from "react";
 
 const MONITORED_EVENTS = [
     ...Object.values(GanttOutgoingEvents),

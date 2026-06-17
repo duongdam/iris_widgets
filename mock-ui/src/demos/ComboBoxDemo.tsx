@@ -2,7 +2,7 @@ import { createMockComboboxDatasource, DIMENSION_MOCK_DATA } from "@iris/form-co
 import { ThemeProvider } from "@iris/chart-ui";
 import { Space, Switch, Typography } from "antd";
 import type { EditableValue } from "mendix";
-import { useMemo, useState } from "react";
+import { JSX, useMemo, useState } from "react";
 import { ComboBoxView } from "../../../widgets/ax-combobox/src/main/components/ComboBoxView";
 import type { SelectionModeEnum } from "../../../widgets/ax-combobox/src/typings/AxComboBoxProps";
 

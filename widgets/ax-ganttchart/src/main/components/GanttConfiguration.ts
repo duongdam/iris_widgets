@@ -1,9 +1,13 @@
 import { gantt, type GanttStatic } from "dhtmlx-gantt";
 import { applyColumns, getDefaultColumns } from "./ColumnManager";
 import { applyTimelineRange, getScales } from "./TimelineManager";
-import { installTodayMarkerSync } from "./todayMarker";
+import { installTodayMarkerSync } from "./TodayMarker";
+import { installMtoMarkerSync } from "./MtoMarker";
 import { TimelineViewMode, type GanttTask } from "../eventbus/eventTypes";
 import type { GanttAppearanceConfig, GanttEditingConfig } from "../../shared/types/editingConfig";
+import { shouldShowTimelineEventBar, getEventTypeTag } from "../../shared/utils/mtoDate";
+import { canDragGridRow } from "../../shared/utils/gridReorder";
+import { applyGanttLayoutConfig } from "../../shared/constants/ganttLayout";
 
 export interface GanttDisplayConfig {
     showGrid: boolean;
@@ -29,22 +33,65 @@ export interface GanttNativeEventHandlers {
 
 const HOVER_DEBOUNCE_MS = 16;
 let pluginsEnabled = false;
+let linkBlockingEnabled = false;
+
+/** Toolbar row height (padding + border) subtracted from widget height for the gantt container. */
+export const GANTT_TOOLBAR_HEIGHT = 41;
+export const GANTT_MIN_CONTAINER_HEIGHT = 120;
+
+export function resolveGanttShellHeight(height: number, expandHeight: boolean): number | string {
+    return expandHeight ? "100vh" : `${height}px`;
+}
+
+export function resolveGanttContainerHeight(
+    height: number,
+    expandHeight: boolean,
+    showToolbar: boolean
+): number | string {
+    const toolbarOffset = showToolbar ? GANTT_TOOLBAR_HEIGHT : 0;
+
+    if (expandHeight) {
+        return `calc(100vh - ${toolbarOffset}px)`;
+    }
+
+    return Math.max(height - toolbarOffset, GANTT_MIN_CONTAINER_HEIGHT);
+}
+
+export function scheduleGanttLayoutRefresh(target: GanttStatic = gantt): void {
+    requestAnimationFrame(() => {
+        target.render();
+    });
+}
+
+export function installGanttLayoutSync(container: HTMLElement, target: GanttStatic = gantt): () => void {
+    const refresh = (): void => {
+        scheduleGanttLayoutRefresh(target);
+    };
+
+    refresh();
+
+    if (typeof ResizeObserver === "undefined") {
+        return () => undefined;
+    }
+
+    const observer = new ResizeObserver(refresh);
+    observer.observe(container);
+    return () => observer.disconnect();
+}
 
 export function initGantt(container: HTMLElement, display: GanttDisplayConfig): void {
     gantt.config.date_format = "%Y-%m-%d %H:%i";
     gantt.config.smart_rendering = true;
     gantt.config.autosize = false;
-    gantt.config.row_height = 26;
-    gantt.config.bar_height = 18;
-    gantt.config.scale_height = 52; // 2 scale rows × 26px
-    gantt.config.min_column_width = 1; // remove DHTMLX's 70px default minimum
-    gantt.config.column_width = 32;
+    applyGanttLayoutConfig(gantt);
     gantt.config.show_progress = display.showProgress;
     gantt.config.show_grid = display.showGrid;
     gantt.config.show_chart = display.showTimeline;
     gantt.config.fit_tasks = false;
     gantt.config.start_on_monday = true;
     gantt.config.xml_date = "%Y-%m-%d %H:%i";
+    gantt.config.show_links = false;
+    gantt.config.drag_links = false;
 
     if ((display.taskCount ?? 0) > 500) {
         gantt.config.show_task_cells = false;
@@ -57,6 +104,18 @@ export function initGantt(container: HTMLElement, display: GanttDisplayConfig): 
     applyAppearanceConfig(display.appearance, gantt);
 
     gantt.init(container);
+    blockTaskLinking(gantt);
+}
+
+/** Prevent dependency links between tasks (display + drag-create + programmatic add/delete). */
+function blockTaskLinking(target: GanttStatic): void {
+    if (linkBlockingEnabled) {
+        return;
+    }
+
+    target.attachEvent("onBeforeLinkAdd", () => false);
+    target.attachEvent("onBeforeLinkDelete", () => false);
+    linkBlockingEnabled = true;
 }
 
 function applyAppearanceConfig(appearance: GanttAppearanceConfig | undefined, target: GanttStatic): void {
@@ -95,7 +154,25 @@ export function applyEditingConfig(config: GanttEditingConfig, target: GanttStat
     );
 
     eventIds.push(
-        target.attachEvent("onBeforeTaskChanged", () => {
+        target.attachEvent("onBeforeTaskChanged", (_id, mode, task) => {
+            const typedTask = task as GanttTask;
+
+            if (mode === "resize" || mode === "progress") {
+                if (getEventTypeTag(typedTask.tags)) {
+                    return false;
+                }
+
+                if (mode === "resize") {
+                    return config.allowResize && editable;
+                }
+
+                return config.allowUpdate && editable;
+            }
+
+            if (mode === "move") {
+                return config.allowDrag && editable;
+            }
+
             return config.allowUpdate && editable;
         })
     );
@@ -120,33 +197,61 @@ function applyTemplates(target: GanttStatic): void {
         return day === 0 || day === 6 ? "gantt-weekend" : "";
     };
 
-    // Semantic CSS class per task type
+    // Semantic CSS class per task type + hide timeline bars on hierarchy Level 1–2
     (target.templates as Record<string, unknown>).task_class = (
         _start: unknown,
         _end: unknown,
-        task: { type?: string }
+        task: { type?: string; $level?: number }
     ): string => {
+        const classes: string[] = [];
+
         switch (task.type) {
             case "project":
-                return "gantt-type-project";
+                classes.push("gantt-type-project");
+                break;
             case "milestone":
-                return "gantt-type-milestone";
+                classes.push("gantt-type-milestone");
+                break;
             default:
-                return "gantt-type-task";
+                classes.push("gantt-type-task");
         }
+
+        if (!shouldShowTimelineEventBar(task.$level)) {
+            classes.push("gantt-timeline-no-event");
+        }
+
+        if (getEventTypeTag((task as GanttTask).tags)) {
+            classes.push("gantt-event-no-resize");
+        }
+
+        return classes.join(" ");
     };
 
-    // Grid row class for summary rows (bold text)
+    (target.templates as Record<string, unknown>).task_row_class = (
+        _start: unknown,
+        _end: unknown,
+        task: { $level?: number }
+    ): string => {
+        return shouldShowTimelineEventBar(task.$level) ? "" : "gantt-timeline-no-event-row";
+    };
+
+    // Grid row class for summary rows (bold text) + reorder affordance
     (target.templates as Record<string, unknown>).grid_row_class = (
         _start: unknown,
         _end: unknown,
-        task: { type?: string }
+        task: { type?: string; $level?: number }
     ): string => {
+        const classes: string[] = [];
+
         if (task.type === "project") {
-            return "gantt-row-project";
+            classes.push("gantt-row-project");
         }
 
-        return "";
+        if (canDragGridRow(task)) {
+            classes.push("gantt-draggable-row");
+        }
+
+        return classes.join(" ");
     };
 }
 
@@ -305,6 +410,10 @@ export function destroyGantt(target: GanttStatic = gantt): void {
 
 export function setupTodayMarkerSync(getEnabled: () => boolean, target: GanttStatic = gantt): () => void {
     return installTodayMarkerSync(target, getEnabled);
+}
+
+export function setupMtoMarkerSync(target: GanttStatic = gantt): () => void {
+    return installMtoMarkerSync(target);
 }
 
 export { gantt };

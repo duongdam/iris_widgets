@@ -1,7 +1,5 @@
 import type { GanttTask } from "../../../widgets/ax-ganttchart/src/main/eventbus/eventTypes";
-import { type EditableValue } from "mendix";
-import { useCallback, useMemo, useState } from "react";
-import { createMockEditableValue } from "./editableValue";
+import { useCallback, useState } from "react";
 
 export interface MockGanttSelectionSummary {
     taskId: string;
@@ -9,8 +7,6 @@ export interface MockGanttSelectionSummary {
 }
 
 export function useMockGanttSelectionFields(): {
-    selectedTaskId: EditableValue<string>;
-    selectedPayload: EditableValue<string>;
     selectionSummary: MockGanttSelectionSummary;
     resetSelection: () => void;
     applySelection: (task?: GanttTask) => void;
@@ -32,29 +28,11 @@ export function useMockGanttSelectionFields(): {
         });
     }, []);
 
-    const selectedTaskId = useMemo(
-        () =>
-            createMockEditableValue("", next =>
-                setSelection(current => ({ ...current, taskId: next }))
-            ),
-        []
-    );
-
-    const selectedPayload = useMemo(
-        () =>
-            createMockEditableValue("", next =>
-                setSelection(current => ({ ...current, payload: next }))
-            ),
-        []
-    );
-
     const resetSelection = (): void => {
         applySelection(undefined);
     };
 
     return {
-        selectedTaskId,
-        selectedPayload,
         selectionSummary: selection,
         resetSelection,
         applySelection,

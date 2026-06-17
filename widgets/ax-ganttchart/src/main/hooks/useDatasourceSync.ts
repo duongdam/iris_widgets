@@ -7,6 +7,7 @@ import {
     mapMendixDatasourceToGanttTasks,
     validateDatasourceMapping
 } from "../services/MendixTaskAdapter";
+import { preserveBranchOpenState } from "../../shared/utils/preserveBranchOpenState";
 
 export function useDatasourceSync(store: GanttStore, props: AxGanttChartProps, enabled = true): boolean {
     const { tasksDatasource } = props;
@@ -37,7 +38,7 @@ export function useDatasourceSync(store: GanttStore, props: AxGanttChartProps, e
         }
 
         const result = mapMendixDatasourceToGanttTasks(props);
-        store.setTasksIfChanged(result.tasks);
+        store.setTasksIfChanged(preserveBranchOpenState(store.tasks, result.tasks));
         store.setLoading(false);
 
         if (store.selectedTask && !result.tasks.some(task => task.id === store.selectedTask?.id)) {
@@ -57,9 +58,12 @@ export function useDatasourceSync(store: GanttStore, props: AxGanttChartProps, e
         props.durationAttribute,
         props.progressAttribute,
         props.parentAttribute,
+        props.orderNoAttribute,
         props.openAttribute,
         props.typeAttribute,
-        props.tagsAttribute
+        props.tagsAttribute,
+        props.mtoDateAttribute,
+        props.eventTypeAttribute
     ]);
 
     return mappingValid;

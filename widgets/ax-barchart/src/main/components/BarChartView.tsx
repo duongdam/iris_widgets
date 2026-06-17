@@ -11,7 +11,7 @@ import {
 } from "@iris/chart-ui";
 import ReactECharts from "echarts-for-react";
 import { observer } from "mobx-react-lite";
-import { useEffect, useMemo, useRef } from "react";
+import { JSX, useEffect, useMemo, useRef } from "react";
 import type { AxBarChartProps } from "../../typings/AxBarChartProps";
 import { useBarChartContext } from "../providers/BarChartProvider";
 

@@ -1,5 +1,5 @@
 import { observer } from "mobx-react-lite";
-import { useEffect, useRef } from "react";
+import { JSX, useEffect, useRef } from "react";
 import type { GanttTask } from "../eventbus/eventTypes";
 
 const MONTH_ABBR = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -106,7 +106,7 @@ export const GanttTooltip = observer(function GanttTooltip({
                 padding: "10px 12px",
                 minWidth: 200,
                 maxWidth: 280,
-                fontSize: 12,
+                fontSize: 13,
                 lineHeight: "1.6",
                 transition: "opacity 120ms ease"
             }}
@@ -123,7 +123,7 @@ export const GanttTooltip = observer(function GanttTooltip({
                                 background: task.type === "milestone" ? "#722ed1" : "#0958d9",
                                 borderRadius: 3,
                                 padding: "1px 6px",
-                                fontSize: 10,
+                                fontSize: 13,
                                 fontWeight: 500,
                                 textTransform: "capitalize"
                             }}
@@ -137,7 +137,7 @@ export const GanttTooltip = observer(function GanttTooltip({
                                 background: "rgba(255,255,255,0.15)",
                                 borderRadius: 3,
                                 padding: "1px 6px",
-                                fontSize: 10
+                                fontSize: 13
                             }}
                         >
                             {status}

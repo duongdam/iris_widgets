@@ -1,5 +1,5 @@
 import type { GanttStatic } from "dhtmlx-gantt";
-import { MOCK_TIMELINE_END, MOCK_TIMELINE_START } from "./TimelineManager";
+import { getDefaultTimelineEnd, getDefaultTimelineStart } from "./TimelineManager";
 
 export const TODAY_MARKER_ID = "ax-gantt-today-marker";
 const MARKER_AREA_CLASS = "gantt_marker_area";
@@ -14,8 +14,8 @@ function getTodayDate(): Date {
 
 function isTodayInConfigRange(gantt: GanttStatic): boolean {
     const today = getTodayDate().getTime();
-    const start = gantt.config.start_date?.getTime() ?? MOCK_TIMELINE_START.getTime();
-    const end = gantt.config.end_date?.getTime() ?? MOCK_TIMELINE_END.getTime();
+    const start = gantt.config.start_date?.getTime() ?? getDefaultTimelineStart().getTime();
+    const end = gantt.config.end_date?.getTime() ?? getDefaultTimelineEnd().getTime();
     return today >= start && today <= end;
 }
 

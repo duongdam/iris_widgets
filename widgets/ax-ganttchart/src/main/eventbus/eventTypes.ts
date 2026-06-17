@@ -9,16 +9,19 @@ export interface GanttTask {
     open?: boolean;
     type?: string;
     color?: string;
-    /** Optional labels rendered as chips in the grid text column (e.g. Manual, Process). */
+    /** Optional labels rendered as chips in the grid text column (e.g. Manual, Process, MTO, K/O). */
     tags?: string[];
+    /** MTO / K/O milestone date — midpoint for MTO, start for K/O. */
+    mto_date?: string | Date;
+    /** Sibling sort index within the same parent branch. */
+    orderNo?: number;
     metadata?: Record<string, unknown>;
 }
 
 export enum TimelineViewMode {
     DAY = "day",
     WEEK = "week",
-    MONTH = "month",
-    QUARTER = "quarter"
+    MONTH = "month"
 }
 
 export enum GanttIncomingEvents {
@@ -34,14 +37,12 @@ export enum GanttIncomingEvents {
     ZOOM_DAY = "ZOOM_DAY",
     ZOOM_WEEK = "ZOOM_WEEK",
     ZOOM_MONTH = "ZOOM_MONTH",
-    ZOOM_QUARTER = "ZOOM_QUARTER",
     SET_START_DATE = "SET_START_DATE",
     SET_END_DATE = "SET_END_DATE",
     SCROLL_TO_TODAY = "SCROLL_TO_TODAY",
     SCROLL_TO_TASK = "SCROLL_TO_TASK",
     EXPORT_PDF = "EXPORT_PDF",
     EXPORT_PNG = "EXPORT_PNG",
-    EXPORT_JPEG = "EXPORT_JPEG",
     EXPORT_EXCEL = "EXPORT_EXCEL",
     FIT_TIMELINE = "FIT_TIMELINE",
     SHOW_GRID = "SHOW_GRID",
@@ -51,16 +52,12 @@ export enum GanttIncomingEvents {
 }
 
 export enum GanttOutgoingEvents {
-    TASK_SELECTED = "TASK_SELECTED",
     TASK_CLICKED = "TASK_CLICKED",
     TASK_DOUBLE_CLICKED = "TASK_DOUBLE_CLICKED",
     TASK_CREATED = "TASK_CREATED",
     TASK_UPDATED = "TASK_UPDATED",
     TASK_DELETED = "TASK_DELETED",
-    ADD_TASK_REQUESTED = "ADD_TASK_REQUESTED",
-    VIEW_CHANGED = "VIEW_CHANGED",
-    FULLSCREEN_CHANGED = "FULLSCREEN_CHANGED",
-    TIMELINE_CHANGED = "TIMELINE_CHANGED"
+    TASK_REQUEST_ADD = "TASK_REQUEST_ADD"
 }
 
 export type GanttEventType = GanttIncomingEvents | GanttOutgoingEvents;
@@ -89,14 +86,6 @@ export interface AddTaskRequestedData {
     task: GanttTask;
     level: number;
     childCount: number;
-}
-
-export interface ViewChangedData {
-    viewMode: TimelineViewMode;
-}
-
-export interface FullscreenChangedData {
-    fullscreen: boolean;
 }
 
 export interface ScrollToTaskData {

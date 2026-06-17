@@ -1,3 +1,4 @@
+import { JSX } from "react";
 import { createMockDatasource, MOCK_FLAT_RECORDS } from "@iris/chart-core";
 import { ThemeProvider } from "@iris/chart-ui";
 import type { Big } from "big.js";

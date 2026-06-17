@@ -1,3 +1,4 @@
+import { JSX } from "react";
 import type React from "react";
 import { Button, DatePicker, Dropdown, Segmented, Space, Tooltip } from "antd";
 import type { MenuProps } from "antd";
@@ -142,6 +143,17 @@ function IconExpandHeight({ active }: { active: boolean }) {
     );
 }
 
+function IconReorder() {
+    return (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M2 3h8M2 6h8M2 9h8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+            <circle cx="4" cy="3" r="0.8" fill="currentColor" />
+            <circle cx="4" cy="6" r="0.8" fill="currentColor" />
+            <circle cx="4" cy="9" r="0.8" fill="currentColor" />
+        </svg>
+    );
+}
+
 function IconExport() {
     return (
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -171,8 +183,7 @@ function IconCalendar() {
 const VIEW_MODE_EVENT_MAP: Record<TimelineViewMode, GanttIncomingEvents> = {
     [TimelineViewMode.DAY]: GanttIncomingEvents.ZOOM_DAY,
     [TimelineViewMode.WEEK]: GanttIncomingEvents.ZOOM_WEEK,
-    [TimelineViewMode.MONTH]: GanttIncomingEvents.ZOOM_MONTH,
-    [TimelineViewMode.QUARTER]: GanttIncomingEvents.ZOOM_QUARTER
+    [TimelineViewMode.MONTH]: GanttIncomingEvents.ZOOM_MONTH
 };
 
 const DATE_PICKER_STYLE: React.CSSProperties = { width: 110 };
@@ -229,7 +240,7 @@ function getExpandTooltip(expandLevel: number, maxLevel: number): string {
 }
 
 export const GanttToolbar = observer(function GanttToolbar(): JSX.Element {
-    const { store, eventBus, widgetId } = useGanttContext();
+    const { store, eventBus, widgetId, allowGridReorder } = useGanttContext();
     const maxExpandLevel = resolveMaxExpandLevel(store.tasks);
     const canExpandFurther = maxExpandLevel > 0 && store.expandLevel < maxExpandLevel;
 
@@ -282,7 +293,7 @@ export const GanttToolbar = observer(function GanttToolbar(): JSX.Element {
                         placeholder="Start date"
                     />
                 </Tooltip>
-                <span style={{ color: "#aaa", fontSize: 11, lineHeight: 1 }}>→</span>
+                <span style={{ color: "#aaa", fontSize: 13, lineHeight: 1 }}>→</span>
                 <Tooltip title="Timeline end date" mouseEnterDelay={0.5}>
                     <DatePicker
                         size="small"
@@ -334,6 +345,29 @@ export const GanttToolbar = observer(function GanttToolbar(): JSX.Element {
                     />
                 </Tooltip>
             </Space>
+
+            {allowGridReorder && (
+                <>
+                    <div style={{ width: 1, height: 16, background: "#e8e8e8", flexShrink: 0 }} />
+                    <Tooltip
+                        title={
+                            store.gridReorderMode
+                                ? "Exit reorder mode — drag child rows between parents"
+                                : "Reorder mode — drag child rows onto another parent"
+                        }
+                        mouseEnterDelay={0.5}
+                    >
+                        <Button
+                            size="small"
+                            type={store.gridReorderMode ? "primary" : "default"}
+                            icon={<IconReorder />}
+                            onClick={() => store.toggleGridReorderMode()}
+                        >
+                            Reorder
+                        </Button>
+                    </Tooltip>
+                </>
+            )}
 
             {/* Spacer */}
             <div style={{ flex: 1 }} />

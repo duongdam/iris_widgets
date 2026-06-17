@@ -1,3 +1,4 @@
+import { JSX } from "react";
 import { ThemeProvider } from "@iris/chart-ui";
 import { ColumnChartView } from "./main/components/ColumnChartView";
 import { ColumnChartProvider } from "./main/providers/ColumnChartProvider";

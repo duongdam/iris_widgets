@@ -69,7 +69,6 @@ export function useEventBusBridge(options: UseEventBusBridgeOptions): void {
                 const enteredNativeFullscreen = await fullscreenService.enter(containerRef.current);
                 if (!enteredNativeFullscreen) {
                     store.setFullscreen(true);
-                    bridge.handleFullscreenChanged(true);
                 }
             }),
 
@@ -82,7 +81,6 @@ export function useEventBusBridge(options: UseEventBusBridgeOptions): void {
                 }
                 if (store.fullscreen) {
                     store.setFullscreen(false);
-                    bridge.handleFullscreenChanged(false);
                 }
             }),
 
@@ -129,7 +127,6 @@ export function useEventBusBridge(options: UseEventBusBridgeOptions): void {
                     return;
                 }
                 fitTimeline(gantt);
-                bridge.handleTimelineChanged();
             }),
 
             eventBus.on(GanttIncomingEvents.SET_START_DATE, payload => {
@@ -139,7 +136,6 @@ export function useEventBusBridge(options: UseEventBusBridgeOptions): void {
                 const data = payload.data as SetDateData | undefined;
                 if (data?.date) {
                     store.setTimelineStart(new Date(data.date));
-                    bridge.handleTimelineChanged();
                 }
             }),
 
@@ -150,7 +146,6 @@ export function useEventBusBridge(options: UseEventBusBridgeOptions): void {
                 const data = payload.data as SetDateData | undefined;
                 if (data?.date) {
                     store.setTimelineEnd(new Date(data.date));
-                    bridge.handleTimelineChanged();
                 }
             }),
 
@@ -196,13 +191,6 @@ export function useEventBusBridge(options: UseEventBusBridgeOptions): void {
                 await exportService.exportPng({ name: "gantt.png" });
             }),
 
-            eventBus.on(GanttIncomingEvents.EXPORT_JPEG, async payload => {
-                if (payload.widgetId !== widgetId) {
-                    return;
-                }
-                await exportService.exportJpeg({ name: "gantt.jpeg" });
-            }),
-
             eventBus.on(GanttIncomingEvents.EXPORT_EXCEL, async payload => {
                 if (payload.widgetId !== widgetId) {
                     return;
@@ -214,8 +202,7 @@ export function useEventBusBridge(options: UseEventBusBridgeOptions): void {
         const zoomEvents = [
             GanttIncomingEvents.ZOOM_DAY,
             GanttIncomingEvents.ZOOM_WEEK,
-            GanttIncomingEvents.ZOOM_MONTH,
-            GanttIncomingEvents.ZOOM_QUARTER
+            GanttIncomingEvents.ZOOM_MONTH
         ];
 
         for (const zoomEvent of zoomEvents) {
@@ -234,7 +221,6 @@ export function useEventBusBridge(options: UseEventBusBridgeOptions): void {
 
         const removeFullscreenListener = fullscreenService.onChange(fullscreen => {
             store.setFullscreen(fullscreen);
-            bridge.handleFullscreenChanged(fullscreen);
         });
 
         installGanttGlobalApi();

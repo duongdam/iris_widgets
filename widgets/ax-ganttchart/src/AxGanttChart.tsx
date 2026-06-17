@@ -1,3 +1,4 @@
+import { JSX } from "react";
 import { AxGanttChartView } from "./main/components/AxGanttChartView";
 import { GanttProvider } from "./main/providers/GanttProvider";
 import { ThemeProvider } from "./main/providers/ThemeProvider";

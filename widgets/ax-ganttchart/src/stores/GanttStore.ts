@@ -8,6 +8,8 @@ export class GanttStore {
     viewMode: TimelineViewMode = TimelineViewMode.WEEK;
     fullscreen = false;
     expandHeight = false;
+    /** Grid drag mode — move child rows to another parent branch. */
+    gridReorderMode = false;
     /** How many hierarchy levels are expanded via toolbar (0 = all branches collapsed). */
     expandLevel = 0;
     loading = false;
@@ -17,7 +19,7 @@ export class GanttStore {
     timelineStart: Date = getDefaultTimelineStart();
     timelineEnd: Date = getDefaultTimelineEnd();
 
-    constructor(defaultViewMode: TimelineViewMode = TimelineViewMode.WEEK) {
+    constructor(defaultViewMode: TimelineViewMode = TimelineViewMode.MONTH) {
         this.viewMode = defaultViewMode;
         makeAutoObservable(this);
     }
@@ -35,17 +37,18 @@ export class GanttStore {
     }
 
     setTasks(tasks: GanttTask[]): void {
-        this.tasks = tasks;
+        this.tasks = cloneTasksForStore(tasks);
     }
 
     setTasksIfChanged(tasks: GanttTask[]): void {
-        if (!areGanttTasksEqual(this.tasks, tasks)) {
-            this.tasks = tasks;
+        const nextTasks = cloneTasksForStore(tasks);
+        if (!areGanttTasksEqual(this.tasks, nextTasks)) {
+            this.tasks = nextTasks;
         }
     }
 
     selectTask(task: GanttTask | undefined): void {
-        this.selectedTask = task;
+        this.selectedTask = task ? cloneTaskForStore(task) : undefined;
     }
 
     setViewMode(mode: TimelineViewMode): void {
@@ -62,6 +65,18 @@ export class GanttStore {
 
     toggleExpandHeight(): void {
         this.expandHeight = !this.expandHeight;
+    }
+
+    setGridReorderMode(value: boolean): void {
+        this.gridReorderMode = value;
+    }
+
+    toggleGridReorderMode(): void {
+        this.gridReorderMode = !this.gridReorderMode;
+    }
+
+    updateTaskParent(taskId: string, parentId: string | undefined): void {
+        this.tasks = this.tasks.map(task => (task.id === taskId ? { ...task, parent: parentId } : task));
     }
 
     setExpandLevel(level: number): void {
@@ -104,6 +119,18 @@ export class GanttStore {
 
 export function createGanttStore(defaultViewMode?: TimelineViewMode): GanttStore {
     return new GanttStore(defaultViewMode);
+}
+
+function cloneTaskForStore(task: GanttTask): GanttTask {
+    return {
+        ...task,
+        tags: task.tags ? [...task.tags] : undefined,
+        metadata: task.metadata ? { ...task.metadata } : undefined
+    };
+}
+
+function cloneTasksForStore(tasks: GanttTask[]): GanttTask[] {
+    return tasks.map(cloneTaskForStore);
 }
 
 function areGanttTasksEqual(a: GanttTask[], b: GanttTask[]): boolean {

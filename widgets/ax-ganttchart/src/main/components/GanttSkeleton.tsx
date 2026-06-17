@@ -1,3 +1,4 @@
+import { JSX } from "react";
 const ROW_COUNT = 8;
 const BAR_WIDTHS = [120, 80, 160, 60, 140, 100, 90, 70];
 const BAR_OFFSETS = [20, 100, 60, 180, 10, 130, 80, 50];

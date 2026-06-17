@@ -1,3 +1,4 @@
+import { JSX } from "react";
 import { ValueStatus, type ListValue } from "mendix";
 import { AxGanttChartView } from "./main/components/AxGanttChartView";
 import { GanttProvider } from "./main/providers/GanttProvider";
@@ -34,15 +35,13 @@ const previewProps: AxGanttChartProps = {
     showToolbar: true,
     showGrid: true,
     showTimeline: true,
-    showProgress: true,
+    showProgress: false,
     showTodayMarker: true,
     showCriticalPath: false,
     showBaseline: false,
-    allowCreate: true,
-    allowUpdate: true,
-    allowDelete: true,
     allowDrag: true,
-    allowResize: true,
+    allowResize: false,
+    allowGridReorder: true,
     readOnly: false,
     defaultViewMode: PREVIEW_VIEW_MODE
 };

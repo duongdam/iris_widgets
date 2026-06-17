@@ -3,7 +3,6 @@ export {
     GanttOutgoingEvents,
     TimelineViewMode,
     type ExportResultData,
-    type FullscreenChangedData,
     type GanttEventBus,
     type GanttEventHandler,
     type GanttEventPayload,
@@ -11,8 +10,7 @@ export {
     type GanttTask,
     type ScrollToTaskData,
     type SetDateData,
-    type TaskEventData,
-    type ViewChangedData
+    type TaskEventData
 } from "./eventTypes";
 
 export {

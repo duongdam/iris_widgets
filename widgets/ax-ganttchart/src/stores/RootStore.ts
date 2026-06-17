@@ -4,7 +4,7 @@ import { TimelineViewMode } from "../main/eventbus/eventTypes";
 export class RootStore {
     readonly gantt: GanttStore;
 
-    constructor(defaultViewMode: TimelineViewMode = TimelineViewMode.WEEK) {
+    constructor(defaultViewMode: TimelineViewMode = TimelineViewMode.MONTH) {
         this.gantt = createGanttStore(defaultViewMode);
     }
 }

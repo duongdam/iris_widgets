@@ -2,7 +2,7 @@
  * Contract: ThemeProvider — Ant Design ConfigProvider wrapper with Iris token sync.
  */
 
-import type { ReactNode } from "react";
+import type { JSX, ReactNode } from "react";
 import type { ThemeConfig } from "antd";
 import type { ChartDesignTokens } from "./chart-design-tokens";
 

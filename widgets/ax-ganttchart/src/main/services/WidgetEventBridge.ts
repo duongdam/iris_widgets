@@ -1,4 +1,10 @@
-import { GanttOutgoingEvents, TimelineViewMode, type GanttEventBus, type GanttTask } from "../eventbus/eventTypes";
+import {
+    GanttOutgoingEvents,
+    type GanttEventBus,
+    type GanttEventPayload,
+    type GanttTask
+} from "../eventbus/eventTypes";
+import { notifyGanttOutgoingEvent, recordGanttOutgoingEvent } from "./GanttCommandRegistry";
 
 export interface MendixActionValue {
     canExecute?: boolean;
@@ -9,26 +15,16 @@ export interface MendixActionValue {
 export interface WidgetEventBridgeOptions {
     widgetId: string;
     eventBus: GanttEventBus;
-    onTaskClick?: MendixActionValue;
-    onTaskDoubleClick?: MendixActionValue;
-    onTaskCreated?: MendixActionValue;
-    onTaskUpdated?: MendixActionValue;
-    onTaskDeleted?: MendixActionValue;
-    onSelectionChanged?: MendixActionValue;
-    onAddTask?: MendixActionValue;
+    onEvent?: MendixActionValue;
 }
 
 export interface WidgetEventBridge {
     handleTaskClick: (task: GanttTask) => void;
     handleTaskDoubleClick: (task: GanttTask) => void;
-    handleSelectionChanged: (task?: GanttTask) => void;
     handleTaskCreated: (task: GanttTask) => void;
     handleTaskUpdated: (task: GanttTask) => void;
     handleTaskDeleted: (taskId: string) => void;
     handleAddTaskRequested: (task: GanttTask, childCount: number) => void;
-    handleViewChanged: (viewMode: TimelineViewMode) => void;
-    handleFullscreenChanged: (fullscreen: boolean) => void;
-    handleTimelineChanged: () => void;
 }
 
 function executeAction(action?: MendixActionValue): void {
@@ -38,107 +34,39 @@ function executeAction(action?: MendixActionValue): void {
 }
 
 export function createWidgetEventBridge(options: WidgetEventBridgeOptions): WidgetEventBridge {
-    const {
-        widgetId,
-        eventBus,
-        onTaskClick,
-        onTaskDoubleClick,
-        onTaskCreated,
-        onTaskUpdated,
-        onTaskDeleted,
-        onSelectionChanged,
-        onAddTask
-    } = options;
+    const { widgetId, eventBus, onEvent } = options;
+
+    function emitOutgoing(type: GanttOutgoingEvents, data?: unknown): void {
+        const payload: GanttEventPayload = { widgetId, type, data };
+        recordGanttOutgoingEvent(payload);
+        eventBus.emit(payload);
+        notifyGanttOutgoingEvent(payload);
+        executeAction(onEvent);
+    }
 
     return {
         handleTaskClick(task: GanttTask): void {
-            eventBus.emit({
-                widgetId,
-                type: GanttOutgoingEvents.TASK_CLICKED,
-                data: { task }
-            });
-            executeAction(onTaskClick);
+            emitOutgoing(GanttOutgoingEvents.TASK_CLICKED, { task });
         },
 
         handleTaskDoubleClick(task: GanttTask): void {
-            eventBus.emit({
-                widgetId,
-                type: GanttOutgoingEvents.TASK_DOUBLE_CLICKED,
-                data: { task }
-            });
-            executeAction(onTaskDoubleClick);
-        },
-
-        handleSelectionChanged(task?: GanttTask): void {
-            eventBus.emit({
-                widgetId,
-                type: GanttOutgoingEvents.TASK_SELECTED,
-                data: { task }
-            });
-            executeAction(onSelectionChanged);
+            emitOutgoing(GanttOutgoingEvents.TASK_DOUBLE_CLICKED, { task });
         },
 
         handleTaskCreated(task: GanttTask): void {
-            eventBus.emit({
-                widgetId,
-                type: GanttOutgoingEvents.TASK_CREATED,
-                data: { task }
-            });
-            executeAction(onTaskCreated);
+            emitOutgoing(GanttOutgoingEvents.TASK_CREATED, { task });
         },
 
         handleTaskUpdated(task: GanttTask): void {
-            eventBus.emit({
-                widgetId,
-                type: GanttOutgoingEvents.TASK_UPDATED,
-                data: { task }
-            });
-            executeAction(onTaskUpdated);
+            emitOutgoing(GanttOutgoingEvents.TASK_UPDATED, { task });
         },
 
         handleTaskDeleted(taskId: string): void {
-            eventBus.emit({
-                widgetId,
-                type: GanttOutgoingEvents.TASK_DELETED,
-                data: { taskId }
-            });
-            executeAction(onTaskDeleted);
+            emitOutgoing(GanttOutgoingEvents.TASK_DELETED, { taskId });
         },
 
         handleAddTaskRequested(task: GanttTask, childCount: number): void {
-            eventBus.emit({
-                widgetId,
-                type: GanttOutgoingEvents.ADD_TASK_REQUESTED,
-                data: { task, level: 1, childCount }
-            });
-            executeAction(onAddTask);
-        },
-
-        handleViewChanged(viewMode: TimelineViewMode): void {
-            eventBus.emit({
-                widgetId,
-                type: GanttOutgoingEvents.VIEW_CHANGED,
-                data: { viewMode }
-            });
-            eventBus.emit({
-                widgetId,
-                type: GanttOutgoingEvents.TIMELINE_CHANGED
-            });
-        },
-
-        handleFullscreenChanged(fullscreen: boolean): void {
-            eventBus.emit({
-                widgetId,
-                type: GanttOutgoingEvents.FULLSCREEN_CHANGED,
-                data: { fullscreen }
-            });
-        },
-
-        handleTimelineChanged(): void {
-            eventBus.emit({
-                widgetId,
-                type: GanttOutgoingEvents.TIMELINE_CHANGED
-            });
+            emitOutgoing(GanttOutgoingEvents.TASK_REQUEST_ADD, { task, level: 1, childCount });
         }
     };
 }

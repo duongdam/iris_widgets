@@ -6,7 +6,7 @@ import {
     type ChartStore,
     type WidgetEventBridge
 } from "@iris/chart-core";
-import { createContext, useContext, useMemo, type ReactNode } from "react";
+import { JSX, createContext, useContext, useMemo, type ReactNode } from "react";
 import type { AxBarChartProps } from "../../typings/AxBarChartProps";
 
 export interface BarChartContextValue {

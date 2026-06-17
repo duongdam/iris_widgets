@@ -1,6 +1,14 @@
 import { gantt } from "../components/GanttConfiguration";
 import type { GanttTask } from "../eventbus/eventTypes";
 
+function cloneTask(task: GanttTask): GanttTask {
+    return { ...task, tags: task.tags ? [...task.tags] : undefined, metadata: task.metadata ? { ...task.metadata } : undefined };
+}
+
+function cloneTasksForGantt(tasks: GanttTask[]): GanttTask[] {
+    return tasks.map(cloneTask);
+}
+
 function tasksEqual(a: GanttTask, b: GanttTask): boolean {
     return JSON.stringify(a) === JSON.stringify(b);
 }
@@ -22,7 +30,7 @@ export function syncTasks(currentTasks: GanttTask[], nextTasks: GanttTask[]): vo
     if (isBulkChange) {
         gantt.silent(() => {
             gantt.clearAll();
-            gantt.parse({ data: nextTasks as never, links: [] });
+            gantt.parse({ data: cloneTasksForGantt(nextTasks) as never, links: [] });
         });
         gantt.render();
         return;
@@ -37,13 +45,13 @@ export function syncTasks(currentTasks: GanttTask[], nextTasks: GanttTask[]): vo
 
         for (const task of nextTasks) {
             if (!currentIds.has(task.id)) {
-                gantt.addTask(task as never);
+                gantt.addTask(cloneTask(task) as never);
                 continue;
             }
 
             const existing = currentTasks.find(item => item.id === task.id);
             if (existing && !tasksEqual(existing, task)) {
-                gantt.updateTask(task.id, task as never);
+                gantt.updateTask(task.id, cloneTask(task) as never);
             }
         }
     });
