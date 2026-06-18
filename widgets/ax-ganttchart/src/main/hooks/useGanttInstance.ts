@@ -226,25 +226,13 @@ export function useGanttInstance(options: UseGanttInstanceOptions): void {
             return true;
         });
 
-        const branchEventIds = [
-            gantt.attachEvent("onTaskOpened", (id: string | number) => {
-                store.setTaskOpen(String(id), true);
-                return true;
-            }),
-            gantt.attachEvent("onTaskClosed", (id: string | number) => {
-                store.setTaskOpen(String(id), false);
-                return true;
-            })
-        ];
-
         runtime.teardownAddButton = attachAddButtonDelegation(container, (taskId, event) => {
             event.stopPropagation();
             runtimeRef.current.onAddTaskClick?.(taskId);
         });
 
         if (store.tasks.length > 0) {
-            syncTasks([], store.tasks);
-            runtime.previousTasks = store.tasks;
+            runtime.previousTasks = syncTasks([], store.tasks);
         }
 
         scheduleFocusOnToday(runtimeRef.current.showTodayMarker);
@@ -265,9 +253,6 @@ export function useGanttInstance(options: UseGanttInstanceOptions): void {
             runtime.teardownLayout?.();
             runtime.teardownLayout = null;
             gantt.detachEvent(dragEventId);
-            for (const branchEventId of branchEventIds) {
-                gantt.detachEvent(branchEventId);
-            }
             detachEvents();
             clearCrossHighlight();
             resetGantt();
@@ -331,8 +316,7 @@ export function useGanttInstance(options: UseGanttInstanceOptions): void {
 
         const hadTasks = runtime.previousTasks.length > 0;
         const tasksToSync = mergeGanttOpenState(runtime.previousTasks, store.tasks, gantt);
-        syncTasks(runtime.previousTasks, tasksToSync);
-        runtime.previousTasks = tasksToSync;
+        runtime.previousTasks = syncTasks(runtime.previousTasks, tasksToSync);
 
         if (!hadTasks && store.tasks.length > 0) {
             scheduleFocusOnToday(runtimeRef.current.showTodayMarker);

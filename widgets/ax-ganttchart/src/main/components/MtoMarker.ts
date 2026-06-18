@@ -1,7 +1,6 @@
 import type { GanttStatic } from "dhtmlx-gantt";
 import type { GanttTask } from "../eventbus/eventTypes";
 import {
-    computeMtoDate,
     getEventTypeTag,
     parseGanttDate,
     shouldShowTimelineEventBar
@@ -36,8 +35,7 @@ function resolveMarkerTop(gantt: GanttStatic, rowTop: number): number {
 type GanttWithDom = GanttStatic & { $task_data?: HTMLElement };
 
 function resolveMtoDate(task: GanttTask): Date | null {
-    const raw = task.mto_date ?? computeMtoDate(task);
-    return parseGanttDate(raw);
+    return parseGanttDate(task.mto_date);
 }
 
 function shouldRenderMarker(task: GanttTask): boolean {

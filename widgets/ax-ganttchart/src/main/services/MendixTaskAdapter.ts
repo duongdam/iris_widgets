@@ -6,7 +6,7 @@ import { convertDate, convertDateToGanttString } from "../../shared/converters/c
 import { convertProgress } from "../../shared/converters/convertProgress";
 import { convertTaskId } from "../../shared/converters/convertTaskId";
 import { validateDatasourceMapping } from "../../shared/validators/validateDatasourceMapping";
-import { withComputedMtoDate, normalizeEventTypeTag } from "../../shared/utils/mtoDate";
+import { normalizeEventTypeTag, normalizeMtoDateField } from "../../shared/utils/mtoDate";
 import { sortTasksByOrderNo } from "../../shared/utils/sortTasksByOrderNo";
 
 export interface AdapterResult {
@@ -184,8 +184,11 @@ export function mapMendixDatasourceToGanttTasks(props: MendixTaskMappingProps): 
 
         if (end_date) {
             task.end_date = end_date;
-        } else if (duration != null && duration > 0) {
+        } else if (duration != null && duration >= 0) {
             task.duration = duration;
+            if (duration === 0 && !end_date) {
+                task.end_date = start_date;
+            }
         } else {
             skippedCount += 1;
             warnings.push(`Skipped item ${item.id}: missing end date or duration`);
@@ -224,7 +227,7 @@ export function mapMendixDatasourceToGanttTasks(props: MendixTaskMappingProps): 
             task.mto_date = mto_date;
         }
 
-        tasks.push(withComputedMtoDate(task));
+        tasks.push(normalizeMtoDateField(task));
     }
 
     const validIds = new Set(tasks.map(task => task.id));
