@@ -3,7 +3,11 @@ import type { GanttTask } from "../eventbus/eventTypes";
 import {
     getEventTypeTag,
     parseGanttDate,
-    shouldShowTimelineEventBar
+    shouldShowTimelineEventBar,
+    syncEventMtoDateWithDrag,
+    beginEventMtoDrag,
+    endEventMtoDrag,
+    resolveEventDragBaseline
 } from "../../shared/utils/mtoDate";
 import {
     GANTT_BAR_HEIGHT,
@@ -108,6 +112,48 @@ export function installMtoMarkerSync(gantt: GanttStatic): () => void {
     for (const eventName of ["onGanttRender", "onDataRender", "onGanttScroll"] as const) {
         eventIds.push(gantt.attachEvent(eventName, refresh));
     }
+
+    eventIds.push(
+        gantt.attachEvent("onBeforeTaskDrag", (id, mode) => {
+            if (mode === "move" && gantt.isTaskExists(id)) {
+                beginEventMtoDrag(id, gantt.getTask(id) as GanttTask);
+            }
+            return true;
+        })
+    );
+
+    eventIds.push(
+        gantt.attachEvent("onTaskDrag", (_id, mode, task, original) => {
+            const baseline = resolveEventDragBaseline(_id, original as GanttTask);
+            const nextMto = syncEventMtoDateWithDrag(task as GanttTask, baseline, mode);
+            if (nextMto) {
+                (task as GanttTask).mto_date = nextMto;
+                scheduleMtoMarkerRefresh(gantt);
+            }
+            return true;
+        })
+    );
+
+    eventIds.push(
+        gantt.attachEvent("onAfterTaskDrag", (id, mode) => {
+            if (mode !== "move" || !gantt.isTaskExists(id)) {
+                endEventMtoDrag(id);
+                return true;
+            }
+
+            const baseline = resolveEventDragBaseline(id, gantt.getTask(id) as GanttTask);
+            const task = gantt.getTask(id) as GanttTask;
+            const nextMto = syncEventMtoDateWithDrag(task, baseline, mode);
+            endEventMtoDrag(id);
+
+            if (nextMto) {
+                task.mto_date = nextMto;
+                scheduleMtoMarkerRefresh(gantt);
+            }
+
+            return true;
+        })
+    );
 
     scheduleMtoMarkerRefresh(gantt);
 

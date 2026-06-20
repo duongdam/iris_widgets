@@ -31,6 +31,12 @@ export interface AxGanttChartProps extends AxGanttChartContainerProps {
     mtoDateAttribute?: ListAttributeValue<Date>;
     /** Event marker type: MTO or K/O. */
     eventTypeAttribute?: ListAttributeValue<string>;
+    /** Optional opaque metadata slots passed through to task.metadata. */
+    metadata1Attribute?: ListAttributeValue<string | Big | boolean | Date>;
+    metadata2Attribute?: ListAttributeValue<string | Big | boolean | Date>;
+    metadata3Attribute?: ListAttributeValue<string | Big | boolean | Date>;
+    metadata4Attribute?: ListAttributeValue<string | Big | boolean | Date>;
+    metadata5Attribute?: ListAttributeValue<string | Big | boolean | Date>;
     showToolbar: boolean;
     showGrid: boolean;
     showTimeline: boolean;

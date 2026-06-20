@@ -17,6 +17,41 @@ export function formatGanttDateTime(date: Date): string {
     return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())} 00:00`;
 }
 
+/** Strip time-of-day so drag math matches DHTMLX day-based timeline columns. */
+export function toLocalCalendarDay(date: Date): Date {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+export function calendarDayDiff(from: Date, to: Date): number {
+    const fromDay = toLocalCalendarDay(from).getTime();
+    const toDay = toLocalCalendarDay(to).getTime();
+    return Math.round((toDay - fromDay) / 86_400_000);
+}
+
+export function addCalendarDays(date: Date, days: number): Date {
+    const next = toLocalCalendarDay(date);
+    next.setDate(next.getDate() + days);
+    return next;
+}
+
+const eventDragBaselines = new Map<string, GanttTask>();
+
+export function beginEventMtoDrag(taskId: string | number, task: GanttTask): void {
+    if (!getEventTypeTag(task.tags)) {
+        return;
+    }
+
+    eventDragBaselines.set(String(taskId), normalizeGanttTaskDates({ ...task }));
+}
+
+export function endEventMtoDrag(taskId: string | number): void {
+    eventDragBaselines.delete(String(taskId));
+}
+
+export function resolveEventDragBaseline(taskId: string | number, fallback: GanttTask): GanttTask {
+    return eventDragBaselines.get(String(taskId)) ?? fallback;
+}
+
 export function parseGanttDate(value: string | Date | undefined): Date | null {
     if (value == null) {
         return null;
@@ -95,4 +130,51 @@ export function normalizeMtoDateField(task: GanttTask): GanttTask {
     }
 
     return { ...task, mto_date: formatGanttDateTime(parsed) };
+}
+
+/** Keep MTO/K/O milestone aligned when the user drags a task bar horizontally. */
+export function syncEventMtoDateWithDrag(
+    task: GanttTask,
+    original: GanttTask,
+    mode: string
+): string | undefined {
+    if (mode !== "move") {
+        return undefined;
+    }
+
+    const eventType = getEventTypeTag(task.tags);
+    if (!eventType) {
+        return undefined;
+    }
+
+    const origStart = parseGanttDate(original.start_date);
+    const newStart = parseGanttDate(task.start_date);
+    if (!origStart || !newStart) {
+        return undefined;
+    }
+
+    if (eventType === "K/O") {
+        return formatGanttDateTime(toLocalCalendarDay(newStart));
+    }
+
+    const origMto = parseGanttDate(original.mto_date);
+    if (!origMto) {
+        return undefined;
+    }
+
+    const mtoOffsetDays = calendarDayDiff(origStart, origMto);
+    return formatGanttDateTime(addCalendarDays(newStart, mtoOffsetDays));
+}
+
+export function normalizeGanttTaskDates(task: GanttTask): GanttTask {
+    const start = parseGanttDate(task.start_date);
+    const end = parseGanttDate(task.end_date);
+    const mto = parseGanttDate(task.mto_date);
+
+    return {
+        ...task,
+        start_date: start ? formatGanttDateTime(start) : task.start_date,
+        end_date: end ? formatGanttDateTime(end) : task.end_date,
+        mto_date: mto ? formatGanttDateTime(mto) : task.mto_date
+    };
 }

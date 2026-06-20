@@ -1,5 +1,5 @@
 import { observer } from "mobx-react-lite";
-import { JSX, useEffect, useRef } from "react";
+import { JSX, useEffect, useMemo, useRef, type CSSProperties, type RefObject } from "react";
 import type { GanttTask } from "../eventbus/eventTypes";
 
 const MONTH_ABBR = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -43,10 +43,25 @@ interface TooltipPos {
     y: number;
 }
 
+const TOOLTIP_STYLE: CSSProperties = {
+    position: "absolute",
+    zIndex: 100,
+    pointerEvents: "none",
+    background: "#1f1f1f",
+    color: "#fff",
+    borderRadius: 6,
+    padding: "10px 12px",
+    minWidth: 200,
+    maxWidth: 280,
+    fontSize: 13,
+    lineHeight: "1.6",
+    transition: "opacity 120ms ease"
+};
+
 export interface GanttTooltipProps {
     task: GanttTask | undefined;
     pos: TooltipPos;
-    containerRef: React.RefObject<HTMLDivElement>;
+    containerRef: RefObject<HTMLDivElement>;
 }
 
 export const GanttTooltip = observer(function GanttTooltip({
@@ -83,34 +98,29 @@ export const GanttTooltip = observer(function GanttTooltip({
         tip.style.top = `${top}px`;
     }, [pos, task, containerRef]);
 
-    if (!task) {
+    const displayData = useMemo(() => {
+        if (!task) {
+            return null;
+        }
+
+        return {
+            pct: progressPercent(task.progress),
+            duration: calcDuration(task),
+            assignee: task.metadata?.assignee as string | undefined,
+            status: task.metadata?.status as string | undefined,
+            startFormatted: formatTooltipDate(task.start_date),
+            endFormatted: formatTooltipDate(task.end_date)
+        };
+    }, [task]);
+
+    if (!task || !displayData) {
         return null;
     }
 
-    const pct = progressPercent(task.progress);
-    const duration = calcDuration(task);
-    const assignee = task.metadata?.assignee as string | undefined;
-    const status = task.metadata?.status as string | undefined;
+    const { pct, duration, assignee, status, startFormatted, endFormatted } = displayData;
 
     return (
-        <div
-            ref={tooltipRef}
-            className="ax-gantt-tooltip"
-            style={{
-                position: "absolute",
-                zIndex: 100,
-                pointerEvents: "none",
-                background: "#1f1f1f",
-                color: "#fff",
-                borderRadius: 6,
-                padding: "10px 12px",
-                minWidth: 200,
-                maxWidth: 280,
-                fontSize: 13,
-                lineHeight: "1.6",
-                transition: "opacity 120ms ease"
-            }}
-        >
+        <div ref={tooltipRef} className="ax-gantt-tooltip" style={TOOLTIP_STYLE}>
             {/* Task name */}
             <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 6, wordBreak: "break-word" }}>{task.text}</div>
 
@@ -148,9 +158,9 @@ export const GanttTooltip = observer(function GanttTooltip({
 
             {/* Date row */}
             <div style={{ color: "rgba(255,255,255,0.65)", marginBottom: 4 }}>
-                <span>{formatTooltipDate(task.start_date)}</span>
+                <span>{startFormatted}</span>
                 <span style={{ margin: "0 5px" }}>→</span>
-                <span>{formatTooltipDate(task.end_date)}</span>
+                <span>{endFormatted}</span>
             </div>
 
             {/* Duration */}

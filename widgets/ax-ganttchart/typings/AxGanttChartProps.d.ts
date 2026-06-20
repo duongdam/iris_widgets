@@ -35,6 +35,11 @@ export interface AxGanttChartContainerProps {
     tagsAttribute?: ListAttributeValue<string>;
     mtoDateAttribute?: ListAttributeValue<Date>;
     eventTypeAttribute?: ListAttributeValue<string>;
+    metadata1Attribute?: ListAttributeValue<string | Big | boolean | Date>;
+    metadata2Attribute?: ListAttributeValue<string | Big | boolean | Date>;
+    metadata3Attribute?: ListAttributeValue<string | Big | boolean | Date>;
+    metadata4Attribute?: ListAttributeValue<string | Big | boolean | Date>;
+    metadata5Attribute?: ListAttributeValue<string | Big | boolean | Date>;
     allowDrag: boolean;
     allowResize: boolean;
     allowGridReorder: boolean;
@@ -78,6 +83,11 @@ export interface AxGanttChartPreviewProps {
     tagsAttribute: string;
     mtoDateAttribute: string;
     eventTypeAttribute: string;
+    metadata1Attribute: string;
+    metadata2Attribute: string;
+    metadata3Attribute: string;
+    metadata4Attribute: string;
+    metadata5Attribute: string;
     allowDrag: boolean;
     allowResize: boolean;
     allowGridReorder: boolean;

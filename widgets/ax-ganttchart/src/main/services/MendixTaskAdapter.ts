@@ -32,6 +32,11 @@ export type MendixTaskMappingProps = Pick<
     | "tagsAttribute"
     | "mtoDateAttribute"
     | "eventTypeAttribute"
+    | "metadata1Attribute"
+    | "metadata2Attribute"
+    | "metadata3Attribute"
+    | "metadata4Attribute"
+    | "metadata5Attribute"
 >;
 
 function parseTags(value: string | undefined): string[] | undefined {
@@ -132,6 +137,54 @@ function readBoolean(item: ObjectItem, accessor?: ListAttributeValue<boolean>): 
     return attr.value;
 }
 
+function readMetadataValue(
+    item: ObjectItem,
+    accessor?: ListAttributeValue<string | Big | boolean | Date>
+): string | number | boolean | undefined {
+    if (!accessor) {
+        return undefined;
+    }
+
+    const attr = accessor.get(item);
+    if (attr.status !== "available" || attr.value == null) {
+        return undefined;
+    }
+
+    if (attr.value instanceof Date) {
+        return attr.value.toISOString();
+    }
+
+    if (typeof attr.value === "boolean" || typeof attr.value === "string") {
+        return attr.value;
+    }
+
+    const num = Number(attr.value);
+    return Number.isFinite(num) ? num : String(attr.value);
+}
+
+function readMetadataFields(
+    item: ObjectItem,
+    props: MendixTaskMappingProps
+): Record<string, string | number | boolean> {
+    const metadata: Record<string, string | number | boolean> = {};
+    const slots = [
+        ["metadata1", props.metadata1Attribute],
+        ["metadata2", props.metadata2Attribute],
+        ["metadata3", props.metadata3Attribute],
+        ["metadata4", props.metadata4Attribute],
+        ["metadata5", props.metadata5Attribute]
+    ] as const;
+
+    for (const [key, accessor] of slots) {
+        const value = readMetadataValue(item, accessor);
+        if (value !== undefined) {
+            metadata[key] = value;
+        }
+    }
+
+    return metadata;
+}
+
 export function mapMendixDatasourceToGanttTasks(props: MendixTaskMappingProps): AdapterResult {
     const mappingValidation = validateDatasourceMapping(props);
     if (!mappingValidation.valid) {
@@ -174,12 +227,13 @@ export function mapMendixDatasourceToGanttTasks(props: MendixTaskMappingProps): 
         const mto_date = convertDateToGanttString(mtoDate);
         const eventTypeRaw = props.eventTypeAttribute ? readAttributeString(item, props.eventTypeAttribute) : undefined;
         const eventTypeTag = normalizeEventTypeTag(eventTypeRaw);
+        const extraMetadata = readMetadataFields(item, props);
 
         const task: GanttTask = {
             id,
             text,
             start_date,
-            metadata: { mendixItemId: item.id }
+            metadata: { mendixItemId: item.id, ...extraMetadata }
         };
 
         if (end_date) {

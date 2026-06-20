@@ -16,10 +16,11 @@ import {
     updateLayout
 } from "../components/GanttConfiguration";
 import { expandToLevel } from "../components/TreeExpandManager";
-import { applyMode, applyTimelineRange, scrollToToday } from "../components/TimelineManager";
+import { applyMode, applyTimelineRange, scrollToTaskOrEvent, scrollToToday } from "../components/TimelineManager";
 import { scheduleTodayMarkerRefresh, syncTodayMarker } from "../components/TodayMarker";
 import { scheduleMtoMarkerRefresh } from "../components/MtoMarker";
 import { applyGridReorderConfig } from "../../shared/utils/gridReorder";
+import { normalizeGanttTaskDates } from "../../shared/utils/mtoDate";
 import type { GanttTask } from "../eventbus/eventTypes";
 import type { WidgetEventBridge } from "../services/WidgetEventBridge";
 import { syncTasks } from "../services/GanttSyncService";
@@ -48,6 +49,7 @@ interface GanttInstanceRuntime {
     allowGridReorder: boolean;
     editing: GanttEditingConfig;
     onAddTaskClick?: (taskId: string) => void;
+    onHoverTask?: (taskId: string | undefined) => void;
     teardownTodayMarker: (() => void) | null;
     teardownMtoMarker: (() => void) | null;
     teardownGridReorder: (() => void) | null;
@@ -77,6 +79,7 @@ function emitTaskClick(taskId: string, store: GanttStore, bridge?: WidgetEventBr
     }
 
     store.selectTask(task);
+    scrollToTaskOrEvent(gantt, task);
     bridge?.handleTaskClick(task);
 }
 
@@ -137,6 +140,7 @@ function createRuntimeState(options: UseGanttInstanceOptions): GanttInstanceRunt
         allowGridReorder: options.allowGridReorder ?? true,
         editing: options.editing,
         onAddTaskClick: options.onAddTaskClick,
+        onHoverTask: options.onHoverTask,
         teardownTodayMarker: null,
         teardownMtoMarker: null,
         teardownGridReorder: null,
@@ -167,6 +171,7 @@ export function useGanttInstance(options: UseGanttInstanceOptions): void {
     runtimeRef.current.bridge = bridge;
     runtimeRef.current.showTodayMarker = showTodayMarker;
     runtimeRef.current.onAddTaskClick = onAddTaskClick;
+    runtimeRef.current.onHoverTask = onHoverTask;
     runtimeRef.current.allowGridReorder = allowGridReorder;
     runtimeRef.current.editing = editing;
 
@@ -205,7 +210,7 @@ export function useGanttInstance(options: UseGanttInstanceOptions): void {
             },
             onMouseMove: (id: string) => {
                 store.setHoveredTaskId(id);
-                onHoverTask?.(id);
+                runtimeRef.current.onHoverTask?.(id);
                 applyCrossHighlight(id);
             }
         });
@@ -221,8 +226,13 @@ export function useGanttInstance(options: UseGanttInstanceOptions): void {
 
         // Emit TASK_UPDATED after user finishes dragging or resizing a bar on the timeline.
         const dragEventId = gantt.attachEvent("onAfterTaskDrag", (id: string | number, mode: string) => {
-            const task = gantt.getTask(id) as GanttTask;
-            runtimeRef.current.bridge?.handleTaskUpdated(task, mode as "move" | "resize" | "progress");
+            const liveTask = normalizeGanttTaskDates(gantt.getTask(id) as GanttTask);
+            store.updateTaskFromTimeline(liveTask);
+            runtime.previousTasks = runtime.previousTasks.map(task =>
+                task.id === liveTask.id ? liveTask : task
+            );
+            runtimeRef.current.bridge?.handleTaskUpdated(liveTask, mode as "move" | "resize" | "progress");
+            scheduleMtoMarkerRefresh(gantt);
             return true;
         });
 
@@ -258,7 +268,7 @@ export function useGanttInstance(options: UseGanttInstanceOptions): void {
             resetGantt();
             runtime.initialized = false;
         };
-    }, [containerRef, showProgress, store.viewMode, store.showGrid, store.showTimeline, onHoverTask]);
+    }, [containerRef, showProgress, store.viewMode, store.showGrid, store.showTimeline]);
 
     useEffect(() => {
         const runtime = runtimeRef.current;

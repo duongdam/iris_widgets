@@ -81,6 +81,8 @@ export function installGanttLayoutSync(container: HTMLElement, target: GanttStat
 export function initGantt(container: HTMLElement, display: GanttDisplayConfig): void {
     gantt.config.date_format = "%Y-%m-%d %H:%i";
     gantt.config.smart_rendering = true;
+    gantt.config.branch_loading = true;
+    gantt.config.scroll_on_click = false;
     gantt.config.autosize = false;
     applyGanttLayoutConfig(gantt);
     gantt.config.show_progress = display.showProgress;

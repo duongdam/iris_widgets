@@ -77,6 +77,8 @@
     letter-spacing: 0;
     line-height: $gantt-cell-size;
     min-height: $gantt-cell-size;
+    height: $gantt-cell-size;
+    box-sizing: border-box;
 }
 
 /* ─── Grid rows ─────────────────────────────────────────────────────────────── */
@@ -84,6 +86,13 @@
 .gantt_task_cell,
 .gantt_grid_data .gantt_row {
     height: $gantt-row-height !important;
+}
+
+.gantt_task_cell {
+    width: $gantt-cell-size !important;
+    min-width: $gantt-cell-size !important;
+    max-width: $gantt-cell-size !important;
+    box-sizing: border-box;
 }
 
 .gantt_task_row {

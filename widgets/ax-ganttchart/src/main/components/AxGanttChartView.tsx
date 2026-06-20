@@ -115,13 +115,23 @@ export const AxGanttChartView = observer(function AxGanttChartView({
     );
     const hideGantt = showEmpty || showConfigError;
 
-    function handleMouseMove(e: React.MouseEvent<HTMLDivElement>): void {
+    const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
         setTooltipPos({ x: e.clientX, y: e.clientY });
-    }
+    }, []);
 
-    function handleMouseLeave(): void {
+    const handleMouseLeave = useCallback(() => {
         store.setHoveredTaskId(undefined);
-    }
+    }, [store]);
+
+    const ganttContainerStyle = useMemo(
+        () => ({
+            height: ganttContainerHeight,
+            minHeight: typeof ganttContainerHeight === "number" ? ganttContainerHeight : undefined,
+            display: hideGantt ? ("none" as const) : ("block" as const),
+            visibility: store.loading ? ("hidden" as const) : ("visible" as const)
+        }),
+        [ganttContainerHeight, hideGantt, store.loading]
+    );
 
     return (
         <div
@@ -155,12 +165,7 @@ export const AxGanttChartView = observer(function AxGanttChartView({
                 <div
                     ref={containerRef}
                     className="ax-ganttchart__gantt"
-                    style={{
-                        height: ganttContainerHeight,
-                        minHeight: typeof ganttContainerHeight === "number" ? ganttContainerHeight : undefined,
-                        display: hideGantt ? "none" : "block",
-                        visibility: store.loading ? "hidden" : "visible"
-                    }}
+                    style={ganttContainerStyle}
                 />
 
                 {hoveredTask && <GanttTooltip task={hoveredTask} pos={tooltipPos} containerRef={rootRef} />}

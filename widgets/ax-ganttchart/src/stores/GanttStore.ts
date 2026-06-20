@@ -79,6 +79,17 @@ export class GanttStore {
         this.tasks = this.tasks.map(task => (task.id === taskId ? { ...task, parent: parentId } : task));
     }
 
+    updateTaskFromTimeline(task: GanttTask): void {
+        const index = this.tasks.findIndex(item => item.id === task.id);
+        if (index < 0) {
+            return;
+        }
+
+        const next = [...this.tasks];
+        next[index] = cloneTaskForStore(task);
+        this.tasks = next;
+    }
+
     setExpandLevel(level: number): void {
         this.expandLevel = level;
     }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { gantt } from "../components/GanttConfiguration";
 import { collapseAllBranches, expandNextLevel } from "../components/TreeExpandManager";
 import { fitTimeline, incomingEventToViewMode, scrollToToday, scrollToTask } from "../components/TimelineManager";
@@ -26,6 +26,9 @@ export interface UseEventBusBridgeOptions {
 export function useEventBusBridge(options: UseEventBusBridgeOptions): void {
     const { store, eventBus, widgetId, bridge, containerRef, onRefresh } = options;
 
+    const onRefreshRef = useRef(onRefresh);
+    onRefreshRef.current = onRefresh;
+
     const exportService: ExportService = useMemo(() => createExportService(), []);
     const fullscreenService = useMemo(() => createFullscreenService(), []);
 
@@ -35,14 +38,14 @@ export function useEventBusBridge(options: UseEventBusBridgeOptions): void {
                 if (payload.widgetId !== widgetId) {
                     return;
                 }
-                onRefresh?.();
+                onRefreshRef.current?.();
             }),
 
             eventBus.on(GanttIncomingEvents.LOAD_DATA, payload => {
                 if (payload.widgetId !== widgetId) {
                     return;
                 }
-                onRefresh?.();
+                onRefreshRef.current?.();
             }),
 
             eventBus.on(GanttIncomingEvents.EXPAND_ALL, payload => {
@@ -234,5 +237,5 @@ export function useEventBusBridge(options: UseEventBusBridgeOptions): void {
             removeFullscreenListener();
             unregisterGanttWidget(widgetId);
         };
-    }, [store, eventBus, widgetId, bridge, containerRef, exportService, fullscreenService, onRefresh]);
+    }, [store, eventBus, widgetId, bridge, containerRef, exportService, fullscreenService]);
 }

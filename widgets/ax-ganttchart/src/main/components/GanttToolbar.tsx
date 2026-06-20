@@ -1,4 +1,4 @@
-import { JSX } from "react";
+import { JSX, useCallback, useMemo } from "react";
 import type React from "react";
 import { Button, DatePicker, Dropdown, Segmented, Space, Tooltip } from "antd";
 import type { MenuProps } from "antd";
@@ -244,28 +244,85 @@ export const GanttToolbar = observer(function GanttToolbar(): JSX.Element {
     const maxExpandLevel = resolveMaxExpandLevel(store.tasks);
     const canExpandFurther = maxExpandLevel > 0 && store.expandLevel < maxExpandLevel;
 
-    function emit(type: GanttIncomingEvents, data?: SetDateData): void {
-        eventBus.emit({ widgetId, type, data });
-    }
+    const emit = useCallback(
+        (type: GanttIncomingEvents, data?: SetDateData): void => {
+            eventBus.emit({ widgetId, type, data });
+        },
+        [eventBus, widgetId]
+    );
 
-    function handleExport(key: string): void {
-        const event = EXPORT_EVENT_MAP[key];
-        if (event) {
-            emit(event);
-        }
-    }
+    const handleExport = useCallback(
+        (key: string): void => {
+            const event = EXPORT_EVENT_MAP[key];
+            if (event) {
+                emit(event);
+            }
+        },
+        [emit]
+    );
 
-    function handleStartDateChange(date: dayjs.Dayjs | null): void {
-        if (date) {
-            emit(GanttIncomingEvents.SET_START_DATE, { date: date.startOf("day").toISOString() });
-        }
-    }
+    const handleStartDateChange = useCallback(
+        (date: dayjs.Dayjs | null): void => {
+            if (date) {
+                emit(GanttIncomingEvents.SET_START_DATE, { date: date.startOf("day").toISOString() });
+            }
+        },
+        [emit]
+    );
 
-    function handleEndDateChange(date: dayjs.Dayjs | null): void {
-        if (date) {
-            emit(GanttIncomingEvents.SET_END_DATE, { date: date.endOf("day").toISOString() });
-        }
-    }
+    const handleEndDateChange = useCallback(
+        (date: dayjs.Dayjs | null): void => {
+            if (date) {
+                emit(GanttIncomingEvents.SET_END_DATE, { date: date.endOf("day").toISOString() });
+            }
+        },
+        [emit]
+    );
+
+    const handleViewModeChange = useCallback(
+        (val: string | number): void => {
+            emit(VIEW_MODE_EVENT_MAP[val as TimelineViewMode]);
+        },
+        [emit]
+    );
+
+    const handleScrollToToday = useCallback(() => {
+        emit(GanttIncomingEvents.SCROLL_TO_TODAY);
+    }, [emit]);
+
+    const handleFitTimeline = useCallback(() => {
+        emit(GanttIncomingEvents.FIT_TIMELINE);
+    }, [emit]);
+
+    const handleExpandAll = useCallback(() => {
+        emit(GanttIncomingEvents.EXPAND_ALL);
+    }, [emit]);
+
+    const handleCollapseAll = useCallback(() => {
+        emit(GanttIncomingEvents.COLLAPSE_ALL);
+    }, [emit]);
+
+    const handleToggleGridReorder = useCallback(() => {
+        store.toggleGridReorderMode();
+    }, [store]);
+
+    const handleToggleExpandHeight = useCallback(() => {
+        emit(
+            store.expandHeight ? GanttIncomingEvents.EXIT_EXPAND_HEIGHT : GanttIncomingEvents.ENTER_EXPAND_HEIGHT
+        );
+    }, [emit, store.expandHeight]);
+
+    const handleToggleFullscreen = useCallback(() => {
+        emit(store.fullscreen ? GanttIncomingEvents.EXIT_FULLSCREEN : GanttIncomingEvents.ENTER_FULLSCREEN);
+    }, [emit, store.fullscreen]);
+
+    const exportMenu = useMemo<MenuProps>(
+        () => ({
+            items: EXPORT_ITEMS,
+            onClick: ({ key }) => handleExport(String(key))
+        }),
+        [handleExport]
+    );
 
     return (
         <div className="ax-ganttchart__toolbar">
@@ -274,7 +331,7 @@ export const GanttToolbar = observer(function GanttToolbar(): JSX.Element {
                 size="small"
                 options={VIEW_OPTIONS}
                 value={store.viewMode}
-                onChange={val => emit(VIEW_MODE_EVENT_MAP[val as TimelineViewMode])}
+                onChange={handleViewModeChange}
             />
 
             <div style={{ width: 1, height: 16, background: "#e8e8e8", flexShrink: 0 }} />
@@ -312,13 +369,13 @@ export const GanttToolbar = observer(function GanttToolbar(): JSX.Element {
             {/* Navigation actions */}
             <Space size={4}>
                 <Tooltip title="Scroll to today" mouseEnterDelay={0.5}>
-                    <Button size="small" icon={<IconToday />} onClick={() => emit(GanttIncomingEvents.SCROLL_TO_TODAY)}>
+                    <Button size="small" icon={<IconToday />} onClick={handleScrollToToday}>
                         Today
                     </Button>
                 </Tooltip>
 
                 <Tooltip title="Fit timeline to tasks" mouseEnterDelay={0.5}>
-                    <Button size="small" icon={<IconFit />} onClick={() => emit(GanttIncomingEvents.FIT_TIMELINE)}>
+                    <Button size="small" icon={<IconFit />} onClick={handleFitTimeline}>
                         Fit
                     </Button>
                 </Tooltip>
@@ -333,16 +390,12 @@ export const GanttToolbar = observer(function GanttToolbar(): JSX.Element {
                         size="small"
                         icon={<IconExpand />}
                         disabled={!canExpandFurther}
-                        onClick={() => emit(GanttIncomingEvents.EXPAND_ALL)}
+                        onClick={handleExpandAll}
                     />
                 </Tooltip>
 
                 <Tooltip title="Collapse all rows" mouseEnterDelay={0.5}>
-                    <Button
-                        size="small"
-                        icon={<IconCollapse />}
-                        onClick={() => emit(GanttIncomingEvents.COLLAPSE_ALL)}
-                    />
+                    <Button size="small" icon={<IconCollapse />} onClick={handleCollapseAll} />
                 </Tooltip>
             </Space>
 
@@ -361,7 +414,7 @@ export const GanttToolbar = observer(function GanttToolbar(): JSX.Element {
                             size="small"
                             type={store.gridReorderMode ? "primary" : "default"}
                             icon={<IconReorder />}
-                            onClick={() => store.toggleGridReorderMode()}
+                            onClick={handleToggleGridReorder}
                         >
                             Reorder
                         </Button>
@@ -374,14 +427,7 @@ export const GanttToolbar = observer(function GanttToolbar(): JSX.Element {
 
             {/* Export + Fullscreen */}
             <Space size={4}>
-                <Dropdown
-                    menu={{
-                        items: EXPORT_ITEMS,
-                        onClick: ({ key }) => handleExport(key)
-                    }}
-                    placement="bottomRight"
-                    trigger={["click"]}
-                >
+                <Dropdown menu={exportMenu} placement="bottomRight" trigger={["click"]}>
                     <Button size="small" icon={<IconExport />}>
                         Export
                     </Button>
@@ -395,13 +441,7 @@ export const GanttToolbar = observer(function GanttToolbar(): JSX.Element {
                         size="small"
                         type={store.expandHeight ? "primary" : "default"}
                         icon={<IconExpandHeight active={store.expandHeight} />}
-                        onClick={() =>
-                            emit(
-                                store.expandHeight
-                                    ? GanttIncomingEvents.EXIT_EXPAND_HEIGHT
-                                    : GanttIncomingEvents.ENTER_EXPAND_HEIGHT
-                            )
-                        }
+                        onClick={handleToggleExpandHeight}
                     />
                 </Tooltip>
 
@@ -409,13 +449,7 @@ export const GanttToolbar = observer(function GanttToolbar(): JSX.Element {
                     <Button
                         size="small"
                         icon={<IconFullscreen active={store.fullscreen} />}
-                        onClick={() =>
-                            emit(
-                                store.fullscreen
-                                    ? GanttIncomingEvents.EXIT_FULLSCREEN
-                                    : GanttIncomingEvents.ENTER_FULLSCREEN
-                            )
-                        }
+                        onClick={handleToggleFullscreen}
                     />
                 </Tooltip>
             </Space>

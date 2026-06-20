@@ -153,6 +153,71 @@
                     <attributeType name="Enum" />
                 </attributeTypes>
             </property>
+            <property key="metadata1Attribute" type="attribute" dataSource="tasksDatasource" required="false">
+                <caption>Metadata 1 attribute</caption>
+                <description>Optional value stored in task metadata.metadata1</description>
+                <attributeTypes>
+                    <attributeType name="String" />
+                    <attributeType name="Integer" />
+                    <attributeType name="Long" />
+                    <attributeType name="Decimal" />
+                    <attributeType name="Boolean" />
+                    <attributeType name="Enum" />
+                    <attributeType name="DateTime" />
+                </attributeTypes>
+            </property>
+            <property key="metadata2Attribute" type="attribute" dataSource="tasksDatasource" required="false">
+                <caption>Metadata 2 attribute</caption>
+                <description>Optional value stored in task metadata.metadata2</description>
+                <attributeTypes>
+                    <attributeType name="String" />
+                    <attributeType name="Integer" />
+                    <attributeType name="Long" />
+                    <attributeType name="Decimal" />
+                    <attributeType name="Boolean" />
+                    <attributeType name="Enum" />
+                    <attributeType name="DateTime" />
+                </attributeTypes>
+            </property>
+            <property key="metadata3Attribute" type="attribute" dataSource="tasksDatasource" required="false">
+                <caption>Metadata 3 attribute</caption>
+                <description>Optional value stored in task metadata.metadata3</description>
+                <attributeTypes>
+                    <attributeType name="String" />
+                    <attributeType name="Integer" />
+                    <attributeType name="Long" />
+                    <attributeType name="Decimal" />
+                    <attributeType name="Boolean" />
+                    <attributeType name="Enum" />
+                    <attributeType name="DateTime" />
+                </attributeTypes>
+            </property>
+            <property key="metadata4Attribute" type="attribute" dataSource="tasksDatasource" required="false">
+                <caption>Metadata 4 attribute</caption>
+                <description>Optional value stored in task metadata.metadata4</description>
+                <attributeTypes>
+                    <attributeType name="String" />
+                    <attributeType name="Integer" />
+                    <attributeType name="Long" />
+                    <attributeType name="Decimal" />
+                    <attributeType name="Boolean" />
+                    <attributeType name="Enum" />
+                    <attributeType name="DateTime" />
+                </attributeTypes>
+            </property>
+            <property key="metadata5Attribute" type="attribute" dataSource="tasksDatasource" required="false">
+                <caption>Metadata 5 attribute</caption>
+                <description>Optional value stored in task metadata.metadata5</description>
+                <attributeTypes>
+                    <attributeType name="String" />
+                    <attributeType name="Integer" />
+                    <attributeType name="Long" />
+                    <attributeType name="Decimal" />
+                    <attributeType name="Boolean" />
+                    <attributeType name="Enum" />
+                    <attributeType name="DateTime" />
+                </attributeTypes>
+            </property>
         </propertyGroup>
         <propertyGroup caption="Editing">
             <property key="allowDrag" type="boolean" required="true" defaultValue="true">

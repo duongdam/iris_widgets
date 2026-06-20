@@ -63,7 +63,12 @@ export function useDatasourceSync(store: GanttStore, props: AxGanttChartProps, e
         props.typeAttribute,
         props.tagsAttribute,
         props.mtoDateAttribute,
-        props.eventTypeAttribute
+        props.eventTypeAttribute,
+        props.metadata1Attribute,
+        props.metadata2Attribute,
+        props.metadata3Attribute,
+        props.metadata4Attribute,
+        props.metadata5Attribute
     ]);
 
     return mappingValid;
