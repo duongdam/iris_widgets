@@ -125,3 +125,28 @@ body,
     border-color: var(--iris-primary);
     color: var(--iris-primary);
 }
+
+.mock-ui-gantt-chart-wrap {
+    position: relative;
+}
+
+.mock-ui-lifecycle-panel {
+    position: absolute;
+    top: 52px;
+    right: 12px;
+    z-index: 20;
+    width: 220px;
+    padding: 10px 12px;
+    border: 1px solid var(--iris-border);
+    border-radius: var(--iris-radius-sm);
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    font-size: 12px;
+}
+
+.mock-ui-lifecycle-grid {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 4px 8px;
+    margin-top: 8px;
+}

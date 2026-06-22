@@ -1,7 +1,7 @@
 import type { GanttStatic } from "dhtmlx-gantt";
-import type { GanttStore } from "../../stores/GanttStore";
-import type { GanttTask } from "../../main/eventbus/eventTypes";
-import type { WidgetEventBridge } from "../../main/services/WidgetEventBridge";
+import type { AxGanttStore } from "../../stores/AxGanttStore";
+import type { GanttTask } from "../../events/eventTypes";
+import type { MendixActionBridge } from "../../shared/bridge/mendixActionBridge";
 import { TIMELINE_EVENT_MIN_ZERO_LEVEL } from "./mtoDate";
 
 type TaskWithLevel = { id?: string | number; $level?: number; parent?: string | number };
@@ -38,9 +38,9 @@ export function isValidGridReorderTarget(
 
 export function syncTaskParentFromGantt(
     taskId: string,
-    store: GanttStore,
+    store: AxGanttStore,
     gantt: GanttStatic,
-    bridge?: WidgetEventBridge
+    actionBridge?: MendixActionBridge
 ): void {
     if (!gantt.isTaskExists(taskId)) {
         return;
@@ -58,8 +58,7 @@ export function syncTaskParentFromGantt(
 
     store.updateTaskParent(taskId, parent);
 
-    const newOrderNo = gantt.getTaskIndex(taskId) + 1;
-    bridge?.handleTaskReordered({ ...existing, parent }, newParentId, newOrderNo);
+    actionBridge?.fireDropped({ ...existing, parent });
 }
 
 type GanttWithDom = GanttStatic & { $task_data?: HTMLElement; $grid_data?: HTMLElement };
@@ -86,8 +85,8 @@ export interface GridReorderOptions {
 
 export function applyGridReorderConfig(
     enabled: boolean,
-    store: GanttStore,
-    bridge: WidgetEventBridge | undefined,
+    store: AxGanttStore,
+    actionBridge: MendixActionBridge | undefined,
     target: GanttStatic,
     options: GridReorderOptions = {}
 ): () => void {
@@ -128,7 +127,7 @@ export function applyGridReorderConfig(
 
         eventIds.push(
             target.attachEvent("onRowDragEnd", id => {
-                syncTaskParentFromGantt(String(id), store, target, bridge);
+                syncTaskParentFromGantt(String(id), store, target, actionBridge);
             })
         );
     }

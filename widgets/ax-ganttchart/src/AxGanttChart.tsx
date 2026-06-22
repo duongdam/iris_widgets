@@ -1,17 +1,16 @@
-import { JSX } from "react";
-import { AxGanttChartView } from "./main/components/AxGanttChartView";
-import { GanttProvider } from "./main/providers/GanttProvider";
-import { ThemeProvider } from "./main/providers/ThemeProvider";
+import { JSX, useRef } from "react";
+import { AxGanttInner } from "./AxGanttInner";
+import { AxGanttChartView } from "./main/AxGanttChartView";
 import type { AxGanttChartContainerProps, AxGanttChartProps } from "./typings/AxGanttChartProps";
 import "./styles/gantt.scss";
 
 export function AxGanttChart(props: AxGanttChartProps): JSX.Element {
+    const rootRef = useRef<HTMLDivElement>(null);
+
     return (
-        <ThemeProvider>
-            <GanttProvider widgetProps={props}>
-                <AxGanttChartView widgetProps={props} />
-            </GanttProvider>
-        </ThemeProvider>
+        <AxGanttInner widgetProps={props} containerRef={rootRef}>
+            <AxGanttChartView widgetProps={props} rootRef={rootRef} />
+        </AxGanttInner>
     );
 }
 

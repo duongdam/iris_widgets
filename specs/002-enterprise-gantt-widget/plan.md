@@ -1,358 +1,205 @@
-# Implementation Plan: Gantt Refactor — Unified Event Bridge + Simplification
+# Implementation Plan: AxGanttChart Refactor — Simplified Architecture + Typed Mendix Actions
 
-**Branch**: `001-enterprise-chart-widgets` | **Date**: 2026-06-18 | **Spec**: [spec.md](./spec.md)
+**Branch**: `001-enterprise-chart-widgets` | **Date**: 2026-06-23 | **Spec**: [spec.md](./spec.md)
 
-**Input**: Refactor `ax-ganttchart` để đơn giản hóa tích hợp Mendix:
-- Thay JS global hack bằng attribute write-back thuần Mendix
-- Single `onEvent` nanoflow nhận tất cả events + đọc `eventType`/`eventPayload` trực tiếp như String attribute
-- Loại bỏ các property XML chưa dùng/tương lai
-- Bổ sung events thực tế còn thiếu (TASK_UPDATED từ drag, TASK_REORDERED)
-- Tài liệu hóa recipe nanoflow cho từng use-case phổ biến
-
-**Note**: Planning only — implementation via `/speckit-tasks` + `/speckit-implement`.
-
----
+**Input**: Refactor `ax-ganttchart` based on updated `AxGanttChart.xml`, replace unified `eventType`/`eventPayload` bridge with per-action Mendix callbacks, simplify folder structure, use `gantt-test.json` as preview mock data, support unscheduled group rows via DHTMLX `show_unscheduled`.
 
 ## Summary
 
-Refactor Gantt widget theo hướng "Mendix-native event contract": mọi tương tác của người dùng được phản chiếu vào hai String attribute (`eventType` + `eventPayload`) mà nanoflow đọc trực tiếp — không cần JS, không cần `window.__AX_GANTT__`. Đồng thời dọn dẹp các property XML chưa dùng và chuẩn hóa tập events phản ánh đúng nhu cầu thực tế.
+Refactor the Gantt widget from a multi-layer architecture (Provider, hooks, WidgetEventBridge, RootStore, typed enum event bus) into a **flat, KISS structure**:
 
-**Pain points hiện tại**:
-
-| Vấn đề | Hiện trạng | Sau refactor |
-|--------|-----------|--------------|
-| Đọc event trong nanoflow | JS: `window.__AX_GANTT__.getLastEvent(name).data.task` | Attribute: `$eventType`, `$eventPayload` |
-| XML cluttered | `showCriticalPath`, `showBaseline`, `exportServerUrl` — chưa dùng | Loại bỏ |
-| TASK_UPDATED từ drag | Không có — thay đổi mất sau reload | Emit khi user thả bar |
-| TASK_REORDERED từ grid | Không có — reorder không persist | Emit khi user thay parent |
-| Event documentation | Không có recipe mẫu | quickstart.md với ví dụ nanoflow |
-
----
+1. **One MobX store**: `AxGanttStore` (remove `RootStore`, rename `GanttStore`)
+2. **One main view**: `AxGanttChartView` — Gantt init, datasource sync, toolbar, and Mendix action dispatch live here or in co-located modules (not split into many tiny components)
+3. **One bridge component**: `AxGanttInner` — listens for external Mendix commands (incoming topics on global event bus)
+4. **Simple global event bus** — `GlobalKey = "AX_EVENT_BUS"`, API: `emit`, `on`, `removeListener`; helpers: `createBus`, `initEventBus`, `getEventBus`, `emitEvent(topic, event)`
+5. **Mendix events** — replace `onEvent` + `eventType` + `eventPayload` with dedicated actions: `onClicked`, `onDoubleClicked`, `onChanged`, `onAdded`, `onDropped`; each writes scalar write-back attributes (`outItemId`, `outType`, optional `outChangedNum`) before `execute()`
+6. **Unscheduled groups** — `CUSTOM_GROUP`, `DISTRICT_GROUP` (and mapped legacy `AREA`/`BIZ_LINE`) have no start/end; use DHTMLX `unscheduled: true` + `gantt.config.show_unscheduled = false` per [DHTMLX unscheduled tasks guide](https://docs.dhtmlx.com/gantt/guides/unscheduled-tasks/)
+7. **Mock data** — replace hand-written preview tasks with normalized data from [`gantt-test.json`](../../gantt-test.json)
 
 ## Technical Context
 
-**Language/Version**: TypeScript 5.4 (strict), React 18.2, SCSS, MobX 6.16
-
-**Primary Dependencies**: antd 6.4.3, dhtmlx-gantt ^9.1.4, @mendix/pluggable-widgets-tools 11.8.1
-
-**Target Platform**: Mendix Studio Pro 10.24.9+, pluggable widget
-
-**Storage**: N/A (UI layer — viết ngược về Mendix attribute)
-
-**Constraints**:
-- `eventType` và `eventPayload` MUST là `EditableValue<string>` — Mendix ghi nhận thay đổi synchronously
-- Widget PHẢI gọi `eventType.setValue(...)` → `eventPayload.setValue(...)` → sau đó `executeAction(onEvent)` — đúng thứ tự
-- `onEvent` vẫn là single action (nanoflow/microflow); logic routing ở phía Mendix qua `$eventType`
-- Backward compat: `window.__AX_GANTT__.getLastEvent()` GIỮ LẠI cho debug, nhưng không phải primary contract nữa
-- Không có REST call; mọi thứ qua Mendix attribute và action
-
-**Scope**: 1 widget (`ax-ganttchart`), 1 XML, 2 service files, 1 hook, 1 typings file, 1 contract file
-
----
+**Language/Version**: TypeScript strict, React 18.2, Mendix Pluggable Widgets 11.8.1  
+**Primary Dependencies**: dhtmlx-gantt ^9.1.4, MobX 6.16, antd 6.4.3, SCSS  
+**Storage**: Mendix list datasource (`roadmapItems`); no direct REST  
+**Testing**: Jest unit tests in widget package (`pnpm --filter ax-ganttchart test`)  
+**Target Platform**: Mendix Studio Pro 10.24.9+, browser runtime  
+**Project Type**: Mendix pluggable widget in PNPM monorepo  
+**Performance Goals**: Smart rendering at 1,000+ tasks; incremental `gantt.updateTask` on datasource delta  
+**Constraints**: Offline-capable; per-widget-instance store; no global mutable app state except scoped event bus singleton  
+**Scale/Scope**: ~47 TS files today → target ~25–30 after consolidation
 
 ## Constitution Check
 
-| Gate | Status | Notes |
-|------|--------|-------|
-| Shared logic trong packages, không trong widgets | ✅ PASS | Không thêm shared packages |
-| TypeScript strict, React hooks only | ✅ PASS | Không thay đổi pattern |
-| MobX store patterns | ✅ PASS | Store không đổi |
-| Mendix datasource — không gọi API trực tiếp | ✅ PASS | Attribute write-back là Mendix-native |
-| Independent widget builds | ✅ PASS | Chỉ thay đổi ax-ganttchart |
+*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-**Post-design re-check**: ✅ Không vi phạm.
+| Principle | Status | Notes |
+|-----------|--------|-------|
+| KISS / Simplicity | ✅ PASS | Refactor explicitly removes over-abstraction |
+| MobX `makeAutoObservable` | ✅ PASS | Retained in `AxGanttStore` |
+| No global mutable state | ⚠️ JUSTIFIED | Global event bus is intentional for cross-widget Mendix command ingress; scoped by `widgetId` in event payload |
+| Functional React + hooks | ✅ PASS | `AxGanttChartView`, `AxGanttInner` only |
+| Datasource-only data | ✅ PASS | Runtime uses Mendix list; preview uses `gantt-test.json` |
+| SOLID / DRY | ✅ PASS | Consolidate duplicate bridge/hook layers |
 
----
+**Post-design re-check**: PASS — simplified architecture aligns with constitution simplicity goal.
 
 ## Project Structure
 
+### Documentation (this feature)
+
 ```text
 specs/002-enterprise-gantt-widget/
-├── plan.md              # File này
-├── research.md          # Phase 0 — attribute write-back + event gap analysis
-├── data-model.md        # Phase 1 — GanttEventPayload shapes, XML contract mới
-├── quickstart.md        # Phase 1 — Nanoflow recipes cho 6 use-cases
-├── contracts/
-│   └── event-bridge.ts  # UPDATED — unified event bridge contract
-└── tasks.md             # Phase 2 — /speckit-tasks (chưa tạo)
+├── plan.md              # This file
+├── research.md          # Phase 0 — decisions
+├── data-model.md        # Phase 1 — entities + widget props
+├── quickstart.md        # Phase 1 — Mendix integration guide
+├── contracts/           # Phase 1 — TypeScript contracts
+│   ├── event-bus.ts
+│   ├── event-bridge.ts
+│   ├── gantt-record.ts
+│   ├── gantt-configuration.ts
+│   └── datasource-adapter.ts
+└── tasks.md             # Phase 2 (/speckit-tasks — not created here)
 ```
+
+### Source Code (target after refactor)
 
 ```text
 widgets/ax-ganttchart/src/
-├── AxGanttChart.xml                    # UPDATED — thêm eventType/eventPayload, xóa unused
-├── typings/AxGanttChartProps.ts        # UPDATED — thêm eventType/eventPayload EditableValue
-├── main/services/WidgetEventBridge.ts  # UPDATED — write attributes trước executeAction
-├── main/hooks/useGanttInstance.ts      # UPDATED — emit TASK_UPDATED khi drag/resize done
-├── main/hooks/useEventBusBridge.ts     # UPDATED — emit TASK_REORDERED khi grid reorder
-└── main/eventbus/eventTypes.ts         # UPDATED — thêm TASK_UPDATED, TASK_REORDERED vào outgoing
+├── AxGanttChart.tsx              # ThemeProvider → AxGanttInner
+├── AxGanttChart.editorPreview.tsx
+├── AxGanttChart.xml              # Fixed datasource refs + new action props
+├── typings/AxGanttChartProps.d.ts  # Regenerated from XML
+├── main/
+│   ├── AxGanttInner.tsx          # NEW: Mendix command listener (event bus in)
+│   └── AxGanttChartView.tsx      # Single main view (gantt shell)
+├── stores/
+│   └── AxGanttStore.ts           # ONLY store (rename from GanttStore)
+├── shared/
+│   ├── eventBus/
+│   │   ├── createBus.ts
+│   │   ├── globalScope.ts
+│   │   ├── initEventBus.ts
+│   │   ├── getEventBus.ts
+│   │   └── emitEvent.ts
+│   ├── constants/                # layout, task types, dhtmlx defaults
+│   ├── converters/
+│   ├── utils/                    # mtoDate, gridReorder, ganttTaskTiming
+│   └── mock/
+│       └── ganttTestData.ts      # Import/normalize gantt-test.json
+├── preview/                      # Thin wrapper → ganttTestData
+└── styles/gantt.scss
 ```
 
----
+**Removed / merged** (do not recreate as separate layers):
 
-## Phase 0: Research Summary
+- `main/providers/GanttProvider.tsx` → logic moves to `AxGanttChartView` + `AxGanttInner`
+- `main/hooks/*` (5 hooks) → inline in view or single `useAxGantt.ts` if needed
+- `main/services/WidgetEventBridge.ts` → replaced by direct action dispatch
+- `stores/RootStore.ts` → delete
+- `main/eventbus/GanttEventBus.ts` + `eventTypes.ts` enum explosion → simple topic bus
 
-### R1 — Mendix Attribute Write-back Pattern
+**Structure Decision**: Keep supporting modules (`ColumnManager`, `TimelineManager`, `MtoMarker`, `TodayMarker`, `MendixTaskAdapter`) as plain TS modules imported by `AxGanttChartView` — not React components.
 
-**Decision**: Dùng `EditableValue<string>` cho `eventType` và `eventPayload`.
+## Phase 0 — Research Summary
 
-**Rationale**: Pluggable widget API cho phép widget gọi `.setValue(value)` trên `EditableValue` để cập nhật Mendix attribute đồng bộ. Nanoflow đọc attribute này như biến thông thường — không cần JS, không cần `$currentObject`. Đây là pattern chuẩn của Mendix (ví dụ: `selectedTaskId` + `selectedPayload` đã dùng trong spec ban đầu).
+See [research.md](./research.md) for full decisions. Key resolutions:
 
-**Alternatives considered**: 
-- Giữ `window.__AX_GANTT__.getLastEvent()` → từ chối vì yêu cầu JS action trong nanoflow
-- Mendix `$currentObject` entity → quá nặng, không phù hợp với non-persistent event data
+| Unknown | Decision |
+|---------|----------|
+| Tasks without start/end | DHTMLX `unscheduled: true` on task; `show_unscheduled: false` in config |
+| Required startDate validation | Remove global requirement; only TASK/SUB_TASK with dates render bars; groups always unscheduled |
+| Mendix event exposure | Per-action write-back attrs, not JSON payload |
+| `changedNum` | Integer month delta: `round((newStart - oldStart) / ~30 days)` signed |
+| Mock data | Normalize `gantt-test.json` types: AREA→DISTRICT_GROUP, BIZ_LINE→CUSTOM_GROUP |
+| Expression props | Add explicit return types where Mendix requires them (Boolean/String/Integer) |
 
-**Flow mới**:
-```
-User interaction
-  → Widget emits outgoing event internally
-  → eventType.setValue("TASK_REQUEST_ADD")
-  → eventPayload.setValue(JSON.stringify({ task: {...} }))
-  → executeAction(onEvent)
-  → Nanoflow đọc $eventType + $eventPayload trực tiếp
-  → Route theo $eventType (Decision/Exclusive Split)
-```
+## Phase 1 — Design Summary
 
----
+See [data-model.md](./data-model.md) and [contracts/](./contracts/).
 
-### R2 — Events Gap Analysis
+### Widget XML fixes (AxGanttChart.xml)
 
-So sánh contracts chuẩn vs. implementation hiện tại:
+| Issue | Fix |
+|-------|-----|
+| `dataSource="tasksDatasource"` on attributes | Change to `dataSource="roadmapItems"` |
+| Duplicate `hasTuningAttribute` (lines 186–198) | Remove duplicate block |
+| `onEvent` + `eventType` + `eventPayload` | Remove; add `onClicked`, `onDoubleClicked`, `onChanged`, `onAdded`, `onDropped` |
+| Missing write-back attrs for actions | Add `outItemId`, `outType`, `outChangedNum` (attribute, out) |
+| Expression props without return type | Add `<returnType assignableTo="Boolean" />` / `String` / `Integer` as appropriate |
+| `parentIdAttribute` vs `groupAttribute` | Document: `parentIdAttribute` = tree parent; `groupAttribute` = business grouping key |
 
-| Event | Contracts | Implementation | Action |
-|-------|-----------|----------------|--------|
-| TASK_CLICKED | ✅ | ✅ | GIỮ |
-| TASK_DOUBLE_CLICKED | ✅ | ✅ | GIỮ |
-| TASK_REQUEST_ADD | ✅ | ✅ | GIỮ, rename → ADD_TASK_REQUESTED cho rõ |
-| TASK_UPDATED (drag/resize) | ✅ contracts | ❌ chưa emit sau drag | **THÊM** |
-| TASK_REORDERED (grid DnD) | ❌ | ❌ | **THÊM** |
-| TASK_CREATED | ✅ | ✅ | GIỮ (nếu có in-gantt creation) |
-| TASK_DELETED | ✅ | ✅ bridge | GIỮ |
-| TASK_SELECTED | ✅ contracts | ❌ không có riêng | MERGE vào TASK_CLICKED |
-| VIEW_CHANGED | ✅ contracts | ❌ chưa emit | **THÊM** (optional) |
-| FULLSCREEN_CHANGED | ✅ contracts | ❌ chưa emit | **THÊM** (optional) |
+### Mendix action contract (temporary Phase 1 set)
 
----
+| Action | Write-back before execute | When fired |
+|--------|---------------------------|------------|
+| `onClicked` | `outItemId`, `outType` | Click task row/bar |
+| `onDoubleClicked` | `outItemId`, `outType` | Double-click row/bar |
+| `onChanged` | `outItemId`, `outType`, `outChangedNum` | After timeline drag/resize (month delta) |
+| `onAdded` | `outItemId`, `outType` | (+) button on eligible row |
+| `onDropped` | `outItemId`, `outType` | Grid row reorder to new parent |
 
-### R3 — XML Properties to Remove
+### Task type taxonomy
 
-| Property | Lý do xóa |
-|----------|-----------|
-| `showCriticalPath` | Chưa implement, luôn false, chỉ tốn không gian Studio Pro |
-| `showBaseline` | Chưa implement, luôn false, tương tự |
-| `exportServerUrl` | Không có trong XML, chỉ trong typings — orphaned dead code, xóa khỏi typings |
+| Type | Has timeline bar | Dates required | DHTMLX flags |
+|------|------------------|----------------|--------------|
+| `DISTRICT_GROUP` (L1) | No (grid only) | No | `unscheduled: true`, `$level 0` |
+| `CUSTOM_GROUP` (L2) | No | No | `unscheduled: true`, `$level 1` |
+| `TASK` | Yes | Yes (or unscheduled fallback) | MTO/K/O milestone logic |
+| `SUB_TASK` | Yes | Yes | Same as TASK |
 
----
+Legacy mock mapping from `gantt-test.json`: `AREA` → `DISTRICT_GROUP`, `BIZ_LINE` → `CUSTOM_GROUP`.
 
-### R4 — Suggested Additional Features (investigate)
+### DHTMLX config inventory
 
-Ngoài yêu cầu ban đầu, những use-case thực tế nên hỗ trợ:
+Full list of `gantt.config.*` options from dhtmlx-gantt 9.1.4 — see [research.md §6](./research.md). Widget currently sets:
 
-#### 1. TASK_UPDATED khi drag/resize bar
-```json
-{
-  "type": "TASK_UPDATED",
-  "data": {
-    "task": { "id": "123", "text": "...", "start_date": "2026-07-01", "end_date": "2026-07-15", "duration": 14 }
-  }
-}
-```
-Nanoflow: tìm Mendix object theo `id`, cập nhật `StartDate`, `EndDate`, commit.
-
-#### 2. TASK_REORDERED khi kéo row trong grid
-```json
-{
-  "type": "TASK_REORDERED",
-  "data": {
-    "task": { "id": "123", ... },
-    "newParentId": "456",
-    "newOrderNo": 2
-  }
-}
-```
-Nanoflow: cập nhật `Parent` và `OrderNo` của task, commit.
-
-#### 3. ADD_TASK_REQUESTED khi click nút `+`
-```json
-{
-  "type": "ADD_TASK_REQUESTED",
-  "data": {
-    "task": { "id": "456", "text": "Phase A", "parent": "100", ... },
-    "level": 1,
-    "childCount": 3
-  }
-}
-```
-Nanoflow: ShowPage(NewTaskForm) với parent pre-filled từ `data.task.id`.
-
-#### 4. VIEW_CHANGED khi đổi zoom
-```json
-{
-  "type": "VIEW_CHANGED",
-  "data": { "viewMode": "week" }
-}
-```
-Nanoflow: lưu user preference vào DB.
-
-#### 5. FULLSCREEN_CHANGED
-```json
-{
-  "type": "FULLSCREEN_CHANGED",
-  "data": { "fullscreen": true }
-}
-```
-Nanoflow: toggle CSS class trên container bên ngoài nếu cần.
-
----
-
-## Phase 1: Design Artifacts
-
-| Artifact | Path | Status |
-|----------|------|--------|
-| Event bridge contract | [contracts/event-bridge.ts](./contracts/event-bridge.ts) | Cần update |
-| Data model (payload shapes) | [data-model.md](./data-model.md) | Cần tạo mới |
-| Nanoflow recipes | [quickstart.md](./quickstart.md) | Cần viết mới |
-
----
-
-## XML Contract Mới (sau refactor)
-
-### Properties được THÊM
-
-```xml
-<propertyGroup caption="Events">
-    <!-- Existing -->
-    <property key="onEvent" type="action" required="false">
-        <caption>On event</caption>
-        <description>
-            Nanoflow/microflow executed when any Gantt event fires.
-            Read $eventType and $eventPayload attributes for event details.
-        </description>
-    </property>
-
-    <!-- NEW: attribute write-back -->
-    <property key="eventType" type="attribute" required="false">
-        <caption>Event type (out)</caption>
-        <description>
-            Widget writes the event name here before calling On event.
-            Read this in your nanoflow to route logic:
-            TASK_CLICKED | TASK_DOUBLE_CLICKED | ADD_TASK_REQUESTED |
-            TASK_UPDATED | TASK_REORDERED | VIEW_CHANGED | FULLSCREEN_CHANGED
-        </description>
-        <attributeTypes>
-            <attributeType name="String" />
-        </attributeTypes>
-    </property>
-
-    <property key="eventPayload" type="attribute" required="false">
-        <caption>Event payload (out)</caption>
-        <description>
-            Widget writes JSON payload here before calling On event.
-            Parse in nanoflow via parseJSON($eventPayload) or JavaScript.
-        </description>
-        <attributeTypes>
-            <attributeType name="String" />
-        </attributeTypes>
-    </property>
-</propertyGroup>
+```typescript
+// Currently applied in initGantt + TimelineManager + ganttLayout
+date_format, smart_rendering, branch_loading, scroll_on_click, autosize,
+row_height, bar_height, scale_height, min_column_width, column_width,
+show_progress, show_grid, show_chart, fit_tasks, start_on_monday,
+xml_date, show_links, drag_links, show_task_cells (>500 tasks),
+scales, start_date, end_date, readonly, drag_move, drag_resize,
+drag_progress, details_on_create, details_on_dblclick
 ```
 
-### Properties được XÓA
+**New configs for this refactor**:
 
-```xml
-<!-- XÓA — chưa implement, luôn false -->
-<property key="showCriticalPath" .../>
-<property key="showBaseline" .../>
+```typescript
+gantt.config.show_unscheduled = false;  // show unscheduled rows in timeline area
+// Per-task: { unscheduled: true } for group types without dates
 ```
 
-### Properties được GIỮ NGUYÊN
+### Event bus API
 
-- Tất cả Data Source mappings
-- Display toggles (showToolbar, showGrid, showTimeline, showProgress, showTodayMarker)
-- Editing (allowDrag, allowResize, allowGridReorder, readOnly)
-- Commands (command, commandPayload)
+```typescript
+export const AX_EVENT_BUS_KEY = "AX_EVENT_BUS";
 
----
-
-## Nanoflow Recipe (Mendix Developer Guide)
-
-### Setup trong Studio Pro
-
-1. Tạo non-persistent entity `GanttEventContext` với 2 attribute: `EventType` (String), `EventPayload` (String)
-2. Trên page chứa Gantt widget:
-   - Tạo data view với `GanttEventContext` làm data source (nanoflow trả object)
-   - Đặt `GanttEventContext/EventType` → widget property `Event type (out)`
-   - Đặt `GanttEventContext/EventPayload` → widget property `Event payload (out)`
-3. Tạo nanoflow `ACT_Gantt_OnEvent`:
-   ```
-   Decision: $EventType = "ADD_TASK_REQUESTED"
-     → True: JavaScript action để parse payload → ShowModal
-   Decision: $EventType = "TASK_UPDATED"
-     → True: JavaScript action để parse payload → Commit task dates
-   Decision: $EventType = "TASK_REORDERED"
-     → True: JavaScript action để parse payload → Commit parent + order
-   ```
-
-### Đọc payload trong Nanoflow JavaScript
-
-```javascript
-// Đọc event type
-var eventType = $currentObject.EventType;
-
-// Parse payload
-var payload = JSON.parse($currentObject.EventPayload);
-
-// Ví dụ: ADD_TASK_REQUESTED
-if (eventType === "ADD_TASK_REQUESTED") {
-    var parentTask = payload.data.task;
-    // parentTask.id, parentTask.text, parentTask.parent, parentTask.metadata
+export interface AxEvent {
+  widgetId: string;
+  [key: string]: unknown;
 }
 
-// Ví dụ: TASK_UPDATED (drag/resize)
-if (eventType === "TASK_UPDATED") {
-    var updatedTask = payload.data.task;
-    // updatedTask.id, updatedTask.start_date, updatedTask.end_date, updatedTask.duration
+export interface AxEventBus {
+  emit(topic: string, event: AxEvent): void;
+  on(topic: string, handler: (event: AxEvent) => void): () => void;
+  removeListener(topic: string, handler: (event: AxEvent) => void): void;
 }
+
+// createBus(), initEventBus(), getEventBus(), emitEvent(topic, event)
 ```
 
----
-
-## Implementation Phases (for /speckit-tasks)
-
-### Phase A — XML & Typings Contract (P1)
-
-- **T-A1**: Xóa `showCriticalPath`, `showBaseline` khỏi `AxGanttChart.xml` và `AxGanttChartProps.ts`
-- **T-A2**: Xóa `exportServerUrl` khỏi `AxGanttChartProps.ts` (orphaned — không có trong XML)
-- **T-A3**: Thêm `eventType` và `eventPayload` (`EditableValue<string>`) vào XML + typings
-
-### Phase B — Event Bridge Write-back (P1)
-
-- **T-B1**: Cập nhật `WidgetEventBridge` — gọi `eventType.setValue()` + `eventPayload.setValue()` trước `executeAction(onEvent)`
-- **T-B2**: Cập nhật `GanttProvider` — truyền `eventType`/`eventPayload` props xuống bridge
-- **T-B3**: Thêm `TASK_UPDATED` outgoing event vào `eventTypes.ts` + emit trong `useGanttInstance` sau `gantt.attachEvent("onAfterTaskDrag")`
-- **T-B4**: Thêm `TASK_REORDERED` outgoing event + emit sau `gantt.attachEvent("onRowDragEnd")`
-
-### Phase C — Additional Outgoing Events (P2)
-
-- **T-C1**: Emit `VIEW_CHANGED` khi `store.viewMode` thay đổi (trong `useEventBusBridge` hoặc MobX reaction)
-- **T-C2**: Emit `FULLSCREEN_CHANGED` khi fullscreen state thay đổi
-
-### Phase D — Documentation (P1, parallel)
-
-- **T-D1**: Viết `quickstart.md` với Studio Pro setup guide + nanoflow recipes
-- **T-D2**: Cập nhật `contracts/event-bridge.ts` — unified contract với payload shapes đầy đủ
-- **T-D3**: Cập nhật `data-model.md` — document tất cả payload types
-
----
+Incoming topics (Mendix → widget via `AxGanttInner`): `REFRESH`, `ZOOM_*`, `ENTER_FULLSCREEN`, etc.  
+Outgoing topics (widget → dashboard): optional; Mendix actions are primary outbound path.
 
 ## Complexity Tracking
 
-> Không có vi phạm constitution. Không cần complexity tracking.
+| Violation | Why Needed | Simpler Alternative Rejected Because |
+|-----------|------------|-------------------------------------|
+| Global event bus singleton | Mendix pages send commands via separate nanoflows/toolbars without prop drilling | React context alone cannot receive external Mendix attribute changes from sibling widgets |
+| Keep ColumnManager/TimelineManager modules | DHTMLX setup is inherently complex | Inlining 800+ lines into one JSX file hurts maintainability |
 
----
+## Next Steps
 
-## Migration Notes
-
-Nếu đang dùng `window.__AX_GANTT__.getLastEvent()` trong nanoflow JS hiện tại:
-- **Vẫn hoạt động** — global API được giữ nguyên
-- **Nên migrate** sang attribute read-back để code nanoflow gọn hơn
-- **Thứ tự migration**: Thêm attribute binding → test → xóa JS action cũ
+Run `/speckit-tasks` then `/speckit-implement` for Phase 2 execution.

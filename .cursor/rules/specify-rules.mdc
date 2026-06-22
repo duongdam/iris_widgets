@@ -16,9 +16,11 @@ Related artifacts:
 
 Tech stack: pnpm 10.30.0, @mendix/pluggable-widgets-tools 11.8.1, React 18.2, MobX 6.16, antd 6.4.3, dhtmlx-gantt ^9.1.4, SCSS
 
-Current focus: Gantt refactor — Unified Event Bridge. Key changes:
-1. Thêm `eventType` + `eventPayload` EditableValue<string> props để nanoflow đọc trực tiếp
-2. Xóa `showCriticalPath`, `showBaseline`, `exportServerUrl` (unused)
-3. Thêm TASK_UPDATED (drag/resize) + TASK_REORDERED (grid DnD) outgoing events
-4. Phase 2 via /speckit-tasks + /speckit-implement
+Current focus: Gantt refactor — Simplified Architecture. Key changes:
+1. Bỏ `onEvent` + `eventType` + `eventPayload` → dùng `onClicked`, `onDoubleClicked`, `onChanged`, `onAdded`, `onDropped` với write-back `outItemId`, `outType`, `outChangedNum`
+2. Event bus đơn giản: GlobalKey `AX_EVENT_BUS`, API emit/on/removeListener
+3. Chỉ `AxGanttStore`; main gồm `AxGanttChartView` + `AxGanttInner`
+4. Unscheduled groups: `show_unscheduled=false`, groups không cần start/end date
+5. Mock data từ `gantt-test.json`; types: DISTRICT_GROUP, CUSTOM_GROUP, TASK, SUB_TASK
+6. Phase 2 via /speckit-tasks + /speckit-implement
 <!-- SPECKIT END -->

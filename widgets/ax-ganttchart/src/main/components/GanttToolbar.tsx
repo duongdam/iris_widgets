@@ -4,9 +4,10 @@ import { Button, DatePicker, Dropdown, Segmented, Space, Tooltip } from "antd";
 import type { MenuProps } from "antd";
 import dayjs from "dayjs";
 import { observer } from "mobx-react-lite";
-import type { GanttTask } from "../eventbus/eventTypes";
-import { useGanttContext } from "../providers/GanttProvider";
-import { GanttIncomingEvents, type SetDateData, TimelineViewMode } from "../eventbus/eventTypes";
+import type { GanttTask } from "../../events/eventTypes";
+import { useAxGanttContext } from "../../AxGanttInner";
+import { GanttIncomingEvents, type SetDateData, TimelineViewMode } from "../../events/eventTypes";
+import { emitEvent } from "../../shared/eventBus/emitEvent";
 import { gantt } from "./GanttConfiguration";
 import { getMaxExpandableLevel } from "./TreeExpandManager";
 
@@ -240,15 +241,15 @@ function getExpandTooltip(expandLevel: number, maxLevel: number): string {
 }
 
 export const GanttToolbar = observer(function GanttToolbar(): JSX.Element {
-    const { store, eventBus, widgetId, allowGridReorder } = useGanttContext();
+    const { store, widgetId, allowGridReorder } = useAxGanttContext();
     const maxExpandLevel = resolveMaxExpandLevel(store.tasks);
     const canExpandFurther = maxExpandLevel > 0 && store.expandLevel < maxExpandLevel;
 
     const emit = useCallback(
         (type: GanttIncomingEvents, data?: SetDateData): void => {
-            eventBus.emit({ widgetId, type, data });
+            emitEvent(type, { widgetId, payload: data as Record<string, unknown> | undefined });
         },
-        [eventBus, widgetId]
+        [widgetId]
     );
 
     const handleExport = useCallback(

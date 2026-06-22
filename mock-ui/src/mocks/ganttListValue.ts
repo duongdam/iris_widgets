@@ -1,16 +1,23 @@
 import type { ListValue, ObjectItem } from "mendix";
-import type { GanttTask } from "../../../widgets/ax-ganttchart/src/main/eventbus/eventTypes";
+import type { AxGanttTask } from "../../../widgets/ax-ganttchart/src/shared/types/axGanttTask";
 import type { AxGanttChartProps } from "../../../widgets/ax-ganttchart/src/typings/AxGanttChartProps";
-import { getEventTypeTag } from "../../../widgets/ax-ganttchart/src/shared/utils/mtoDate";
 
 interface MockGanttEntity {
     item: ObjectItem;
-    task: GanttTask;
+    task: AxGanttTask;
 }
 
 function parseGanttDate(dateStr: string): Date {
     const normalized = dateStr.length === 10 ? `${dateStr}T00:00:00` : dateStr.replace(" ", "T");
     return new Date(normalized);
+}
+
+function toDate(value: string | Date | undefined): Date | undefined {
+    if (!value) {
+        return undefined;
+    }
+
+    return value instanceof Date ? value : parseGanttDate(value);
 }
 
 function createAttrValue(value: unknown) {
@@ -21,7 +28,7 @@ function createAttrValue(value: unknown) {
         displayValue: value != null ? String(value) : "",
         formatter: {
             format: (v?: unknown) => String(v ?? ""),
-            parse: (v: string) => v,
+            parse: (v: string) => v
         },
         setFormatter: () => undefined,
         setValidator: () => undefined,
@@ -29,11 +36,11 @@ function createAttrValue(value: unknown) {
         setValue: () => undefined,
         isList: false as const,
         validation: undefined,
-        universe: undefined,
+        universe: undefined
     };
 }
 
-function createListAttribute(entities: MockGanttEntity[], pick: (task: GanttTask) => unknown) {
+function createListAttribute(entities: MockGanttEntity[], pick: (task: AxGanttTask) => unknown) {
     const byItemId = new Map(entities.map(entity => [entity.item.id, entity.task]));
 
     return {
@@ -43,45 +50,51 @@ function createListAttribute(entities: MockGanttEntity[], pick: (task: GanttTask
         type: "String",
         formatter: {
             format: (v?: unknown) => String(v ?? ""),
-            parse: (v: string) => ({ valid: true, value: v }),
+            parse: (v: string) => ({ valid: true, value: v })
         },
         universe: undefined,
         isList: false,
         get: (item: ObjectItem) => {
             const task = byItemId.get(item.id);
             return createAttrValue(task ? pick(task) : undefined);
-        },
+        }
     };
 }
 
-function ganttTasksToEntities(tasks: GanttTask[]): MockGanttEntity[] {
+function ganttTasksToEntities(tasks: AxGanttTask[]): MockGanttEntity[] {
     return tasks.map(task => ({
         item: { id: `mock-${task.id}` } as ObjectItem,
-        task,
+        task
     }));
 }
 
-export function createMockGanttDatasource(tasks: GanttTask[]): Pick<
+export function createMockGanttDatasource(tasks: AxGanttTask[]): Pick<
     AxGanttChartProps,
-    | "tasksDatasource"
-    | "idAttribute"
+    | "roadmapItems"
+    | "aidAttribute"
+    | "itemIdAttribute"
+    | "parentIdAttribute"
+    | "groupAttribute"
+    | "typeAttribute"
+    | "nameAttribute"
     | "textAttribute"
+    | "countAttribute"
+    | "orderAttribute"
+    | "customOrderAttribute"
     | "startDateAttribute"
     | "endDateAttribute"
-    | "durationAttribute"
-    | "progressAttribute"
-    | "parentAttribute"
-    | "orderNoAttribute"
-    | "openAttribute"
-    | "typeAttribute"
-    | "tagsAttribute"
-    | "mtoDateAttribute"
-    | "eventTypeAttribute"
+    | "milestoneAttribute"
+    | "stndMileMonthAttribute"
+    | "hasTuningAttribute"
+    | "hasManualAttribute"
+    | "hasCertAttribute"
+    | "hasRFAttribute"
+    | "canEditAttribute"
 > {
     const entities = ganttTasksToEntities(tasks);
 
     return {
-        tasksDatasource: {
+        roadmapItems: {
             status: "available",
             offset: 0,
             limit: Number.POSITIVE_INFINITY,
@@ -93,52 +106,50 @@ export function createMockGanttDatasource(tasks: GanttTask[]): Pick<
             sortOrder: [],
             filter: undefined,
             setSortOrder: () => undefined,
-            setFilter: () => undefined,
+            setFilter: () => undefined
         } as unknown as ListValue,
-        idAttribute: createListAttribute(entities, task => task.id),
+        aidAttribute: createListAttribute(entities, task => task.aid ?? task.id),
+        itemIdAttribute: createListAttribute(entities, task => task.id),
         textAttribute: createListAttribute(entities, task => task.text),
-        startDateAttribute: createListAttribute(entities, task =>
-            task.start_date instanceof Date ? task.start_date : parseGanttDate(task.start_date as string)
+        nameAttribute: createListAttribute(entities, task => task.name ?? task.text),
+        typeAttribute: createListAttribute(entities, task => task.type ?? "TASK"),
+        parentIdAttribute: createListAttribute(entities, task => task.parent ?? ""),
+        groupAttribute: createListAttribute(entities, task => task.group ?? ""),
+        countAttribute: createListAttribute(entities, task => task.count ?? 0),
+        orderAttribute: createListAttribute(entities, task => task.order ?? 0),
+        customOrderAttribute: createListAttribute(entities, task => task.customOrder ?? task.order ?? 0),
+        startDateAttribute: createListAttribute(entities, task => toDate(task.start_date)),
+        endDateAttribute: createListAttribute(entities, task => toDate(task.end_date)),
+        milestoneAttribute: createListAttribute(entities, task => task.milestone ?? ""),
+        stndMileMonthAttribute: createListAttribute(entities, task =>
+            toDate(task.stndMileMonth)
         ),
-        endDateAttribute: createListAttribute(entities, task =>
-            task.end_date
-                ? task.end_date instanceof Date
-                    ? task.end_date
-                    : parseGanttDate(task.end_date as string)
-                : undefined
-        ),
-        durationAttribute: createListAttribute(entities, task => task.duration),
-        progressAttribute: createListAttribute(entities, task => task.progress),
-        parentAttribute: createListAttribute(entities, task => task.parent) as unknown as AxGanttChartProps["parentAttribute"],
-        orderNoAttribute: createListAttribute(entities, task => task.orderNo) as unknown as AxGanttChartProps["orderNoAttribute"],
-        openAttribute: createListAttribute(entities, task => task.open),
-        typeAttribute: createListAttribute(entities, task => task.type),
-        tagsAttribute: createListAttribute(entities, task =>
-            task.tags && task.tags.length > 0 ? JSON.stringify(task.tags) : undefined
-        ),
-        mtoDateAttribute: createListAttribute(entities, task =>
-            task.mto_date
-                ? task.mto_date instanceof Date
-                    ? task.mto_date
-                    : parseGanttDate(task.mto_date as string)
-                : undefined
-        ) as unknown as AxGanttChartProps["mtoDateAttribute"],
-        eventTypeAttribute: createListAttribute(entities, task => getEventTypeTag(task.tags)),
+        hasTuningAttribute: createListAttribute(entities, task => task.hasTuning ?? false),
+        hasManualAttribute: createListAttribute(entities, task => task.hasManual ?? false),
+        hasCertAttribute: createListAttribute(entities, task => task.hasCert ?? false),
+        hasRFAttribute: createListAttribute(entities, task => task.hasRF ?? false),
+        canEditAttribute: createListAttribute(entities, task => task.canEdit ?? false)
     } as unknown as Pick<
         AxGanttChartProps,
-        | "tasksDatasource"
-        | "idAttribute"
+        | "roadmapItems"
+        | "aidAttribute"
+        | "itemIdAttribute"
+        | "parentIdAttribute"
+        | "groupAttribute"
+        | "typeAttribute"
+        | "nameAttribute"
         | "textAttribute"
+        | "countAttribute"
+        | "orderAttribute"
+        | "customOrderAttribute"
         | "startDateAttribute"
         | "endDateAttribute"
-        | "durationAttribute"
-        | "progressAttribute"
-        | "parentAttribute"
-        | "orderNoAttribute"
-        | "openAttribute"
-        | "typeAttribute"
-        | "tagsAttribute"
-        | "mtoDateAttribute"
-        | "eventTypeAttribute"
+        | "milestoneAttribute"
+        | "stndMileMonthAttribute"
+        | "hasTuningAttribute"
+        | "hasManualAttribute"
+        | "hasCertAttribute"
+        | "hasRFAttribute"
+        | "canEditAttribute"
     >;
 }

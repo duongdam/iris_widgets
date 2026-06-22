@@ -1,5 +1,5 @@
 import type { GanttStatic } from "dhtmlx-gantt";
-import { TimelineViewMode, type GanttTask } from "../eventbus/eventTypes";
+import { TimelineViewMode, type GanttTask } from "../../events/eventTypes";
 import { applyGanttLayoutConfig, GANTT_CELL_SIZE } from "../../shared/constants/ganttLayout";
 import { getEventTypeTag, parseGanttDate } from "../../shared/utils/mtoDate";
 
@@ -179,17 +179,17 @@ export function scrollToTask(gantt: GanttStatic, taskId: string): void {
     }
 }
 
-/** Scroll timeline to the event marker (mto_date) when present, otherwise to the task bar. */
+/** Scroll timeline to the event marker (stndMileMonth) when present, otherwise to the task bar. */
 export function scrollToTaskOrEvent(gantt: GanttStatic, task: GanttTask): void {
     if (!gantt.isTaskExists(task.id)) {
         return;
     }
 
-    const eventType = getEventTypeTag(task.tags);
-    const mtoDate = parseGanttDate(task.mto_date);
+    const eventType = getEventTypeTag(task.milestone);
+    const milestoneDate = parseGanttDate(task.stndMileMonth);
 
-    if (eventType && mtoDate) {
-        gantt.showDate(mtoDate);
+    if (eventType && milestoneDate) {
+        gantt.showDate(milestoneDate);
         const pos = gantt.getTaskPosition(gantt.getTask(task.id));
         gantt.scrollTo(undefined, Math.max(pos.top - 20, 0));
         return;

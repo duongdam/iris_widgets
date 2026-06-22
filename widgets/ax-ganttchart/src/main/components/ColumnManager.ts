@@ -71,16 +71,39 @@ function escapeHtml(value: string): string {
     return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-const CHIP_CLASS_MAP: Record<string, string> = {
-    Manual: "gantt-chip--manual",
-    Process: "gantt-chip--process",
-    MTO: "gantt-chip--mto",
-    "K/O": "gantt-chip--ko"
+type TaskLike = {
+    id?: string | number;
+    text?: string;
+    hasManual?: boolean;
+    hasTuning?: boolean;
+    $level?: number;
+    start_date?: GanttDateValue;
+    end_date?: GanttDateValue;
+    duration?: number;
 };
 
-function renderChip(tag: string): string {
-    const chipClass = CHIP_CLASS_MAP[tag] ?? "gantt-chip--default";
-    return `<span class="gantt-chip ${chipClass}">${escapeHtml(tag)}</span>`;
+const CHIP_CLASS_MAP: Record<string, string> = {
+    Manual: "gantt-chip--manual",
+    Tuning: "gantt-chip--tuning"
+};
+
+function renderChip(label: string): string {
+    const chipClass = CHIP_CLASS_MAP[label] ?? "gantt-chip--default";
+    return `<span class="gantt-chip ${chipClass}">${escapeHtml(label)}</span>`;
+}
+
+function renderTaskChips(task: TaskLike): string {
+    const chips: string[] = [];
+
+    if (task.hasTuning) {
+        chips.push(renderChip("Tuning"));
+    }
+
+    if (task.hasManual) {
+        chips.push(renderChip("Manual"));
+    }
+
+    return chips.join("");
 }
 
 /** 0-indexed second hierarchy tier (e.g. Phase in Program → Phase → …). */
@@ -114,7 +137,7 @@ function renderTextCell(task: TaskLike, target: GanttStatic): string {
     const text = task.text ?? "";
     const safeText = escapeHtml(text);
     const childCount = countDescendants(String(task.id), target);
-    const chips = (task.tags ?? []).map(renderChip).join("");
+    const chips = renderTaskChips(task);
     const countHtml = childCount > 0 ? `<span class="gantt-text-cell__count">(${childCount})</span>` : "";
     const level = task.$level ?? 0;
     const addButtonHtml = level === GANTT_ADD_BUTTON_LEVEL ? renderAddButton(task.id) : "";
@@ -142,16 +165,6 @@ export interface GanttColumnConfig {
 export function getDefaultColumns(): GanttColumnConfig[] {
     return [{ name: "text", label: "Projects", width: 300, tree: true }];
 }
-
-type TaskLike = {
-    id?: string | number;
-    text?: string;
-    tags?: string[];
-    $level?: number;
-    start_date?: GanttDateValue;
-    end_date?: GanttDateValue;
-    duration?: number;
-};
 
 export function applyColumns(ganttInstance: GanttStatic, columns: GanttColumnConfig[]): void {
     ganttInstance.config.columns = columns.map(col => {

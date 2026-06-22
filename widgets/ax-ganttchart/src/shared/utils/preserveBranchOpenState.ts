@@ -1,4 +1,4 @@
-import type { GanttTask } from "../../main/eventbus/eventTypes";
+import type { GanttTask } from "../../events/eventTypes";
 
 function taskHasChildren(taskId: string, tasks: GanttTask[]): boolean {
     return tasks.some(task => task.parent === taskId);

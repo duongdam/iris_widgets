@@ -1,5 +1,5 @@
 import type { GanttStatic } from "dhtmlx-gantt";
-import type { GanttTask } from "../eventbus/eventTypes";
+import type { GanttTask } from "../../events/eventTypes";
 import {
     getEventTypeTag,
     parseGanttDate,
@@ -39,11 +39,11 @@ function resolveMarkerTop(gantt: GanttStatic, rowTop: number): number {
 type GanttWithDom = GanttStatic & { $task_data?: HTMLElement };
 
 function resolveMtoDate(task: GanttTask): Date | null {
-    return parseGanttDate(task.mto_date);
+    return parseGanttDate(task.stndMileMonth);
 }
 
 function shouldRenderMarker(task: GanttTask): boolean {
-    return getEventTypeTag(task.tags) !== undefined && resolveMtoDate(task) !== null;
+    return getEventTypeTag(task.milestone) !== undefined && resolveMtoDate(task) !== null;
 }
 
 function renderMarkerShape(): string {
@@ -76,7 +76,7 @@ function renderMtoMarkers(gantt: GanttStatic): void {
         }
 
         const mtoDate = resolveMtoDate(task);
-        const eventType = getEventTypeTag(task.tags);
+        const eventType = getEventTypeTag(task.milestone);
         if (!mtoDate || !eventType) {
             return;
         }
@@ -127,7 +127,7 @@ export function installMtoMarkerSync(gantt: GanttStatic): () => void {
             const baseline = resolveEventDragBaseline(_id, original as GanttTask);
             const nextMto = syncEventMtoDateWithDrag(task as GanttTask, baseline, mode);
             if (nextMto) {
-                (task as GanttTask).mto_date = nextMto;
+                (task as GanttTask).stndMileMonth = nextMto;
                 scheduleMtoMarkerRefresh(gantt);
             }
             return true;
@@ -147,7 +147,7 @@ export function installMtoMarkerSync(gantt: GanttStatic): () => void {
             endEventMtoDrag(id);
 
             if (nextMto) {
-                task.mto_date = nextMto;
+                task.stndMileMonth = nextMto;
                 scheduleMtoMarkerRefresh(gantt);
             }
 

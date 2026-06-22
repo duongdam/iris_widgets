@@ -1,34 +1,22 @@
 import { reaction } from "mobx";
 import { useEffect, useRef } from "react";
-import type { GanttStore } from "../../stores/GanttStore";
-import {
-    applyEditingConfig,
-    attachAddButtonDelegation,
-    attachNativeEvents,
-    attachTaskInteractionDelegation,
-    enablePlugins,
-    gantt,
-    initGantt,
-    installGanttLayoutSync,
-    resetGantt,
-    setupTodayMarkerSync,
-    setupMtoMarkerSync,
-    updateLayout
-} from "../components/GanttConfiguration";
+import type { AxGanttStore } from "../../stores/AxGanttStore";
+import type { MendixActionBridge } from "../../shared/bridge/mendixActionBridge";
+import { applyEditingConfig } from "../../gantt/ganttEditing";
+import { updateLayout } from "../../gantt/ganttLayout";
+import { bindGanttController, type GanttControllerHandle } from "../../gantt/ganttController";
+import { gantt } from "../../gantt/ganttInstance";
 import { expandToLevel } from "../components/TreeExpandManager";
-import { applyMode, applyTimelineRange, scrollToTaskOrEvent, scrollToToday } from "../components/TimelineManager";
+import { applyMode, applyTimelineRange } from "../components/TimelineManager";
 import { scheduleTodayMarkerRefresh, syncTodayMarker } from "../components/TodayMarker";
 import { scheduleMtoMarkerRefresh } from "../components/MtoMarker";
 import { applyGridReorderConfig } from "../../shared/utils/gridReorder";
-import { normalizeGanttTaskDates } from "../../shared/utils/mtoDate";
-import type { GanttTask } from "../eventbus/eventTypes";
-import type { WidgetEventBridge } from "../services/WidgetEventBridge";
 import { syncTasks } from "../services/GanttSyncService";
 import type { GanttEditingConfig } from "../../shared/types/editingConfig";
 import { mergeGanttOpenState } from "../../shared/utils/preserveBranchOpenState";
 
 export interface UseGanttInstanceOptions {
-    store: GanttStore;
+    store: AxGanttStore;
     containerRef: React.RefObject<HTMLDivElement>;
     showGrid: boolean;
     showTimeline: boolean;
@@ -36,119 +24,25 @@ export interface UseGanttInstanceOptions {
     showTodayMarker: boolean;
     editing: GanttEditingConfig;
     allowGridReorder?: boolean;
-    bridge?: WidgetEventBridge;
+    actionBridge?: MendixActionBridge;
+    customGanttConfig?: Record<string, unknown>;
+    useDhtmlxTooltip?: boolean;
     onHoverTask?: (taskId: string | undefined) => void;
     onAddTaskClick?: (taskId: string) => void;
+    onRefresh?: () => void;
 }
 
 interface GanttInstanceRuntime {
     initialized: boolean;
-    previousTasks: GanttTask[];
-    bridge?: WidgetEventBridge;
+    controller: GanttControllerHandle | null;
+    actionBridge?: MendixActionBridge;
     showTodayMarker: boolean;
     allowGridReorder: boolean;
     editing: GanttEditingConfig;
     onAddTaskClick?: (taskId: string) => void;
     onHoverTask?: (taskId: string | undefined) => void;
-    teardownTodayMarker: (() => void) | null;
-    teardownMtoMarker: (() => void) | null;
-    teardownGridReorder: (() => void) | null;
     teardownEditing: (() => void) | null;
-    teardownAddButton: (() => void) | null;
-    teardownTaskInteraction: (() => void) | null;
-    teardownLayout: (() => void) | null;
-}
-
-function resolveTask(taskId: string, store: GanttStore): GanttTask | undefined {
-    const fromStore = store.taskById.get(taskId);
-    if (fromStore) {
-        return fromStore;
-    }
-
-    if (gantt.isTaskExists(taskId)) {
-        return gantt.getTask(taskId) as GanttTask;
-    }
-
-    return undefined;
-}
-
-function emitTaskClick(taskId: string, store: GanttStore, bridge?: WidgetEventBridge): void {
-    const task = resolveTask(taskId, store);
-    if (!task) {
-        return;
-    }
-
-    store.selectTask(task);
-    scrollToTaskOrEvent(gantt, task);
-    bridge?.handleTaskClick(task);
-}
-
-function emitTaskDoubleClick(taskId: string, store: GanttStore, bridge?: WidgetEventBridge): void {
-    const task = resolveTask(taskId, store);
-    if (!task) {
-        return;
-    }
-
-    store.selectTask(task);
-    bridge?.handleTaskDoubleClick(task);
-}
-
-let previousHoverRow: HTMLElement | null = null;
-let previousHoverCells: HTMLElement[] = [];
-
-function clearCrossHighlight(): void {
-    previousHoverRow?.classList.remove("gantt-cross-hover-row");
-    for (const cell of previousHoverCells) {
-        cell.classList.remove("gantt-cross-hover-col");
-    }
-    previousHoverRow = null;
-    previousHoverCells = [];
-}
-
-function applyCrossHighlight(taskId: string): void {
-    clearCrossHighlight();
-
-    const row = document.querySelector(`[task_id="${taskId}"]`) as HTMLElement | null;
-    if (row) {
-        row.classList.add("gantt-cross-hover-row");
-        previousHoverRow = row;
-    }
-
-    const cells = Array.from(
-        document.querySelectorAll(`.gantt_task_row[task_id="${taskId}"] .gantt_task_cell`)
-    ) as HTMLElement[];
-
-    for (const cell of cells) {
-        cell.classList.add("gantt-cross-hover-col");
-    }
-    previousHoverCells = cells;
-}
-
-function scheduleFocusOnToday(showMarker: boolean): void {
-    requestAnimationFrame(() => {
-        scrollToToday(gantt);
-        scheduleTodayMarkerRefresh(gantt, showMarker);
-    });
-}
-
-function createRuntimeState(options: UseGanttInstanceOptions): GanttInstanceRuntime {
-    return {
-        initialized: false,
-        previousTasks: [],
-        bridge: options.bridge,
-        showTodayMarker: options.showTodayMarker,
-        allowGridReorder: options.allowGridReorder ?? true,
-        editing: options.editing,
-        onAddTaskClick: options.onAddTaskClick,
-        onHoverTask: options.onHoverTask,
-        teardownTodayMarker: null,
-        teardownMtoMarker: null,
-        teardownGridReorder: null,
-        teardownEditing: null,
-        teardownAddButton: null,
-        teardownTaskInteraction: null,
-        teardownLayout: null
-    };
+    teardownGridReorder: (() => void) | null;
 }
 
 export function useGanttInstance(options: UseGanttInstanceOptions): void {
@@ -161,14 +55,36 @@ export function useGanttInstance(options: UseGanttInstanceOptions): void {
         showTodayMarker,
         editing,
         allowGridReorder = true,
-        bridge,
+        actionBridge,
+        customGanttConfig,
+        useDhtmlxTooltip,
         onHoverTask,
         onAddTaskClick
     } = options;
 
-    const runtimeRef = useRef<GanttInstanceRuntime>(createRuntimeState(options));
+    const runtimeRef = useRef<GanttInstanceRuntime>({
+        initialized: false,
+        controller: null,
+        actionBridge,
+        showTodayMarker,
+        allowGridReorder,
+        editing,
+        onAddTaskClick,
+        onHoverTask,
+        teardownEditing: null,
+        teardownGridReorder: null
+    });
 
-    runtimeRef.current.bridge = bridge;
+    const onAddTaskClickRef = useRef(onAddTaskClick);
+    const onHoverTaskRef = useRef(onHoverTask);
+    const actionBridgeRef = useRef(actionBridge);
+    const customGanttConfigRef = useRef(customGanttConfig);
+
+    onAddTaskClickRef.current = onAddTaskClick;
+    onHoverTaskRef.current = onHoverTask;
+    actionBridgeRef.current = actionBridge;
+    customGanttConfigRef.current = customGanttConfig;
+    runtimeRef.current.actionBridge = actionBridge;
     runtimeRef.current.showTodayMarker = showTodayMarker;
     runtimeRef.current.onAddTaskClick = onAddTaskClick;
     runtimeRef.current.onHoverTask = onHoverTask;
@@ -183,92 +99,35 @@ export function useGanttInstance(options: UseGanttInstanceOptions): void {
         }
 
         runtime.initialized = true;
-        enablePlugins();
-
-        initGantt(container, {
-            showGrid: store.showGrid,
-            showTimeline: store.showTimeline,
-            showProgress,
-            showTodayMarker,
-            viewMode: store.viewMode,
-            taskCount: store.tasks.length,
-            timelineStart: store.timelineStart,
-            timelineEnd: store.timelineEnd
-        });
-        runtime.teardownLayout = installGanttLayoutSync(container);
-
-        runtime.teardownTodayMarker = setupTodayMarkerSync(() => runtimeRef.current.showTodayMarker);
-        runtime.teardownMtoMarker = setupMtoMarkerSync();
-        runtime.teardownEditing = applyEditingConfig(editing);
-
-        const detachEvents = attachNativeEvents({
-            onAfterTaskAdd: (_id: string, task: GanttTask) => {
-                runtimeRef.current.bridge?.handleTaskCreated(task);
+        runtime.controller = bindGanttController({
+            store,
+            container,
+            display: {
+                showGrid: store.showGrid,
+                showTimeline: store.showTimeline,
+                showProgress,
+                showTodayMarker,
+                viewMode: store.viewMode,
+                taskCount: store.tasks.length,
+                timelineStart: store.timelineStart,
+                timelineEnd: store.timelineEnd,
+                useDhtmlxTooltip,
+                customConfig: customGanttConfigRef.current
             },
-            onAfterTaskDelete: (id: string) => {
-                runtimeRef.current.bridge?.handleTaskDeleted(id);
-            },
-            onMouseMove: (id: string) => {
-                store.setHoveredTaskId(id);
-                runtimeRef.current.onHoverTask?.(id);
-                applyCrossHighlight(id);
-            }
+            editing,
+            useDhtmlxTooltip,
+            actionBridge: actionBridgeRef.current,
+            onAddTaskClick: taskId => onAddTaskClickRef.current?.(taskId),
+            onHoverTask: taskId => onHoverTaskRef.current?.(taskId),
+            getShowTodayMarker: () => runtimeRef.current.showTodayMarker
         });
-
-        runtime.teardownTaskInteraction = attachTaskInteractionDelegation(container, {
-            onTaskClick: (taskId: string) => {
-                emitTaskClick(taskId, store, runtimeRef.current.bridge);
-            },
-            onTaskDblClick: (taskId: string) => {
-                emitTaskDoubleClick(taskId, store, runtimeRef.current.bridge);
-            }
-        });
-
-        // Emit TASK_UPDATED after user finishes dragging or resizing a bar on the timeline.
-        const dragEventId = gantt.attachEvent("onAfterTaskDrag", (id: string | number, mode: string) => {
-            const liveTask = normalizeGanttTaskDates(gantt.getTask(id) as GanttTask);
-            store.updateTaskFromTimeline(liveTask);
-            runtime.previousTasks = runtime.previousTasks.map(task =>
-                task.id === liveTask.id ? liveTask : task
-            );
-            runtimeRef.current.bridge?.handleTaskUpdated(liveTask, mode as "move" | "resize" | "progress");
-            scheduleMtoMarkerRefresh(gantt);
-            return true;
-        });
-
-        runtime.teardownAddButton = attachAddButtonDelegation(container, (taskId, event) => {
-            event.stopPropagation();
-            runtimeRef.current.onAddTaskClick?.(taskId);
-        });
-
-        if (store.tasks.length > 0) {
-            runtime.previousTasks = syncTasks([], store.tasks);
-        }
-
-        scheduleFocusOnToday(runtimeRef.current.showTodayMarker);
 
         return () => {
-            runtime.teardownTodayMarker?.();
-            runtime.teardownTodayMarker = null;
-            runtime.teardownMtoMarker?.();
-            runtime.teardownMtoMarker = null;
-            runtime.teardownGridReorder?.();
-            runtime.teardownGridReorder = null;
-            runtime.teardownEditing?.();
-            runtime.teardownEditing = null;
-            runtime.teardownAddButton?.();
-            runtime.teardownAddButton = null;
-            runtime.teardownTaskInteraction?.();
-            runtime.teardownTaskInteraction = null;
-            runtime.teardownLayout?.();
-            runtime.teardownLayout = null;
-            gantt.detachEvent(dragEventId);
-            detachEvents();
-            clearCrossHighlight();
-            resetGantt();
+            runtime.controller?.teardown();
+            runtime.controller = null;
             runtime.initialized = false;
         };
-    }, [containerRef, showProgress, store.viewMode, store.showGrid, store.showTimeline]);
+    }, [containerRef, store, showProgress, useDhtmlxTooltip]);
 
     useEffect(() => {
         const runtime = runtimeRef.current;
@@ -298,7 +157,7 @@ export function useGanttInstance(options: UseGanttInstanceOptions): void {
             }),
             ({ enabled, readOnly }) => {
                 runtime.teardownGridReorder?.();
-                runtime.teardownGridReorder = applyGridReorderConfig(enabled, store, runtimeRef.current.bridge, gantt, {
+                runtime.teardownGridReorder = applyGridReorderConfig(enabled, store, runtimeRef.current.actionBridge, gantt, {
                     readOnly
                 });
             },
@@ -320,16 +179,19 @@ export function useGanttInstance(options: UseGanttInstanceOptions): void {
 
     useEffect(() => {
         const runtime = runtimeRef.current;
-        if (!runtime.initialized) {
+        const controller = runtime.controller;
+        if (!runtime.initialized || !controller) {
             return;
         }
 
-        const hadTasks = runtime.previousTasks.length > 0;
-        const tasksToSync = mergeGanttOpenState(runtime.previousTasks, store.tasks, gantt);
-        runtime.previousTasks = syncTasks(runtime.previousTasks, tasksToSync);
+        const hadTasks = controller.state.previousTasks.length > 0;
+        const tasksToSync = mergeGanttOpenState(controller.state.previousTasks, store.tasks, gantt);
+        controller.state.previousTasks = syncTasks(controller.state.previousTasks, tasksToSync);
 
         if (!hadTasks && store.tasks.length > 0) {
-            scheduleFocusOnToday(runtimeRef.current.showTodayMarker);
+            requestAnimationFrame(() => {
+                scheduleTodayMarkerRefresh(gantt, runtimeRef.current.showTodayMarker);
+            });
         } else {
             scheduleTodayMarkerRefresh(gantt, runtimeRef.current.showTodayMarker);
         }

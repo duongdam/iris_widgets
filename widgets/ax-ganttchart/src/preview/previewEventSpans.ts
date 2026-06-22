@@ -15,20 +15,20 @@ function addMonths(date: Date, months: number): Date {
 export function computePreviewEventSpan(
     milestone: Date,
     eventType: GanttEventTypeTag
-): { start_date: string; end_date: string; mto_date: string } {
-    const mto_date = formatGanttDateTime(milestone);
+): { start_date: string; end_date: string; stndMileMonth: string } {
+    const stndMileMonth = formatGanttDateTime(milestone);
 
     if (eventType === "K/O") {
         return {
-            start_date: mto_date,
+            start_date: stndMileMonth,
             end_date: formatGanttDateTime(addMonths(milestone, KO_MONTHS_AFTER)),
-            mto_date
+            stndMileMonth
         };
     }
 
     return {
         start_date: formatGanttDateTime(addMonths(milestone, -MTO_MONTHS_BEFORE)),
         end_date: formatGanttDateTime(addMonths(milestone, MTO_MONTHS_AFTER)),
-        mto_date
+        stndMileMonth
     };
 }

@@ -1,114 +1,63 @@
 /**
- * Contract: GanttEventBus — typed pub/sub for dashboard integration.
+ * Contract: Ax Event Bus — Global topic pub/sub
+ *
+ * GlobalKey = "AX_EVENT_BUS" on globalThis.
+ * API: emit, on, removeListener
  */
 
-import type { GanttTask, TimelineViewMode } from "./gantt-record";
+export const AX_EVENT_BUS_KEY = "AX_EVENT_BUS";
 
-/** Commands sent TO the Gantt widget */
-export enum GanttIncomingEvents {
-    LOAD_DATA = "LOAD_DATA",
-    REFRESH = "REFRESH",
-    EXPAND_ALL = "EXPAND_ALL",
-    COLLAPSE_ALL = "COLLAPSE_ALL",
-    ENTER_FULLSCREEN = "ENTER_FULLSCREEN",
-    EXIT_FULLSCREEN = "EXIT_FULLSCREEN",
-    ENTER_EXPAND_HEIGHT = "ENTER_EXPAND_HEIGHT",
-    EXIT_EXPAND_HEIGHT = "EXIT_EXPAND_HEIGHT",
-    TOGGLE_EXPAND_HEIGHT = "TOGGLE_EXPAND_HEIGHT",
-    ZOOM_DAY = "ZOOM_DAY",
-    ZOOM_WEEK = "ZOOM_WEEK",
-    ZOOM_MONTH = "ZOOM_MONTH",
-    ZOOM_QUARTER = "ZOOM_QUARTER",
-    SET_START_DATE = "SET_START_DATE",
-    SET_END_DATE = "SET_END_DATE",
-    SCROLL_TO_TODAY = "SCROLL_TO_TODAY",
-    SCROLL_TO_TASK = "SCROLL_TO_TASK",
-    EXPORT_PDF = "EXPORT_PDF",
-    EXPORT_PNG = "EXPORT_PNG",
-    EXPORT_JPEG = "EXPORT_JPEG",
-    EXPORT_EXCEL = "EXPORT_EXCEL",
-    FIT_TIMELINE = "FIT_TIMELINE",
-    SHOW_GRID = "SHOW_GRID",
-    HIDE_GRID = "HIDE_GRID",
-    SHOW_TIMELINE = "SHOW_TIMELINE",
-    HIDE_TIMELINE = "HIDE_TIMELINE",
-}
-
-/** Notifications sent FROM the Gantt widget */
-export enum GanttOutgoingEvents {
-    TASK_SELECTED = "TASK_SELECTED",
-    TASK_CLICKED = "TASK_CLICKED",
-    TASK_DOUBLE_CLICKED = "TASK_DOUBLE_CLICKED",
-    TASK_CREATED = "TASK_CREATED",
-    TASK_UPDATED = "TASK_UPDATED",
-    TASK_DELETED = "TASK_DELETED",
-    TASK_REQUEST_ADD = "TASK_REQUEST_ADD",
-    VIEW_CHANGED = "VIEW_CHANGED",
-    FULLSCREEN_CHANGED = "FULLSCREEN_CHANGED",
-    TIMELINE_CHANGED = "TIMELINE_CHANGED",
-}
-
-export type GanttEventType = GanttIncomingEvents | GanttOutgoingEvents;
-
-export interface GanttEventPayload {
+export interface AxEvent {
+    /** Mendix widget name — filter events to correct instance */
     widgetId: string;
-    type: GanttEventType;
-    data?: unknown;
+    payload?: Record<string, unknown>;
 }
 
-export type GanttEventHandler = (payload: GanttEventPayload) => void;
-
-export interface GanttEventBus {
-    emit(payload: GanttEventPayload): void;
-    on(type: GanttEventType, handler: GanttEventHandler): () => void;
-    off(type: GanttEventType, handler: GanttEventHandler): void;
-    once(type: GanttEventType, handler: GanttEventHandler): void;
+export interface AxEventBus {
+    emit(topic: string, event: AxEvent): void;
+    on(topic: string, handler: (event: AxEvent) => void): () => void;
+    removeListener(topic: string, handler: (event: AxEvent) => void): void;
     clear(): void;
 }
 
-/** Typed payload shapes */
-export interface TaskEventData {
-    task: GanttTask;
-}
+/** Factory — creates a new bus instance */
+export function createBus(): AxEventBus;
 
-/** Emitted when user clicks level-2 (+) add button in grid column */
-export interface AddTaskRequestedData {
-    task: GanttTask;
-    /** Always 1 — 0-indexed second hierarchy tier */
-    level: number;
-    childCount: number;
-}
+/** Registers singleton on globalThis[AX_EVENT_BUS_KEY] */
+export function initEventBus(): AxEventBus;
 
-export interface ViewChangedData {
-    viewMode: TimelineViewMode;
-}
+/** Returns singleton or undefined if not initialized */
+export function getEventBus(): AxEventBus | undefined;
 
-export interface FullscreenChangedData {
-    fullscreen: boolean;
-}
+/** Convenience: getEventBus()?.emit(topic, event) */
+export function emitEvent(topic: string, event: AxEvent): void;
 
-export interface ScrollToTaskData {
-    taskId: string;
-}
+/** Incoming command topics (Mendix → widget) */
+export const AX_INCOMING_TOPICS = {
+    REFRESH: "REFRESH",
+    LOAD_DATA: "LOAD_DATA",
+    EXPAND_ALL: "EXPAND_ALL",
+    COLLAPSE_ALL: "COLLAPSE_ALL",
+    ENTER_FULLSCREEN: "ENTER_FULLSCREEN",
+    EXIT_FULLSCREEN: "EXIT_FULLSCREEN",
+    ENTER_EXPAND_HEIGHT: "ENTER_EXPAND_HEIGHT",
+    EXIT_EXPAND_HEIGHT: "EXIT_EXPAND_HEIGHT",
+    TOGGLE_EXPAND_HEIGHT: "TOGGLE_EXPAND_HEIGHT",
+    ZOOM_DAY: "ZOOM_DAY",
+    ZOOM_WEEK: "ZOOM_WEEK",
+    ZOOM_MONTH: "ZOOM_MONTH",
+    SET_START_DATE: "SET_START_DATE",
+    SET_END_DATE: "SET_END_DATE",
+    SCROLL_TO_TODAY: "SCROLL_TO_TODAY",
+    SCROLL_TO_TASK: "SCROLL_TO_TASK",
+    FIT_TIMELINE: "FIT_TIMELINE",
+    SHOW_GRID: "SHOW_GRID",
+    HIDE_GRID: "HIDE_GRID",
+    SHOW_TIMELINE: "SHOW_TIMELINE",
+    HIDE_TIMELINE: "HIDE_TIMELINE",
+    EXPORT_PDF: "EXPORT_PDF",
+    EXPORT_PNG: "EXPORT_PNG",
+    EXPORT_EXCEL: "EXPORT_EXCEL"
+} as const;
 
-export interface SetDateData {
-    date: string;
-}
-
-export interface ExportResultData {
-    url?: string;
-    error?: string;
-    format: "pdf" | "png" | "jpeg" | "excel";
-}
-
-export interface GanttWidgetEventBridge {
-    handleTaskClick: (task: GanttTask) => void;
-    handleTaskDoubleClick: (task: GanttTask) => void;
-    handleSelectionChanged: (task?: GanttTask) => void;
-    handleTaskCreated: (task: GanttTask) => void;
-    handleTaskUpdated: (task: GanttTask) => void;
-    handleTaskDeleted: (taskId: string) => void;
-    handleViewChanged: (viewMode: TimelineViewMode) => void;
-    handleFullscreenChanged: (fullscreen: boolean) => void;
-    handleTimelineChanged: () => void;
-}
+export type AxIncomingTopic = (typeof AX_INCOMING_TOPICS)[keyof typeof AX_INCOMING_TOPICS];

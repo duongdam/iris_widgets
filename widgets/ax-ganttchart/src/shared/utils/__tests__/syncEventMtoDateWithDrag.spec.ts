@@ -1,4 +1,4 @@
-import type { GanttTask } from "../../../main/eventbus/eventTypes";
+import type { GanttTask } from "../../../events/eventTypes";
 import {
     addCalendarDays,
     calendarDayDiff,
@@ -19,10 +19,10 @@ describe("syncEventMtoDateWithDrag", () => {
     it("shifts MTO milestone by calendar days when the bar moves", () => {
         const original = task({
             id: "mto-1",
-            tags: ["MTO"],
+            milestone: "MTO",
             start_date: "2025-05-01 00:00",
             end_date: "2026-01-31 00:00",
-            mto_date: "2026-03-15 00:00"
+            stndMileMonth: "2026-03-15 00:00"
         });
         const moved = {
             ...original,
@@ -35,10 +35,10 @@ describe("syncEventMtoDateWithDrag", () => {
     it("sets K/O milestone to the snapped start calendar day", () => {
         const original = task({
             id: "ko-1",
-            tags: ["K/O"],
+            milestone: "K/O",
             start_date: "2026-04-01 00:00",
             end_date: "2027-12-01 00:00",
-            mto_date: "2026-04-01 00:00"
+            stndMileMonth: "2026-04-01 00:00"
         });
         const moved = {
             ...original,
@@ -51,10 +51,10 @@ describe("syncEventMtoDateWithDrag", () => {
     it("re-syncs after DHTMLX snap using the drag-start baseline", () => {
         const baseline = task({
             id: "mto-2",
-            tags: ["MTO"],
+            milestone: "MTO",
             start_date: "2025-05-01 00:00",
             end_date: "2026-01-31 00:00",
-            mto_date: "2026-03-15 00:00"
+            stndMileMonth: "2026-03-15 00:00"
         });
         const snapped = {
             ...baseline,
@@ -67,8 +67,8 @@ describe("syncEventMtoDateWithDrag", () => {
     it("ignores resize and progress modes", () => {
         const original = task({
             id: "mto-3",
-            tags: ["MTO"],
-            mto_date: "2026-03-15 00:00"
+            milestone: "MTO",
+            stndMileMonth: "2026-03-15 00:00"
         });
 
         expect(syncEventMtoDateWithDrag(original, original, "resize")).toBeUndefined();

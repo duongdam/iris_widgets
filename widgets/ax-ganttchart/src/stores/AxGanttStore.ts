@@ -1,16 +1,20 @@
 import { makeAutoObservable } from "mobx";
-import { type GanttTask, TimelineViewMode } from "../main/eventbus/eventTypes";
+import type { AxGanttTask } from "../shared/types/axGanttTask";
+import { TimelineViewMode } from "../shared/types/timelineViewMode";
 import { getDefaultTimelineEnd, getDefaultTimelineStart } from "../main/components/TimelineManager";
 
-export class GanttStore {
-    tasks: GanttTask[] = [];
-    selectedTask?: GanttTask;
-    viewMode: TimelineViewMode = TimelineViewMode.WEEK;
+export { TimelineViewMode };
+
+let nextStoreInstanceId = 1;
+
+export class AxGanttStore {
+    readonly instanceId = nextStoreInstanceId++;
+    tasks: AxGanttTask[] = [];
+    selectedTask?: AxGanttTask;
+    viewMode: TimelineViewMode = TimelineViewMode.MONTH;
     fullscreen = false;
     expandHeight = false;
-    /** Grid drag mode — move child rows to another parent branch. */
     gridReorderMode = false;
-    /** How many hierarchy levels are expanded via toolbar (0 = all branches collapsed). */
     expandLevel = 0;
     loading = false;
     showGrid = true;
@@ -18,13 +22,14 @@ export class GanttStore {
     hoveredTaskId?: string;
     timelineStart: Date = getDefaultTimelineStart();
     timelineEnd: Date = getDefaultTimelineEnd();
+    dragStartDates = new Map<string, Date>();
 
     constructor(defaultViewMode: TimelineViewMode = TimelineViewMode.MONTH) {
         this.viewMode = defaultViewMode;
-        makeAutoObservable(this);
+        makeAutoObservable(this, { dragStartDates: false });
     }
 
-    get taskById(): Map<string, GanttTask> {
+    get taskById(): Map<string, AxGanttTask> {
         return new Map(this.tasks.map(task => [task.id, task]));
     }
 
@@ -32,22 +37,26 @@ export class GanttStore {
         return this.tasks.length > 0;
     }
 
-    get rootTasks(): GanttTask[] {
+    getTask(id: string): AxGanttTask | undefined {
+        return this.tasks.find(task => task.id === id);
+    }
+
+    get rootTasks(): AxGanttTask[] {
         return this.tasks.filter(task => !task.parent || task.parent === "0");
     }
 
-    setTasks(tasks: GanttTask[]): void {
+    setTasks(tasks: AxGanttTask[]): void {
         this.tasks = cloneTasksForStore(tasks);
     }
 
-    setTasksIfChanged(tasks: GanttTask[]): void {
+    setTasksIfChanged(tasks: AxGanttTask[]): void {
         const nextTasks = cloneTasksForStore(tasks);
-        if (!areGanttTasksEqual(this.tasks, nextTasks)) {
+        if (!areTasksEqual(this.tasks, nextTasks)) {
             this.tasks = nextTasks;
         }
     }
 
-    selectTask(task: GanttTask | undefined): void {
+    selectTask(task: AxGanttTask | undefined): void {
         this.selectedTask = task ? cloneTaskForStore(task) : undefined;
     }
 
@@ -79,7 +88,7 @@ export class GanttStore {
         this.tasks = this.tasks.map(task => (task.id === taskId ? { ...task, parent: parentId } : task));
     }
 
-    updateTaskFromTimeline(task: GanttTask): void {
+    updateTaskFromTimeline(task: AxGanttTask): void {
         const index = this.tasks.findIndex(item => item.id === task.id);
         if (index < 0) {
             return;
@@ -126,25 +135,42 @@ export class GanttStore {
         this.timelineStart = start;
         this.timelineEnd = end;
     }
+
+    snapshotDragStart(id: string, date: Date): void {
+        this.dragStartDates.set(id, new Date(date.getTime()));
+    }
+
+    clearDragSnapshot(id: string): void {
+        this.dragStartDates.delete(id);
+    }
+
+    getDragStartDate(id: string): Date | undefined {
+        return this.dragStartDates.get(id);
+    }
 }
 
-export function createGanttStore(defaultViewMode?: TimelineViewMode): GanttStore {
-    return new GanttStore(defaultViewMode);
+export function createAxGanttStore(defaultViewMode?: TimelineViewMode): AxGanttStore {
+    return new AxGanttStore(defaultViewMode);
 }
 
-function cloneTaskForStore(task: GanttTask): GanttTask {
+/** @deprecated Use createAxGanttStore */
+export const createGanttStore = createAxGanttStore;
+
+/** @deprecated Use AxGanttStore */
+export type GanttStore = AxGanttStore;
+
+function cloneTaskForStore(task: AxGanttTask): AxGanttTask {
     return {
         ...task,
-        tags: task.tags ? [...task.tags] : undefined,
         metadata: task.metadata ? { ...task.metadata } : undefined
     };
 }
 
-function cloneTasksForStore(tasks: GanttTask[]): GanttTask[] {
+function cloneTasksForStore(tasks: AxGanttTask[]): AxGanttTask[] {
     return tasks.map(cloneTaskForStore);
 }
 
-function areGanttTasksEqual(a: GanttTask[], b: GanttTask[]): boolean {
+function areTasksEqual(a: AxGanttTask[], b: AxGanttTask[]): boolean {
     if (a.length !== b.length) {
         return false;
     }

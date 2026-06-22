@@ -1,16 +1,17 @@
 import type { ListAttributeValue, ListValue, ObjectItem } from "mendix";
 import type Big from "big.js";
-import type { GanttTask } from "../eventbus/eventTypes";
+import type { AxGanttTask } from "../../shared/types/axGanttTask";
 import type { AxGanttChartProps } from "../../typings/AxGanttChartProps";
 import { convertDate, convertDateToGanttString } from "../../shared/converters/convertDate";
-import { convertProgress } from "../../shared/converters/convertProgress";
 import { convertTaskId } from "../../shared/converters/convertTaskId";
 import { validateDatasourceMapping } from "../../shared/validators/validateDatasourceMapping";
-import { normalizeEventTypeTag, normalizeMtoDateField } from "../../shared/utils/mtoDate";
+import { isGroupType, isScheduledType, normalizeTaskType } from "../../shared/types/axGanttTask";
+import { normalizeMtoDateField } from "../../shared/utils/mtoDate";
 import { sortTasksByOrderNo } from "../../shared/utils/sortTasksByOrderNo";
+import { convertProgress } from "../../shared/converters/convertProgress";
 
 export interface AdapterResult {
-    tasks: GanttTask[];
+    tasks: AxGanttTask[];
     skippedCount: number;
     warnings: string[];
     mappingValid: boolean;
@@ -18,53 +19,32 @@ export interface AdapterResult {
 
 export type MendixTaskMappingProps = Pick<
     AxGanttChartProps,
-    | "tasksDatasource"
-    | "idAttribute"
+    | "roadmapItems"
+    | "aidAttribute"
+    | "itemIdAttribute"
+    | "parentIdAttribute"
+    | "groupAttribute"
+    | "typeAttribute"
+    | "nameAttribute"
     | "textAttribute"
+    | "countAttribute"
+    | "orderAttribute"
+    | "customOrderAttribute"
     | "startDateAttribute"
     | "endDateAttribute"
-    | "durationAttribute"
-    | "progressAttribute"
-    | "parentAttribute"
-    | "orderNoAttribute"
-    | "openAttribute"
-    | "typeAttribute"
-    | "tagsAttribute"
-    | "mtoDateAttribute"
-    | "eventTypeAttribute"
+    | "milestoneAttribute"
+    | "stndMileMonthAttribute"
+    | "hasTuningAttribute"
+    | "hasManualAttribute"
+    | "hasCertAttribute"
+    | "hasRFAttribute"
+    | "canEditAttribute"
     | "metadata1Attribute"
     | "metadata2Attribute"
     | "metadata3Attribute"
     | "metadata4Attribute"
     | "metadata5Attribute"
 >;
-
-function parseTags(value: string | undefined): string[] | undefined {
-    if (!value) {
-        return undefined;
-    }
-
-    const trimmed = value.trim();
-    if (!trimmed) {
-        return undefined;
-    }
-
-    try {
-        const parsed = JSON.parse(trimmed) as unknown;
-        if (Array.isArray(parsed)) {
-            const tags = parsed.filter((tag): tag is string => typeof tag === "string" && tag.length > 0);
-            return tags.length > 0 ? tags : undefined;
-        }
-    } catch {
-        // Fall through to comma-separated parsing.
-    }
-
-    const tags = trimmed
-        .split(",")
-        .map(tag => tag.trim())
-        .filter(Boolean);
-    return tags.length > 0 ? tags : undefined;
-}
 
 function readAttributeString(item: ObjectItem, accessor: ListAttributeValue<string>): string | undefined {
     const attr = accessor.get(item);
@@ -108,20 +88,6 @@ function readNumber(item: ObjectItem, accessor?: ListAttributeValue<Big>): numbe
     }
 
     return convertProgress(attr.value);
-}
-
-function readDuration(item: ObjectItem, accessor?: ListAttributeValue<Big>): number | undefined {
-    if (!accessor) {
-        return undefined;
-    }
-
-    const attr = accessor.get(item);
-    if (attr.status !== "available" || attr.value == null) {
-        return undefined;
-    }
-
-    const num = Number(attr.value);
-    return Number.isFinite(num) ? num : undefined;
 }
 
 function readBoolean(item: ObjectItem, accessor?: ListAttributeValue<boolean>): boolean | undefined {
@@ -191,97 +157,95 @@ export function mapMendixDatasourceToGanttTasks(props: MendixTaskMappingProps): 
         return { tasks: [], skippedCount: 0, warnings: mappingValidation.errors, mappingValid: false };
     }
 
-    const datasource = props.tasksDatasource;
+    const datasource = props.roadmapItems;
 
     if (datasource.status !== "available") {
         return { tasks: [], skippedCount: 0, warnings: [], mappingValid: true };
     }
 
     const warnings: string[] = [];
-    const tasks: GanttTask[] = [];
+    const tasks: AxGanttTask[] = [];
     let skippedCount = 0;
     const items = datasource.items ?? [];
 
     for (const item of items) {
-        const id = readTaskId(item, props.idAttribute);
+        const id = readTaskId(item, props.itemIdAttribute);
         const text = readAttributeString(item, props.textAttribute);
-        const startDate = readDate(item, props.startDateAttribute);
-        const start_date = convertDateToGanttString(startDate);
+        const rawType = readAttributeString(item, props.typeAttribute);
+        const type = normalizeTaskType(rawType);
 
-        if (!id || !text || !start_date) {
+        if (!id || !text) {
             skippedCount += 1;
-            warnings.push(`Skipped item ${item.id}: missing id, text, or start date`);
+            warnings.push(`Skipped item ${item.id}: missing itemId or text`);
             continue;
         }
 
+        const parent = readAttributeString(item, props.parentIdAttribute);
+        const group = readAttributeString(item, props.groupAttribute);
+        const name = readAttributeString(item, props.nameAttribute);
+        const startDate = readDate(item, props.startDateAttribute);
         const endDate = readDate(item, props.endDateAttribute);
+        const start_date = convertDateToGanttString(startDate);
         const end_date = convertDateToGanttString(endDate);
-        const duration = readDuration(item, props.durationAttribute);
-        const progress = readNumber(item, props.progressAttribute);
-        const parent = props.parentAttribute ? readTaskId(item, props.parentAttribute) : undefined;
-        const orderNo = readDuration(item, props.orderNoAttribute);
-        const open = readBoolean(item, props.openAttribute);
-        const type = props.typeAttribute ? readAttributeString(item, props.typeAttribute) : undefined;
-        const tags = props.tagsAttribute ? parseTags(readAttributeString(item, props.tagsAttribute)) : undefined;
-        const mtoDate = readDate(item, props.mtoDateAttribute);
-        const mto_date = convertDateToGanttString(mtoDate);
-        const eventTypeRaw = props.eventTypeAttribute ? readAttributeString(item, props.eventTypeAttribute) : undefined;
-        const eventTypeTag = normalizeEventTypeTag(eventTypeRaw);
+        const milestone = readAttributeString(item, props.milestoneAttribute);
+        const stndMileMonth = readDate(item, props.stndMileMonthAttribute);
+        const order = readNumber(item, props.orderAttribute);
+        const customOrderAttr = props.customOrderAttribute.get(item);
+        const customOrder =
+            customOrderAttr.status === "available" && customOrderAttr.value != null
+                ? customOrderAttr.value instanceof Object && "toString" in customOrderAttr.value
+                    ? customOrderAttr.value.toString()
+                    : String(customOrderAttr.value)
+                : undefined;
+        const count = readNumber(item, props.countAttribute);
+        const aid = readTaskId(item, props.aidAttribute);
         const extraMetadata = readMetadataFields(item, props);
 
-        const task: GanttTask = {
+        const unscheduled = isGroupType(type) || (isScheduledType(type) && !start_date);
+
+        if (isScheduledType(type) && !start_date && !unscheduled) {
+            skippedCount += 1;
+            warnings.push(`Skipped item ${item.id}: TASK/SUB_TASK missing start date`);
+            continue;
+        }
+
+        const task: AxGanttTask = {
             id,
+            aid,
             text,
-            start_date,
+            name,
+            type,
+            parent: parent || undefined,
+            group,
+            unscheduled,
+            order,
+            customOrder,
+            count,
+            hasTuning: readBoolean(item, props.hasTuningAttribute),
+            hasManual: readBoolean(item, props.hasManualAttribute),
+            hasCert: readBoolean(item, props.hasCertAttribute),
+            hasRF: readBoolean(item, props.hasRFAttribute),
+            canEdit: readBoolean(item, props.canEditAttribute),
             metadata: { mendixItemId: item.id, ...extraMetadata }
         };
 
-        if (end_date) {
-            task.end_date = end_date;
-        } else if (duration != null && duration >= 0) {
-            task.duration = duration;
-            if (duration === 0 && !end_date) {
-                task.end_date = start_date;
+        if (!unscheduled) {
+            if (start_date) {
+                task.start_date = start_date;
             }
+            if (end_date) {
+                task.end_date = end_date;
+            }
+            if (milestone) {
+                task.milestone = milestone;
+            }
+            if (stndMileMonth) {
+                task.stndMileMonth = convertDateToGanttString(stndMileMonth);
+            }
+            tasks.push(normalizeMtoDateField(task));
         } else {
-            skippedCount += 1;
-            warnings.push(`Skipped item ${item.id}: missing end date or duration`);
-            continue;
+            tasks.push(task);
         }
-
-        if (progress != null) {
-            task.progress = progress;
-        }
-
-        if (parent) {
-            task.parent = parent;
-        }
-
-        if (orderNo != null) {
-            task.orderNo = orderNo;
-        }
-
-        if (open != null) {
-            task.open = open;
-        }
-
-        if (type) {
-            task.type = type;
-        }
-
-        if (tags) {
-            task.tags = tags;
-        }
-
-        if (eventTypeTag) {
-            task.tags = [...(task.tags ?? []).filter(tag => tag !== "MTO" && tag !== "K/O"), eventTypeTag];
-        }
-
-        if (mto_date) {
-            task.mto_date = mto_date;
-        }
-
-        tasks.push(normalizeMtoDateField(task));
     }
 
     const validIds = new Set(tasks.map(task => task.id));

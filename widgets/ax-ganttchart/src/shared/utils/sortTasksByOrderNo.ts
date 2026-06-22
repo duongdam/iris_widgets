@@ -1,4 +1,4 @@
-import type { GanttTask } from "../../main/eventbus/eventTypes";
+import type { GanttTask } from "../../events/eventTypes";
 
 function normalizeParentId(parent: string | undefined): string | undefined {
     if (!parent || parent === "0") {

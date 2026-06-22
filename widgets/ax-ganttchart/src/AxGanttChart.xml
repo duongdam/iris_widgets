@@ -12,148 +12,220 @@
     <icon />
     <properties>
         <propertyGroup caption="General">
-            <property key="height" type="integer" required="true" defaultValue="600">
-                <caption>Height</caption>
-                <description>Gantt widget height in pixels</description>
-            </property>
-            <property key="defaultViewMode" type="enumeration" required="true" defaultValue="month">
-                <caption>Default view mode</caption>
-                <description>Initial timeline scale granularity</description>
-                <enumerationValues>
-                    <enumerationValue key="day">Day</enumerationValue>
-                    <enumerationValue key="week">Week</enumerationValue>
-                    <enumerationValue key="month">Month</enumerationValue>
-                </enumerationValues>
-            </property>
+            <propertyGroup caption="Display">
+                <property key="height" type="expression" required="true" defaultValue="600">
+                    <caption>Height</caption>
+                    <description>Gantt widget height in pixels</description>
+                    <returnType type="Integer" />
+                </property>
+                <property key="defaultViewMode" type="expression" required="true" defaultValue="'month'">
+                    <caption>Default view mode</caption>
+                    <description>Initial timeline scale granularity (day, week, month)</description>
+                    <returnType type="String" />
+                </property>
+                <property key="showToolbar" type="boolean" required="true" defaultValue="true">
+                    <caption>Show toolbar</caption>
+                    <description>Display built-in view mode and action toolbar</description>
+                </property>
+                <property key="showGrid" type="boolean" required="true" defaultValue="true">
+                    <caption>Show grid</caption>
+                    <description>Display task grid panel</description>
+                </property>
+                <property key="showTimeline" type="boolean" required="true" defaultValue="true">
+                    <caption>Show timeline</caption>
+                    <description>Display timeline panel</description>
+                </property>
+                <property key="showProgress" type="boolean" required="true" defaultValue="false">
+                    <caption>Show progress</caption>
+                    <description>Display progress bars on tasks</description>
+                </property>
+                <property key="showTodayMarker" type="boolean" required="true" defaultValue="true">
+                    <caption>Show today marker</caption>
+                    <description>Display vertical marker for current date</description>
+                </property>
+            </propertyGroup>
+            <propertyGroup caption="Options">
+                <property key="optStartDateAttribute" type="expression" required="false">
+                    <caption>Start date attribute</caption>
+                    <description>Optional timeline range start override</description>
+                    <returnType type="String" />
+                </property>
+                <property key="optEndDateAttribute" type="expression" required="false">
+                    <caption>End date attribute</caption>
+                    <description>Optional timeline range end override</description>
+                    <returnType type="String" />
+                </property>
+                <property key="allowDrag" type="expression" required="true" defaultValue="true">
+                    <caption>Allow drag</caption>
+                    <description>Allow dragging tasks on the timeline</description>
+                    <returnType type="Boolean" />
+                </property>
+                <property key="allowResize" type="expression" required="true" defaultValue="false">
+                    <caption>Allow resize</caption>
+                    <description>Allow resizing task bars (MTO/K/O events are always move-only)</description>
+                    <returnType type="Boolean" />
+                </property>
+                <property key="allowGridReorder" type="expression" required="true" defaultValue="true">
+                    <caption>Allow grid reorder</caption>
+                    <description>Allow dragging child rows onto different parents in the grid</description>
+                    <returnType type="Boolean" />
+                </property>
+                <property key="readOnly" type="expression" required="true" defaultValue="false">
+                    <caption>Read only</caption>
+                    <description>Disable all Gantt editing interactions</description>
+                    <returnType type="Boolean" />
+                </property>
+            </propertyGroup>
         </propertyGroup>
-        <propertyGroup caption="Display">
-            <property key="showToolbar" type="boolean" required="true" defaultValue="true">
-                <caption>Show toolbar</caption>
-                <description>Display built-in view mode and action toolbar</description>
-            </property>
-            <property key="showGrid" type="boolean" required="true" defaultValue="true">
-                <caption>Show grid</caption>
-                <description>Display task grid panel</description>
-            </property>
-            <property key="showTimeline" type="boolean" required="true" defaultValue="true">
-                <caption>Show timeline</caption>
-                <description>Display timeline panel</description>
-            </property>
-            <property key="showProgress" type="boolean" required="true" defaultValue="false">
-                <caption>Show progress</caption>
-                <description>Display progress bars on tasks</description>
-            </property>
-            <property key="showTodayMarker" type="boolean" required="true" defaultValue="true">
-                <caption>Show today marker</caption>
-                <description>Display vertical marker for current date</description>
-            </property>
-        </propertyGroup>
+
         <propertyGroup caption="Data Source">
-            <property key="tasksDatasource" type="datasource" isList="true" required="true">
+            <property key="roadmapItems" type="datasource" isList="true" required="true">
                 <caption>Data source</caption>
-                <description>List datasource returning task objects from database, microflow, nanoflow, or REST integration</description>
+                <description>List datasource returning roadmap items</description>
             </property>
-            <property key="idAttribute" type="attribute" dataSource="tasksDatasource" required="true">
-                <caption>ID attribute</caption>
-                <description>Unique task identifier</description>
+            <property key="aidAttribute" type="attribute" dataSource="roadmapItems" required="true">
+                <caption>AID attribute</caption>
+                <description>Internal unique identifier</description>
                 <attributeTypes>
                     <attributeType name="String" />
                     <attributeType name="AutoNumber" />
                 </attributeTypes>
             </property>
-            <property key="textAttribute" type="attribute" dataSource="tasksDatasource" required="true">
-                <caption>Text attribute</caption>
-                <description>Task label displayed in grid and timeline</description>
+            <property key="itemIdAttribute" type="attribute" dataSource="roadmapItems" required="true">
+                <caption>Item ID attribute</caption>
+                <description>Unique task identifier displayed in Gantt</description>
                 <attributeTypes>
                     <attributeType name="String" />
+                    <attributeType name="AutoNumber" />
                 </attributeTypes>
             </property>
-            <property key="startDateAttribute" type="attribute" dataSource="tasksDatasource" required="true">
-                <caption>Start date attribute</caption>
-                <description>Task start date</description>
-                <attributeTypes>
-                    <attributeType name="DateTime" />
-                </attributeTypes>
-            </property>
-            <property key="endDateAttribute" type="attribute" dataSource="tasksDatasource" required="false">
-                <caption>End date attribute</caption>
-                <description>Task end date (optional if duration is provided)</description>
-                <attributeTypes>
-                    <attributeType name="DateTime" />
-                </attributeTypes>
-            </property>
-            <property key="durationAttribute" type="attribute" dataSource="tasksDatasource" required="false">
-                <caption>Duration attribute</caption>
-                <description>Task duration in days (optional if end date is provided)</description>
-                <attributeTypes>
-                    <attributeType name="Integer" />
-                    <attributeType name="Long" />
-                    <attributeType name="Decimal" />
-                </attributeTypes>
-            </property>
-            <property key="progressAttribute" type="attribute" dataSource="tasksDatasource" required="false">
-                <caption>Progress attribute</caption>
-                <description>Task completion from 0 to 1</description>
-                <attributeTypes>
-                    <attributeType name="Decimal" />
-                    <attributeType name="Integer" />
-                </attributeTypes>
-            </property>
-            <property key="parentAttribute" type="attribute" dataSource="tasksDatasource" required="false">
-                <caption>Parent attribute</caption>
+            <property key="parentIdAttribute" type="attribute" dataSource="roadmapItems" required="true">
+                <caption>Parent ID attribute</caption>
                 <description>Parent task ID for hierarchy</description>
                 <attributeTypes>
                     <attributeType name="String" />
-                    <attributeType name="AutoNumber" />
                 </attributeTypes>
             </property>
-            <property key="orderNoAttribute" type="attribute" dataSource="tasksDatasource" required="false">
-                <caption>Order number attribute</caption>
-                <description>Sibling sort order within the same parent (lower values appear first)</description>
+            <property key="groupAttribute" type="attribute" dataSource="roadmapItems" required="true">
+                <caption>Group attribute</caption>
+                <description>Business group key</description>
+                <attributeTypes>
+                    <attributeType name="String" />
+                </attributeTypes>
+            </property>
+            <property key="typeAttribute" type="attribute" dataSource="roadmapItems" required="true">
+                <caption>Type attribute</caption>
+                <description>Task type (DISTRICT_GROUP, CUSTOM_GROUP, TASK, SUB_TASK)</description>
+                <attributeTypes>
+                    <attributeType name="String" />
+                </attributeTypes>
+            </property>
+            <property key="nameAttribute" type="attribute" dataSource="roadmapItems" required="true">
+                <caption>Name attribute</caption>
+                <description>Task name</description>
+                <attributeTypes>
+                    <attributeType name="String" />
+                </attributeTypes>
+            </property>
+            <property key="textAttribute" type="attribute" dataSource="roadmapItems" required="true">
+                <caption>Text attribute</caption>
+                <description>Task text displayed in grid and timeline</description>
+                <attributeTypes>
+                    <attributeType name="String" />
+                </attributeTypes>
+            </property>
+            <property key="countAttribute" type="attribute" dataSource="roadmapItems" required="true">
+                <caption>Count attribute</caption>
+                <description>Task count</description>
                 <attributeTypes>
                     <attributeType name="Integer" />
                     <attributeType name="Long" />
                     <attributeType name="Decimal" />
                 </attributeTypes>
             </property>
-            <property key="openAttribute" type="attribute" dataSource="tasksDatasource" required="false">
-                <caption>Open attribute</caption>
-                <description>Whether child tasks are expanded</description>
+            <property key="orderAttribute" type="attribute" dataSource="roadmapItems" required="true">
+                <caption>Order attribute</caption>
+                <description>Task order</description>
+                <attributeTypes>
+                    <attributeType name="Integer" />
+                    <attributeType name="Long" />
+                    <attributeType name="Decimal" />
+                </attributeTypes>
+            </property>
+            <property key="customOrderAttribute" type="attribute" dataSource="roadmapItems" required="true">
+                <caption>Custom order attribute</caption>
+                <description>Task custom order</description>
+                <attributeTypes>
+                    <attributeType name="String" />
+                    <attributeType name="Integer" />
+                    <attributeType name="Long" />
+                    <attributeType name="Decimal" />
+                </attributeTypes>
+            </property>
+            <property key="startDateAttribute" type="attribute" dataSource="roadmapItems" required="false">
+                <caption>Start date attribute</caption>
+                <description>Task start date (optional for group rows)</description>
+                <attributeTypes>
+                    <attributeType name="DateTime" />
+                </attributeTypes>
+            </property>
+            <property key="endDateAttribute" type="attribute" dataSource="roadmapItems" required="false">
+                <caption>End date attribute</caption>
+                <description>Task end date (optional for group rows)</description>
+                <attributeTypes>
+                    <attributeType name="DateTime" />
+                </attributeTypes>
+            </property>
+            <property key="milestoneAttribute" type="attribute" dataSource="roadmapItems" required="true">
+                <caption>Milestone attribute</caption>
+                <description>Task milestone (MTO, K/O)</description>
+                <attributeTypes>
+                    <attributeType name="String" />
+                </attributeTypes>
+            </property>
+            <property key="stndMileMonthAttribute" type="attribute" dataSource="roadmapItems" required="true">
+                <caption>Standard milestone month attribute</caption>
+                <description>Standard milestone month</description>
+                <attributeTypes>
+                    <attributeType name="DateTime" />
+                </attributeTypes>
+            </property>
+            <property key="hasTuningAttribute" type="attribute" dataSource="roadmapItems" required="true">
+                <caption>Has tuning attribute</caption>
+                <description>Has tuning</description>
                 <attributeTypes>
                     <attributeType name="Boolean" />
                 </attributeTypes>
             </property>
-            <property key="typeAttribute" type="attribute" dataSource="tasksDatasource" required="false">
-                <caption>Type attribute</caption>
-                <description>DHTMLX task type (task, project, milestone)</description>
+            <property key="hasManualAttribute" type="attribute" dataSource="roadmapItems" required="true">
+                <caption>Has manual attribute</caption>
+                <description>Has manual</description>
                 <attributeTypes>
-                    <attributeType name="String" />
-                    <attributeType name="Enum" />
+                    <attributeType name="Boolean" />
                 </attributeTypes>
             </property>
-            <property key="tagsAttribute" type="attribute" dataSource="tasksDatasource" required="false">
-                <caption>Tags attribute</caption>
-                <description>JSON array or comma-separated labels (e.g. Manual, Process)</description>
+            <property key="hasCertAttribute" type="attribute" dataSource="roadmapItems" required="true">
+                <caption>Has cert attribute</caption>
+                <description>Has cert</description>
                 <attributeTypes>
-                    <attributeType name="String" />
+                    <attributeType name="Boolean" />
                 </attributeTypes>
             </property>
-            <property key="mtoDateAttribute" type="attribute" dataSource="tasksDatasource" required="false">
-                <caption>Milestone date attribute</caption>
-                <description>MTO/K/O milestone date on the timeline (MTO = midpoint, K/O = bar start)</description>
+            <property key="hasRFAttribute" type="attribute" dataSource="roadmapItems" required="true">
+                <caption>Has RF attribute</caption>
+                <description>Has RF</description>
                 <attributeTypes>
-                    <attributeType name="DateTime" />
+                    <attributeType name="Boolean" />
                 </attributeTypes>
             </property>
-            <property key="eventTypeAttribute" type="attribute" dataSource="tasksDatasource" required="false">
-                <caption>Event type attribute</caption>
-                <description>Event marker type: MTO or K/O</description>
+            <property key="canEditAttribute" type="attribute" dataSource="roadmapItems" required="false">
+                <caption>Can edit attribute</caption>
+                <description>Per-row edit override</description>
                 <attributeTypes>
-                    <attributeType name="String" />
-                    <attributeType name="Enum" />
+                    <attributeType name="Boolean" />
                 </attributeTypes>
             </property>
-            <property key="metadata1Attribute" type="attribute" dataSource="tasksDatasource" required="false">
+            <property key="metadata1Attribute" type="attribute" dataSource="roadmapItems" required="false">
                 <caption>Metadata 1 attribute</caption>
                 <description>Optional value stored in task metadata.metadata1</description>
                 <attributeTypes>
@@ -166,7 +238,7 @@
                     <attributeType name="DateTime" />
                 </attributeTypes>
             </property>
-            <property key="metadata2Attribute" type="attribute" dataSource="tasksDatasource" required="false">
+            <property key="metadata2Attribute" type="attribute" dataSource="roadmapItems" required="false">
                 <caption>Metadata 2 attribute</caption>
                 <description>Optional value stored in task metadata.metadata2</description>
                 <attributeTypes>
@@ -179,7 +251,7 @@
                     <attributeType name="DateTime" />
                 </attributeTypes>
             </property>
-            <property key="metadata3Attribute" type="attribute" dataSource="tasksDatasource" required="false">
+            <property key="metadata3Attribute" type="attribute" dataSource="roadmapItems" required="false">
                 <caption>Metadata 3 attribute</caption>
                 <description>Optional value stored in task metadata.metadata3</description>
                 <attributeTypes>
@@ -192,7 +264,7 @@
                     <attributeType name="DateTime" />
                 </attributeTypes>
             </property>
-            <property key="metadata4Attribute" type="attribute" dataSource="tasksDatasource" required="false">
+            <property key="metadata4Attribute" type="attribute" dataSource="roadmapItems" required="false">
                 <caption>Metadata 4 attribute</caption>
                 <description>Optional value stored in task metadata.metadata4</description>
                 <attributeTypes>
@@ -205,7 +277,7 @@
                     <attributeType name="DateTime" />
                 </attributeTypes>
             </property>
-            <property key="metadata5Attribute" type="attribute" dataSource="tasksDatasource" required="false">
+            <property key="metadata5Attribute" type="attribute" dataSource="roadmapItems" required="false">
                 <caption>Metadata 5 attribute</caption>
                 <description>Optional value stored in task metadata.metadata5</description>
                 <attributeTypes>
@@ -219,78 +291,66 @@
                 </attributeTypes>
             </property>
         </propertyGroup>
-        <propertyGroup caption="Editing">
-            <property key="allowDrag" type="boolean" required="true" defaultValue="true">
-                <caption>Allow drag</caption>
-                <description>Allow dragging tasks on the timeline</description>
-            </property>
-            <property key="allowResize" type="boolean" required="true" defaultValue="false">
-                <caption>Allow resize</caption>
-                <description>Allow resizing task bars (MTO/K/O events are always move-only)</description>
-            </property>
-            <property key="allowGridReorder" type="boolean" required="true" defaultValue="true">
-                <caption>Allow grid reorder</caption>
-                <description>Show toolbar mode to drag child rows onto different parents in the grid</description>
-            </property>
-            <property key="readOnly" type="boolean" required="true" defaultValue="false">
-                <caption>Read only</caption>
-                <description>Disable all Gantt editing interactions</description>
-            </property>
-        </propertyGroup>
+
         <propertyGroup caption="Commands">
             <property key="command" type="attribute" required="false">
                 <caption>Command</caption>
-                <description>
-                    Write a command name to control the Gantt from Mendix (e.g. FIT_TIMELINE, ZOOM_WEEK, EXPAND_ALL).
-                    Clear the attribute after execute to allow re-triggering the same command.
-                </description>
+                <description>Write a command to control the Gantt (REFRESH, ZOOM_MONTH, ENTER_FULLSCREEN, etc.)</description>
                 <attributeTypes>
                     <attributeType name="String" />
-                    <attributeType name="Enum" />
                 </attributeTypes>
             </property>
             <property key="commandPayload" type="attribute" required="false">
                 <caption>Command payload</caption>
-                <description>
-                    Optional JSON for commands that need data: SET_START_DATE / SET_END_DATE ({ "date": "ISO" }),
-                    SCROLL_TO_TASK ({ "taskId": "..." }), or a plain task ID string.
-                </description>
+                <description>Optional JSON payload for commands</description>
                 <attributeTypes>
                     <attributeType name="String" />
                 </attributeTypes>
             </property>
         </propertyGroup>
+
         <propertyGroup caption="Events">
-            <property key="onEvent" type="action" required="false">
-                <caption>On event</caption>
-                <description>
-                    Nanoflow or microflow executed when the Gantt emits an outgoing event (task click, add task, drag, reorder, etc.).
-                    Read $eventType and $eventPayload attributes directly — no JavaScript required.
-                </description>
-            </property>
-            <property key="eventType" type="attribute" required="false">
-                <caption>Event type (out)</caption>
-                <description>
-                    Widget writes the event name here before calling On event.
-                    Use in nanoflow to route logic:
-                    TASK_CLICKED | TASK_DOUBLE_CLICKED | ADD_TASK_REQUESTED |
-                    TASK_UPDATED | TASK_REORDERED | TASK_CREATED | TASK_DELETED |
-                    VIEW_CHANGED | FULLSCREEN_CHANGED
-                </description>
+            <property key="outItemId" type="attribute" required="false">
+                <caption>Out item ID</caption>
+                <description>Widget writes interacted item ID before calling an event action</description>
                 <attributeTypes>
                     <attributeType name="String" />
                 </attributeTypes>
             </property>
-            <property key="eventPayload" type="attribute" required="false">
-                <caption>Event payload (out)</caption>
-                <description>
-                    Widget writes JSON payload here before calling On event.
-                    Parse in nanoflow: JSON.parse($eventPayload) gives { widgetId, type, data }.
-                    data.task contains full GanttTask object for task events.
-                </description>
+            <property key="outType" type="attribute" required="false">
+                <caption>Out type</caption>
+                <description>Widget writes task type before calling an event action</description>
                 <attributeTypes>
                     <attributeType name="String" />
                 </attributeTypes>
+            </property>
+            <property key="outChangedNum" type="attribute" required="false">
+                <caption>Out changed num</caption>
+                <description>Month delta after timeline drag (onChanged only)</description>
+                <attributeTypes>
+                    <attributeType name="Integer" />
+                    <attributeType name="Long" />
+                </attributeTypes>
+            </property>
+            <property key="onClicked" type="action" required="false">
+                <caption>On clicked</caption>
+                <description>Executed when a task row or bar is clicked. Read outItemId and outType.</description>
+            </property>
+            <property key="onDoubleClicked" type="action" required="false">
+                <caption>On double clicked</caption>
+                <description>Executed when a task row or bar is double-clicked. Read outItemId and outType.</description>
+            </property>
+            <property key="onChanged" type="action" required="false">
+                <caption>On changed</caption>
+                <description>Executed after timeline drag/resize. Read outItemId, outType, outChangedNum.</description>
+            </property>
+            <property key="onAdded" type="action" required="false">
+                <caption>On added</caption>
+                <description>Executed when (+) add button is clicked. Read outItemId and outType.</description>
+            </property>
+            <property key="onDropped" type="action" required="false">
+                <caption>On dropped</caption>
+                <description>Executed after grid row reorder. Read outItemId and outType.</description>
             </property>
         </propertyGroup>
     </properties>

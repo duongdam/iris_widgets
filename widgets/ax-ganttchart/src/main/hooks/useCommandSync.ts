@@ -1,22 +1,20 @@
 import { useEffect, useRef } from "react";
 import type { EditableValue } from "mendix";
-import type { GanttEventBus } from "../eventbus/eventTypes";
+import { emitEvent } from "../../shared/eventBus/emitEvent";
 import { parseGanttCommand } from "../services/ganttCommandParser";
 
 export interface UseCommandSyncOptions {
     command?: EditableValue<string>;
     commandPayload?: EditableValue<string>;
-    eventBus: GanttEventBus;
     widgetId: string;
     enabled: boolean;
 }
 
 /**
  * Executes Mendix-driven commands when the writable `command` attribute changes.
- * Clear the attribute after each trigger so the same command can fire again.
  */
 export function useCommandSync(options: UseCommandSyncOptions): void {
-    const { command, commandPayload, eventBus, widgetId, enabled } = options;
+    const { command, commandPayload, widgetId, enabled } = options;
     const lastCommandRef = useRef<string | null>(null);
 
     useEffect(() => {
@@ -40,10 +38,9 @@ export function useCommandSync(options: UseCommandSyncOptions): void {
         }
 
         lastCommandRef.current = commandValue;
-        eventBus.emit({
+        emitEvent(parsed.type, {
             widgetId,
-            type: parsed.type,
-            data: parsed.data
+            payload: parsed.data as Record<string, unknown> | undefined
         });
-    }, [command?.value, commandPayload?.value, eventBus, widgetId, enabled]);
+    }, [command?.value, commandPayload?.value, widgetId, enabled]);
 }

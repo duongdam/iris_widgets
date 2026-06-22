@@ -1,20 +1,28 @@
 import { gantt } from "../components/GanttConfiguration";
-import type { GanttTask } from "../eventbus/eventTypes";
+import type { GanttTask } from "../../events/eventTypes";
 import { parseGanttDate } from "../../shared/utils/mtoDate";
 import { prepareTasksForGanttSync } from "../../shared/utils/ganttTaskTiming";
+import { mapTaskForDhtmlx } from "../../shared/utils/mapTaskForDhtmlx";
 
 function cloneTaskFields(task: GanttTask): GanttTask {
     return {
         ...task,
-        tags: task.tags ? [...task.tags] : undefined,
         metadata: task.metadata ? { ...task.metadata } : undefined
     };
 }
 
 function toDhtmlxPayload(task: GanttTask, includeOpen: boolean): Record<string, unknown> | null {
+    if (task.unscheduled) {
+        const payload = mapTaskForDhtmlx(task);
+        if (includeOpen && task.open != null) {
+            payload.open = task.open;
+        }
+        return payload;
+    }
+
     const start = parseGanttDate(task.start_date);
     if (!start) {
-        return null;
+        return mapTaskForDhtmlx({ ...task, unscheduled: true });
     }
 
     const { open, start_date: _start, end_date: _end, ...rest } = task;
@@ -42,7 +50,7 @@ function branchDescendantsHaveInvalidTiming(taskId: string): boolean {
     let invalid = false;
 
     gantt.eachTask((task: GanttTask) => {
-        if (!parseGanttDate(task.start_date)) {
+        if (!task.unscheduled && !parseGanttDate(task.start_date)) {
             invalid = true;
         }
     }, taskId);

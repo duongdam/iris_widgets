@@ -2,11 +2,10 @@ import type { ListAttributeValue } from "mendix";
 import type Big from "big.js";
 
 export interface TaskMappingProps {
-    idAttribute?: ListAttributeValue<string | Big>;
+    itemIdAttribute?: ListAttributeValue<string | Big>;
     textAttribute?: ListAttributeValue<string>;
-    startDateAttribute?: ListAttributeValue<Date>;
-    endDateAttribute?: ListAttributeValue<Date>;
-    durationAttribute?: ListAttributeValue<Big>;
+    typeAttribute?: ListAttributeValue<string>;
+    parentIdAttribute?: ListAttributeValue<string>;
 }
 
 export interface MappingValidationResult {
@@ -16,22 +15,22 @@ export interface MappingValidationResult {
 
 /**
  * Validate required datasource attribute mappings before building task data.
- * Logs errors to console; caller should render empty state when invalid.
+ * Groups (DISTRICT_GROUP, CUSTOM_GROUP) do not require start/end dates.
  */
 export function validateDatasourceMapping(props: TaskMappingProps): MappingValidationResult {
     const errors: string[] = [];
 
-    if (!props.idAttribute) {
-        errors.push("idAttribute is required but not configured");
+    if (!props.itemIdAttribute) {
+        errors.push("itemIdAttribute is required but not configured");
     }
     if (!props.textAttribute) {
         errors.push("textAttribute is required but not configured");
     }
-    if (!props.startDateAttribute) {
-        errors.push("startDateAttribute is required but not configured");
+    if (!props.typeAttribute) {
+        errors.push("typeAttribute is required but not configured");
     }
-    if (!props.endDateAttribute && !props.durationAttribute) {
-        errors.push("Either endDateAttribute or durationAttribute must be configured");
+    if (!props.parentIdAttribute) {
+        errors.push("parentIdAttribute is required but not configured");
     }
 
     if (errors.length > 0) {

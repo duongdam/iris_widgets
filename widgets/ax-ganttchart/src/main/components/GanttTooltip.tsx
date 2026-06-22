@@ -1,42 +1,7 @@
 import { observer } from "mobx-react-lite";
 import { JSX, useEffect, useMemo, useRef, type CSSProperties, type RefObject } from "react";
-import type { GanttTask } from "../eventbus/eventTypes";
-
-const MONTH_ABBR = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-function toDateSafe(value: string | Date | undefined): Date | null {
-    if (!value) return null;
-    if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
-    const normalized = value.length === 10 ? `${value}T00:00:00` : value.replace(" ", "T");
-    const d = new Date(normalized);
-    return Number.isNaN(d.getTime()) ? null : d;
-}
-
-function formatTooltipDate(value: string | Date | undefined): string {
-    const d = toDateSafe(value);
-    if (!d) return "—";
-    return `${MONTH_ABBR[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
-}
-
-function calcDuration(task: GanttTask): string {
-    if (task.duration != null && task.duration > 0) {
-        return `${task.duration} day${task.duration !== 1 ? "s" : ""}`;
-    }
-
-    const start = toDateSafe(task.start_date);
-    const end = toDateSafe(task.end_date);
-    if (start && end) {
-        const days = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-        return days > 0 ? `${days} day${days !== 1 ? "s" : ""}` : "—";
-    }
-
-    return "—";
-}
-
-function progressPercent(progress: number | undefined): number {
-    if (progress == null) return 0;
-    return Math.round(progress > 1 ? progress : progress * 100);
-}
+import type { GanttTask } from "../../events/ganttEvents";
+import { buildTooltipDisplay } from "../../gantt/tooltipContent";
 
 interface TooltipPos {
     x: number;
@@ -85,12 +50,10 @@ export const GanttTooltip = observer(function GanttTooltip({
         let left = pos.x - rect.left + GAP;
         let top = pos.y - rect.top - tipH / 2;
 
-        // Prevent overflow on right
         if (left + tipW > rect.width - 8) {
             left = pos.x - rect.left - tipW - GAP;
         }
 
-        // Clamp vertical
         if (top < 4) top = 4;
         if (top + tipH > rect.height - 4) top = rect.height - tipH - 4;
 
@@ -98,39 +61,25 @@ export const GanttTooltip = observer(function GanttTooltip({
         tip.style.top = `${top}px`;
     }, [pos, task, containerRef]);
 
-    const displayData = useMemo(() => {
-        if (!task) {
-            return null;
-        }
-
-        return {
-            pct: progressPercent(task.progress),
-            duration: calcDuration(task),
-            assignee: task.metadata?.assignee as string | undefined,
-            status: task.metadata?.status as string | undefined,
-            startFormatted: formatTooltipDate(task.start_date),
-            endFormatted: formatTooltipDate(task.end_date)
-        };
-    }, [task]);
+    const displayData = useMemo(() => (task ? buildTooltipDisplay(task) : null), [task]);
 
     if (!task || !displayData) {
         return null;
     }
 
-    const { pct, duration, assignee, status, startFormatted, endFormatted } = displayData;
+    const { text, type, status, assignee, startFormatted, endFormatted, duration, progress, progressPercent: pct } =
+        displayData;
 
     return (
         <div ref={tooltipRef} className="ax-gantt-tooltip" style={TOOLTIP_STYLE}>
-            {/* Task name */}
-            <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 6, wordBreak: "break-word" }}>{task.text}</div>
+            <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 6, wordBreak: "break-word" }}>{text}</div>
 
-            {/* Status + type chips */}
-            {(status || task.type) && (
+            {(status || type) && (
                 <div style={{ marginBottom: 6, display: "flex", gap: 5, flexWrap: "wrap" }}>
-                    {task.type && task.type !== "task" && (
+                    {type && type !== "task" && (
                         <span
                             style={{
-                                background: task.type === "milestone" ? "#722ed1" : "#0958d9",
+                                background: type === "milestone" ? "#722ed1" : "#0958d9",
                                 borderRadius: 3,
                                 padding: "1px 6px",
                                 fontSize: 13,
@@ -138,7 +87,7 @@ export const GanttTooltip = observer(function GanttTooltip({
                                 textTransform: "capitalize"
                             }}
                         >
-                            {task.type}
+                            {type}
                         </span>
                     )}
                     {status && (
@@ -156,20 +105,17 @@ export const GanttTooltip = observer(function GanttTooltip({
                 </div>
             )}
 
-            {/* Date row */}
             <div style={{ color: "rgba(255,255,255,0.65)", marginBottom: 4 }}>
                 <span>{startFormatted}</span>
                 <span style={{ margin: "0 5px" }}>→</span>
                 <span>{endFormatted}</span>
             </div>
 
-            {/* Duration */}
             <div style={{ color: "rgba(255,255,255,0.65)", marginBottom: 6 }}>
                 Duration: <span style={{ color: "#fff" }}>{duration}</span>
             </div>
 
-            {/* Progress bar */}
-            {task.progress != null && (
+            {progress != null && (
                 <div>
                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
                         <span style={{ color: "rgba(255,255,255,0.65)" }}>Progress</span>
@@ -196,7 +142,6 @@ export const GanttTooltip = observer(function GanttTooltip({
                 </div>
             )}
 
-            {/* Assignee */}
             {assignee && (
                 <div style={{ marginTop: 6, color: "rgba(255,255,255,0.65)" }}>
                     Assignee: <span style={{ color: "#fff" }}>{assignee}</span>

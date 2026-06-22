@@ -1,9 +1,8 @@
-import { JSX } from "react";
+import { JSX, useRef } from "react";
 import { ValueStatus, type ListValue } from "mendix";
-import { AxGanttChartView } from "./main/components/AxGanttChartView";
-import { GanttProvider } from "./main/providers/GanttProvider";
-import { ThemeProvider } from "./main/providers/ThemeProvider";
-import { MOCK_GANTT_TASKS, PREVIEW_HEIGHT, PREVIEW_VIEW_MODE } from "./preview/previewConfig";
+import { AxGanttInner } from "./AxGanttInner";
+import { AxGanttChartView } from "./main/AxGanttChartView";
+import { GANTT_TEST_TASKS } from "./shared/mock/ganttTestData";
 import type { AxGanttChartProps } from "./typings/AxGanttChartProps";
 import "./styles/gantt.scss";
 
@@ -25,33 +24,56 @@ const previewDatasource = {
 const previewProps: AxGanttChartProps = {
     name: "ax-ganttchart-preview",
     class: "ax-ganttchart-preview",
-    height: PREVIEW_HEIGHT,
-    tasksDatasource: previewDatasource,
-    idAttribute: (() => ({ status: ValueStatus.Unavailable })) as unknown as AxGanttChartProps["idAttribute"],
-    textAttribute: (() => ({ status: ValueStatus.Unavailable })) as unknown as AxGanttChartProps["textAttribute"],
-    startDateAttribute: (() => ({
+    height: { status: ValueStatus.Available, value: { toNumber: () => 600 } } as unknown as AxGanttChartProps["height"],
+    defaultViewMode: { status: ValueStatus.Available, value: "month" } as unknown as AxGanttChartProps["defaultViewMode"],
+    roadmapItems: previewDatasource,
+    aidAttribute: (() => ({ status: ValueStatus.Unavailable })) as unknown as AxGanttChartProps["aidAttribute"],
+    itemIdAttribute: (() => ({ status: ValueStatus.Unavailable })) as unknown as AxGanttChartProps["itemIdAttribute"],
+    parentIdAttribute: (() => ({
         status: ValueStatus.Unavailable
-    })) as unknown as AxGanttChartProps["startDateAttribute"],
+    })) as unknown as AxGanttChartProps["parentIdAttribute"],
+    groupAttribute: (() => ({ status: ValueStatus.Unavailable })) as unknown as AxGanttChartProps["groupAttribute"],
+    typeAttribute: (() => ({ status: ValueStatus.Unavailable })) as unknown as AxGanttChartProps["typeAttribute"],
+    nameAttribute: (() => ({ status: ValueStatus.Unavailable })) as unknown as AxGanttChartProps["nameAttribute"],
+    textAttribute: (() => ({ status: ValueStatus.Unavailable })) as unknown as AxGanttChartProps["textAttribute"],
+    countAttribute: (() => ({ status: ValueStatus.Unavailable })) as unknown as AxGanttChartProps["countAttribute"],
+    orderAttribute: (() => ({ status: ValueStatus.Unavailable })) as unknown as AxGanttChartProps["orderAttribute"],
+    customOrderAttribute: (() => ({
+        status: ValueStatus.Unavailable
+    })) as unknown as AxGanttChartProps["customOrderAttribute"],
+    milestoneAttribute: (() => ({
+        status: ValueStatus.Unavailable
+    })) as unknown as AxGanttChartProps["milestoneAttribute"],
+    stndMileMonthAttribute: (() => ({
+        status: ValueStatus.Unavailable
+    })) as unknown as AxGanttChartProps["stndMileMonthAttribute"],
+    hasTuningAttribute: (() => ({
+        status: ValueStatus.Unavailable
+    })) as unknown as AxGanttChartProps["hasTuningAttribute"],
+    hasManualAttribute: (() => ({
+        status: ValueStatus.Unavailable
+    })) as unknown as AxGanttChartProps["hasManualAttribute"],
+    hasCertAttribute: (() => ({ status: ValueStatus.Unavailable })) as unknown as AxGanttChartProps["hasCertAttribute"],
+    hasRFAttribute: (() => ({ status: ValueStatus.Unavailable })) as unknown as AxGanttChartProps["hasRFAttribute"],
     showToolbar: true,
     showGrid: true,
     showTimeline: true,
     showProgress: false,
     showTodayMarker: true,
-    allowDrag: true,
-    allowResize: false,
-    allowGridReorder: true,
-    readOnly: false,
-    defaultViewMode: PREVIEW_VIEW_MODE
+    allowDrag: { status: ValueStatus.Available, value: true } as unknown as AxGanttChartProps["allowDrag"],
+    allowResize: { status: ValueStatus.Available, value: false } as unknown as AxGanttChartProps["allowResize"],
+    allowGridReorder: { status: ValueStatus.Available, value: true } as unknown as AxGanttChartProps["allowGridReorder"],
+    readOnly: { status: ValueStatus.Available, value: false } as unknown as AxGanttChartProps["readOnly"]
 };
 
 export function preview(getProps: () => AxGanttChartProps): JSX.Element {
     const props = { ...previewProps, ...getProps() };
+    const rootRef = useRef<HTMLDivElement>(null);
+
     return (
-        <ThemeProvider>
-            <GanttProvider widgetProps={props} previewTasks={MOCK_GANTT_TASKS}>
-                <AxGanttChartView widgetProps={props} />
-            </GanttProvider>
-        </ThemeProvider>
+        <AxGanttInner widgetProps={props} previewTasks={GANTT_TEST_TASKS} containerRef={rootRef}>
+            <AxGanttChartView widgetProps={props} rootRef={rootRef} />
+        </AxGanttInner>
     );
 }
 

@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import type { GanttStore } from "../../stores/GanttStore";
+import type { AxGanttStore } from "../../stores/AxGanttStore";
 import type { AxGanttChartProps } from "../../typings/AxGanttChartProps";
 import {
     isDatasourceLoading,
@@ -9,8 +9,8 @@ import {
 } from "../services/MendixTaskAdapter";
 import { preserveBranchOpenState } from "../../shared/utils/preserveBranchOpenState";
 
-export function useDatasourceSync(store: GanttStore, props: AxGanttChartProps, enabled = true): boolean {
-    const { tasksDatasource } = props;
+export function useDatasourceSync(store: AxGanttStore, props: AxGanttChartProps, enabled = true): boolean {
+    const { roadmapItems } = props;
     const mappingValidation = validateDatasourceMapping(props);
     const mappingValid = mappingValidation.valid;
 
@@ -25,15 +25,15 @@ export function useDatasourceSync(store: GanttStore, props: AxGanttChartProps, e
             return;
         }
 
-        store.setLoading(isDatasourceLoading(tasksDatasource));
+        store.setLoading(isDatasourceLoading(roadmapItems));
 
-        if (isDatasourceUnavailable(tasksDatasource)) {
+        if (isDatasourceUnavailable(roadmapItems)) {
             store.setTasksIfChanged([]);
             store.setLoading(false);
             return;
         }
 
-        if (isDatasourceLoading(tasksDatasource)) {
+        if (isDatasourceLoading(roadmapItems)) {
             return;
         }
 
@@ -44,32 +44,7 @@ export function useDatasourceSync(store: GanttStore, props: AxGanttChartProps, e
         if (store.selectedTask && !result.tasks.some(task => task.id === store.selectedTask?.id)) {
             store.selectTask(undefined);
         }
-    }, [
-        enabled,
-        mappingValid,
-        store,
-        tasksDatasource,
-        tasksDatasource.status,
-        tasksDatasource.items,
-        props.idAttribute,
-        props.textAttribute,
-        props.startDateAttribute,
-        props.endDateAttribute,
-        props.durationAttribute,
-        props.progressAttribute,
-        props.parentAttribute,
-        props.orderNoAttribute,
-        props.openAttribute,
-        props.typeAttribute,
-        props.tagsAttribute,
-        props.mtoDateAttribute,
-        props.eventTypeAttribute,
-        props.metadata1Attribute,
-        props.metadata2Attribute,
-        props.metadata3Attribute,
-        props.metadata4Attribute,
-        props.metadata5Attribute
-    ]);
+    }, [enabled, mappingValid, store, roadmapItems, roadmapItems.status, roadmapItems.items, props]);
 
     return mappingValid;
 }

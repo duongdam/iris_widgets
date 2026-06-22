@@ -1,32 +1,48 @@
-import {
-    GanttIncomingEvents,
-    GanttOutgoingEvents,
-    type GanttEventBus,
-    type GanttEventPayload,
-} from "../../../widgets/ax-ganttchart/src/main/eventbus/eventTypes";
 import { JSX, useEffect } from "react";
+import { GanttIncomingEvents } from "../../../widgets/ax-ganttchart/src/events/eventTypes";
+import { getEventBus } from "../../../widgets/ax-ganttchart/src/shared/eventBus/getEventBus";
+import { initEventBus } from "../../../widgets/ax-ganttchart/src/shared/eventBus/initEventBus";
+import type { AxEvent } from "../../../widgets/ax-ganttchart/src/shared/eventBus/types";
 
-const MONITORED_EVENTS = [
-    ...Object.values(GanttOutgoingEvents),
-    ...Object.values(GanttIncomingEvents),
-];
+const MONITORED_TOPICS = Object.values(GanttIncomingEvents);
 
-export interface GanttEventMonitorProps {
-    eventBus: GanttEventBus;
-    onGanttEvent?: (payload: GanttEventPayload) => void;
+export interface GanttBusEventLogEntry {
+    topic: string;
+    widgetId: string;
+    payload?: Record<string, unknown>;
+    at: string;
 }
 
-export function GanttEventMonitor({
-    eventBus,
-    onGanttEvent,
-}: GanttEventMonitorProps): JSX.Element | null {
+export interface GanttEventMonitorProps {
+    widgetId: string;
+    onBusEvent?: (entry: GanttBusEventLogEntry) => void;
+}
+
+export function GanttEventMonitor({ widgetId, onBusEvent }: GanttEventMonitorProps): JSX.Element | null {
     useEffect(() => {
-        if (!onGanttEvent) {
+        if (!onBusEvent) {
             return undefined;
         }
 
-        const unsubscribers = MONITORED_EVENTS.map(type =>
-            eventBus.on(type, payload => onGanttEvent(payload))
+        initEventBus();
+        const bus = getEventBus();
+        if (!bus) {
+            return undefined;
+        }
+
+        const unsubscribers = MONITORED_TOPICS.map(topic =>
+            bus.on(topic, (event: AxEvent) => {
+                if (event.widgetId !== widgetId) {
+                    return;
+                }
+
+                onBusEvent({
+                    topic,
+                    widgetId: event.widgetId,
+                    payload: event.payload,
+                    at: new Date().toISOString()
+                });
+            })
         );
 
         return () => {
@@ -34,7 +50,7 @@ export function GanttEventMonitor({
                 unsubscribe();
             }
         };
-    }, [eventBus, onGanttEvent]);
+    }, [onBusEvent, widgetId]);
 
     return null;
 }

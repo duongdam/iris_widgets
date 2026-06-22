@@ -1,4 +1,4 @@
-import type { GanttTask } from "../../main/eventbus/eventTypes";
+import type { GanttTask } from "../../events/eventTypes";
 
 export type GanttEventTypeTag = "MTO" | "K/O";
 
@@ -37,7 +37,7 @@ export function addCalendarDays(date: Date, days: number): Date {
 const eventDragBaselines = new Map<string, GanttTask>();
 
 export function beginEventMtoDrag(taskId: string | number, task: GanttTask): void {
-    if (!getEventTypeTag(task.tags)) {
+    if (!getEventTypeTag(task.milestone)) {
         return;
     }
 
@@ -83,19 +83,8 @@ export function normalizeEventTypeTag(value: string | undefined): GanttEventType
     return undefined;
 }
 
-export function getEventTypeTag(tags?: string[]): GanttEventTypeTag | undefined {
-    if (!tags?.length) {
-        return undefined;
-    }
-
-    for (const tag of tags) {
-        const normalized = normalizeEventTypeTag(tag);
-        if (normalized) {
-            return normalized;
-        }
-    }
-
-    return undefined;
+export function getEventTypeTag(milestone?: string): GanttEventTypeTag | undefined {
+    return normalizeEventTypeTag(milestone);
 }
 
 export function isEventLeafTask(task: GanttTask, tasks: GanttTask[]): boolean {
@@ -107,7 +96,7 @@ export function isEventLeafTask(task: GanttTask, tasks: GanttTask[]): boolean {
 }
 
 export function isGanttEventTask(task: GanttTask, tasks?: GanttTask[]): boolean {
-    if (!getEventTypeTag(task.tags)) {
+    if (!getEventTypeTag(task.milestone)) {
         return false;
     }
 
@@ -118,18 +107,18 @@ export function isGanttEventTask(task: GanttTask, tasks?: GanttTask[]): boolean 
     return true;
 }
 
-/** Format datasource mto_date only — never derive start/end or mto from other fields. */
+/** Format datasource stndMileMonth only — never derive start/end from other fields. */
 export function normalizeMtoDateField(task: GanttTask): GanttTask {
-    if (!task.mto_date) {
+    if (!task.stndMileMonth) {
         return task;
     }
 
-    const parsed = parseGanttDate(task.mto_date);
+    const parsed = parseGanttDate(task.stndMileMonth);
     if (!parsed) {
         return task;
     }
 
-    return { ...task, mto_date: formatGanttDateTime(parsed) };
+    return { ...task, stndMileMonth: formatGanttDateTime(parsed) };
 }
 
 /** Keep MTO/K/O milestone aligned when the user drags a task bar horizontally. */
@@ -142,7 +131,7 @@ export function syncEventMtoDateWithDrag(
         return undefined;
     }
 
-    const eventType = getEventTypeTag(task.tags);
+    const eventType = getEventTypeTag(task.milestone);
     if (!eventType) {
         return undefined;
     }
@@ -157,7 +146,7 @@ export function syncEventMtoDateWithDrag(
         return formatGanttDateTime(toLocalCalendarDay(newStart));
     }
 
-    const origMto = parseGanttDate(original.mto_date);
+    const origMto = parseGanttDate(original.stndMileMonth);
     if (!origMto) {
         return undefined;
     }
@@ -169,12 +158,12 @@ export function syncEventMtoDateWithDrag(
 export function normalizeGanttTaskDates(task: GanttTask): GanttTask {
     const start = parseGanttDate(task.start_date);
     const end = parseGanttDate(task.end_date);
-    const mto = parseGanttDate(task.mto_date);
+    const mto = parseGanttDate(task.stndMileMonth);
 
     return {
         ...task,
         start_date: start ? formatGanttDateTime(start) : task.start_date,
         end_date: end ? formatGanttDateTime(end) : task.end_date,
-        mto_date: mto ? formatGanttDateTime(mto) : task.mto_date
+        stndMileMonth: mto ? formatGanttDateTime(mto) : task.stndMileMonth
     };
 }

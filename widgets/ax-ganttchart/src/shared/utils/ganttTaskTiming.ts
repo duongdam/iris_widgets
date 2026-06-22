@@ -1,4 +1,5 @@
-import type { GanttTask } from "../../main/eventbus/eventTypes";
+import type { GanttTask } from "../../events/eventTypes";
+import { isGroupType } from "../types/axGanttTask";
 import { formatGanttDateTime, parseGanttDate } from "./mtoDate";
 
 export function hasValidGanttStartDate(value: string | Date | undefined): boolean {
@@ -7,8 +8,12 @@ export function hasValidGanttStartDate(value: string | Date | undefined): boolea
 
 /** Ensure DHTMLX receives valid start/end/duration before parse, add, or update. */
 export function ensureTaskTimingForGantt(task: GanttTask): GanttTask | null {
+    if (task.unscheduled || isGroupType(task.type)) {
+        return { ...task, unscheduled: true };
+    }
+
     if (!hasValidGanttStartDate(task.start_date)) {
-        return null;
+        return { ...task, unscheduled: true };
     }
 
     const next: GanttTask = { ...task };

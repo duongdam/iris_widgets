@@ -1,112 +1,201 @@
-# Tasks: Gantt Refactor — Unified Event Bridge + Simplification
+# Tasks: AxGanttChart Refactor — Simplified Architecture + Typed Mendix Actions
 
-**Input**: Plan `specs/002-enterprise-gantt-widget/plan.md`
+**Input**: Design documents from `specs/002-enterprise-gantt-widget/`
 
-**Tech stack**: TypeScript 5.4 strict · React 18.2 · MobX 6.16 · dhtmlx-gantt ^9.1.4 · @mendix/pluggable-widgets-tools 11.8.1
+**Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/
+
+**Tech stack**: TypeScript strict · React 18.2 · MobX 6.16 · dhtmlx-gantt ^9.1.4 · @mendix/pluggable-widgets-tools 11.8.1
 
 **Format**: `- [ ] [TaskID] [P?] [Story?] Description — file path`
-- **[P]**: Có thể chạy song song (file khác nhau, không phụ thuộc lẫn nhau)
-- **[US#]**: User story tương ứng
 
-## User Stories
+## User Stories (mapped to refactor scope)
 
-| ID | Mô tả | Priority |
-|----|-------|----------|
-| US1 | Mendix-native event contract — `eventType`/`eventPayload` attribute write-back | P1 |
-| US2 | Data mutation events — `TASK_UPDATED` (drag/resize) + `TASK_REORDERED` (grid DnD) | P1 |
-| US3 | State change events — `VIEW_CHANGED` + `FULLSCREEN_CHANGED` | P2 |
-
----
-
-## Phase 1: Setup
-
-**Purpose**: Không có cấu trúc mới — widget đang hoạt động, chỉ cần verify build baseline trước khi refactor.
-
-- [x] T001 Verify widget builds clean: chạy `pnpm --filter ax-ganttchart build` từ repo root, ghi nhận lỗi hiện có (nếu có) — baseline trước refactor
+| ID | Spec story | Priority | Refactor focus |
+|----|------------|----------|----------------|
+| US1 | Render Gantt from Mendix Datasource | P1 | Adapter, unscheduled groups, no global startDate requirement |
+| US2 | Task Selection and Mendix Actions | P1 | `onClicked`, `onDoubleClicked`, `onChanged`, `onAdded`, `onDropped` + write-back attrs |
+| US3 | Timeline View Modes | P2 | Day/Week/Month scale reconfiguration |
+| US4 | Event Bus Programmatic Control | P2 | Global `AX_EVENT_BUS` + `AxGanttInner` command listener |
+| US5 | Enterprise Visual Design | P2 | Cross-highlight, today marker, brand styling |
+| US6 | Large Dataset Performance | P3 | Smart rendering, incremental sync |
+| US7 | Export Architecture | P3 | ExportService via event bus commands |
+| US8 | Studio Pro Preview | P3 | Mock data from `gantt-test.json` |
+| US10 | Gantt Level-2 Add Button & Brand Color | P1 | (+) button, `#009999` palette |
+| US11 | Gantt Progressive Expand Fix | P1 | Toolbar expand one level at a time |
 
 ---
 
-## Phase 2: Foundation — Loại bỏ dead code (prerequisite cho mọi US)
+## Phase 1: Setup (Shared Infrastructure)
 
-**Purpose**: Xóa các property chưa được implement để TypeScript compile sạch sau khi thay đổi. Các task này không ảnh hưởng behavior runtime.
+**Purpose**: Fix widget XML contract and verify build baseline before refactor.
 
-**⚠️ CRITICAL**: Phải hoàn thành trước khi implement bất kỳ User Story nào.
-
-- [x] T002 [P] Xóa `showCriticalPath` và `showBaseline` khỏi `<properties>` trong `widgets/ax-ganttchart/src/AxGanttChart.xml` (2 `<property>` blocks trong group "Display")
-- [x] T003 [P] Xóa `showCriticalPath: boolean` và `showBaseline: boolean` khỏi interface `AxGanttChartProps` trong `widgets/ax-ganttchart/src/typings/AxGanttChartProps.ts`; xóa `exportServerUrl?: string` cùng lúc
-- [x] T004 [P] Xóa `showCriticalPath: false` và `showBaseline: false` khỏi default props object trong `widgets/ax-ganttchart/src/AxGanttChart.editorPreview.tsx`
-- [x] T005 Xóa `showCriticalPath` và `showBaseline` khỏi `UseGanttInstanceOptions` interface + destructuring + `appearance` object trong `widgets/ax-ganttchart/src/main/hooks/useGanttInstance.ts` (lines ~35-36, ~124-125, ~160, ~232-233) — depends on T003
-- [x] T006 Xóa `appearance.showCriticalPath` và `appearance.showBaseline` khỏi hàm apply trong `widgets/ax-ganttchart/src/main/components/GanttConfiguration.ts` (lines ~127-128); xóa luôn parameter `appearance` nếu không còn field nào
-- [x] T007 Xóa interface `GanttAppearanceConfig` (hoặc xóa 2 fields từ nó) khỏi `widgets/ax-ganttchart/src/shared/types/editingConfig.ts` — depends on T006
-- [x] T008 Xóa `exportServerUrl: widgetProps.exportServerUrl` khỏi `useEventBusBridge(...)` call trong `widgets/ax-ganttchart/src/main/components/AxGanttChartView.tsx`; xóa `showCriticalPath` + `showBaseline` khỏi `useGanttInstance(...)` call (lines ~105-106) — depends on T003
-- [x] T009 Xóa `exportServerUrl?` khỏi `UseEventBusBridgeOptions` interface + destructuring + `createExportService(exportServerUrl)` useMemo trong `widgets/ax-ganttchart/src/main/hooks/useEventBusBridge.ts`; thay bằng `createExportService()` (no URL) — depends on T003
-
-**Checkpoint**: Sau T002–T009, `pnpm --filter ax-ganttchart build` phải compile sạch. Verify trước khi tiếp tục.
+- [X] T001 Verify widget builds clean: run `pnpm --filter ax-ganttchart build` from repo root and record baseline errors — `widgets/ax-ganttchart/`
+- [X] T002 Fix `dataSource="tasksDatasource"` → `dataSource="roadmapItems"` on all attribute properties; remove duplicate `hasTuningAttribute` block — `widgets/ax-ganttchart/src/AxGanttChart.xml`
+- [X] T003 Add `<returnType assignableTo="Integer|String|Boolean" />` to expression properties (`height`, `defaultViewMode`, `allowDrag`, `allowResize`, `allowGridReorder`, `readOnly`, `optStartDateAttribute`, `optEndDateAttribute`) — `widgets/ax-ganttchart/src/AxGanttChart.xml`
+- [X] T004 Remove `onEvent`, `eventType`, `eventPayload` properties; add `onClicked`, `onDoubleClicked`, `onChanged`, `onAdded`, `onDropped` actions and `outItemId`, `outType`, `outChangedNum` write-back attributes — `widgets/ax-ganttchart/src/AxGanttChart.xml`
+- [X] T005 Change `startDateAttribute` to `required="false"` in XML — `widgets/ax-ganttchart/src/AxGanttChart.xml`
+- [X] T006 Regenerate or manually update `AxGanttChartProps` / `AxGanttChartPreviewProps` to match new XML (roadmapItems, expression types, new actions, remove old event props) — `widgets/ax-ganttchart/typings/AxGanttChartProps.d.ts`
 
 ---
 
-## Phase 3: US1 — Mendix-native Event Contract (P1) 🎯
+## Phase 2: Foundational (Blocking Prerequisites)
 
-**Goal**: Nanoflow đọc `$EventType` và `$EventPayload` attributes trực tiếp — không cần JavaScript `window.__AX_GANTT__`.
+**Purpose**: Core modules that MUST exist before any user story work. **⚠️ CRITICAL**: No user story work until this phase completes.
 
-**Independent Test**: Bind `GanttEventContext/EventType` vào widget property "Event type (out)". Click một task → `$EventType` = "TASK_CLICKED". Click nút `+` → `$EventType` = "ADD_TASK_REQUESTED". Không cần JS action để đọc data.
+- [X] T007 [P] Implement `createBus()` with `emit`, `on`, `removeListener`, `clear` — `widgets/ax-ganttchart/src/shared/eventBus/createBus.ts`
+- [X] T008 [P] Implement `globalScope.ts` with `AX_EVENT_BUS_KEY = "AX_EVENT_BUS"` typed accessor — `widgets/ax-ganttchart/src/shared/eventBus/globalScope.ts`
+- [X] T009 [P] Implement `initEventBus()`, `getEventBus()`, `emitEvent(topic, event)` — `widgets/ax-ganttchart/src/shared/eventBus/initEventBus.ts`, `getEventBus.ts`, `emitEvent.ts`
+- [X] T010 [P] Define `AxEvent`, `AxGanttTask`, `AxTaskType`, `normalizeTaskType()`, `isGroupType()`, `isScheduledType()` — `widgets/ax-ganttchart/src/shared/types/axGanttTask.ts`
+- [X] T011 Rename `GanttStore` → `AxGanttStore`; add `dragStartDates` map and `snapshotDragStart`/`clearDragSnapshot`; delete `RootStore.ts` — `widgets/ax-ganttchart/src/stores/AxGanttStore.ts`
+- [X] T012 [P] Create `ganttTestData.ts` importing `gantt-test.json`, normalizing AREA→DISTRICT_GROUP, BIZ_LINE→CUSTOM_GROUP, field names — `widgets/ax-ganttchart/src/shared/mock/ganttTestData.ts`
+- [X] T013 Implement `createMendixActionBridge()` with `fireClicked`, `fireDoubleClicked`, `fireChanged`, `fireAdded`, `fireDropped` and `computeChangedNum()` month delta — `widgets/ax-ganttchart/src/shared/bridge/mendixActionBridge.ts`
+- [X] T014 Refactor `AxGanttChart.tsx` entry: `ThemeProvider` → `AxGanttInner` → `AxGanttChartView`; call `initEventBus()` on mount — `widgets/ax-ganttchart/src/AxGanttChart.tsx`
+- [X] T015 Create `AxGanttInner.tsx` scaffold accepting `widgetProps`, `store`, `widgetId`; subscribe to global bus topics filtered by `widgetId` — `widgets/ax-ganttchart/src/main/AxGanttInner.tsx`
 
-### Implementation US1
-
-- [x] T010 [P] [US1] Thêm `<property key="eventType">` và `<property key="eventPayload">` vào `<propertyGroup caption="Events">` trong `widgets/ax-ganttchart/src/AxGanttChart.xml` — theo XML snippet trong plan.md
-- [x] T011 [P] [US1] Thêm `eventType?: EditableValue<string>` và `eventPayload?: EditableValue<string>` vào interface `AxGanttChartProps` trong `widgets/ax-ganttchart/src/typings/AxGanttChartProps.ts` (cần import `EditableValue` từ `mendix` — đã có trong file)
-- [x] T012 [US1] Cập nhật `WidgetEventBridgeOptions` interface trong `widgets/ax-ganttchart/src/main/services/WidgetEventBridge.ts`: thêm `eventType?: EditableValue<string>` và `eventPayload?: EditableValue<string>`; cập nhật hàm `emitOutgoing` để gọi `.setValue()` trên cả hai trước `executeAction(onEvent)` — depends on T011
-- [x] T013 [US1] Rename enum value `TASK_REQUEST_ADD` → `ADD_TASK_REQUESTED` trong `widgets/ax-ganttchart/src/main/eventbus/eventTypes.ts` (outgoing enum); cập nhật reference tại `WidgetEventBridge.ts` line ~69 — depends on T012
-- [x] T014 [US1] Cập nhật `createWidgetEventBridge(...)` call trong `widgets/ax-ganttchart/src/main/providers/GanttProvider.tsx`: thêm `eventType: widgetProps.eventType` và `eventPayload: widgetProps.eventPayload` vào options object — depends on T012
-
-**Checkpoint**: Sau T010–T014, click task → `eventType` attribute cập nhật "TASK_CLICKED", `eventPayload` chứa JSON đầy đủ, nanoflow `onEvent` fires.
-
----
-
-## Phase 4: US2 — Data Mutation Events (P1)
-
-**Goal**: Drag task bar → `TASK_UPDATED` fires với dates mới. Kéo row sang parent khác → `TASK_REORDERED` fires với `newParentId`.
-
-**Independent Test**: 
-1. Kéo task bar → `eventType` = "TASK_UPDATED", `eventPayload.data.task.start_date` = ngày mới, `eventPayload.data.changeType` = "move"
-2. Kéo row sang parent khác (allowGridReorder=true) → `eventType` = "TASK_REORDERED", `eventPayload.data.newParentId` = ID của parent mới
-
-### Implementation US2
-
-- [x] T015 [P] [US2] Thêm `TASK_UPDATED = "TASK_UPDATED"` và `TASK_REORDERED = "TASK_REORDERED"` vào `GanttOutgoingEvents` enum trong `widgets/ax-ganttchart/src/main/eventbus/eventTypes.ts`; thêm interfaces `TaskUpdatedData` (task + changeType) và `TaskReorderedData` (task + newParentId + newOrderNo) — depends on T013
-- [x] T016 [US2] Thêm methods `handleTaskUpdated(task, changeType)` và `handleTaskReordered(task, newParentId, newOrderNo)` vào `WidgetEventBridge` interface + implementation trong `widgets/ax-ganttchart/src/main/services/WidgetEventBridge.ts` — depends on T015
-- [x] T017 [US2] Trong `widgets/ax-ganttchart/src/main/hooks/useGanttInstance.ts`: attach DHTMLX event `gantt.attachEvent("onAfterTaskDrag", (id, mode) => { bridge?.handleTaskUpdated(gantt.getTask(id), mode) })` trong useEffect init block (sau `attachNativeEvents`); cleanup via returned id — depends on T016
-- [x] T018 [US2] Trong `widgets/ax-ganttchart/src/shared/utils/gridReorder.ts`: cập nhật `syncTaskParentFromGantt` để gọi `bridge?.handleTaskReordered(...)` thay vì `handleTaskUpdated`; lấy `newOrderNo` bằng `gantt.getTaskIndex(id) + 1` — depends on T016
-
-**Checkpoint**: Drag task bar trên timeline → `onEvent` nanoflow fires với `eventType="TASK_UPDATED"` chứa dates mới.
+**Checkpoint**: Event bus, store, types, mock loader, and action bridge compile. Old `GanttProvider` not yet removed but new modules exist.
 
 ---
 
-## Phase 5: US3 — State Change Events (P2)
+## Phase 3: User Story 1 — Render Gantt from Mendix Datasource (P1) 🎯 MVP
 
-**Goal**: Thay đổi view mode hoặc fullscreen → Mendix nhận được sự kiện để có thể lưu user preference.
+**Goal**: Map `roadmapItems` datasource to `AxGanttTask[]`; render hierarchy with unscheduled group rows (no dates required).
 
-**Independent Test**: Click "Week" trên toolbar → `eventType` = "VIEW_CHANGED", `eventPayload.data.viewMode` = "week". Vào fullscreen → `eventType` = "FULLSCREEN_CHANGED", `eventPayload.data.fullscreen` = true.
+**Independent Test**: Bind datasource with 50+ items including DISTRICT_GROUP/CUSTOM_GROUP rows without dates; verify grid + hierarchy render; loading/empty states work.
 
-### Implementation US3
+- [X] T016 [P] [US1] Update `validateDatasourceMapping` to require only aid/itemId/type/text/parentId; remove global `startDateAttribute` requirement — `widgets/ax-ganttchart/src/shared/validators/validateDatasourceMapping.ts`
+- [X] T017 [US1] Refactor `MendixTaskAdapter` to use `roadmapItems` prop keys from new XML; map all attributes per data-model.md; set `unscheduled: true` for group types — `widgets/ax-ganttchart/src/main/services/MendixTaskAdapter.ts`
+- [X] T018 [US1] Add `mapTaskForDhtmlx()` helper setting `unscheduled` flag and optional dates for TASK/SUB_TASK — `widgets/ax-ganttchart/src/shared/utils/mapTaskForDhtmlx.ts`
+- [X] T019 [US1] Set `gantt.config.show_unscheduled = false` in init; mark group tasks `unscheduled: true` on parse — `widgets/ax-ganttchart/src/main/components/GanttConfiguration.ts`
+- [X] T020 [US1] Consolidate datasource sync into `AxGanttChartView.tsx`: loading overlay, empty state, config error state, `store.setTasksIfChanged` — `widgets/ax-ganttchart/src/main/components/AxGanttChartView.tsx`
+- [X] T021 [US1] Wire gantt parse/sync from store tasks in view init lifecycle (migrate logic from `useGanttInstance.ts` + `useDatasourceSync.ts`) — `widgets/ax-ganttchart/src/main/components/AxGanttChartView.tsx`
 
-- [x] T019 [P] [US3] Thêm `VIEW_CHANGED = "VIEW_CHANGED"` và `FULLSCREEN_CHANGED = "FULLSCREEN_CHANGED"` vào `GanttOutgoingEvents` enum trong `widgets/ax-ganttchart/src/main/eventbus/eventTypes.ts`; thêm interface shapes tương ứng — depends on T015
-- [x] T020 [P] [US3] Thêm `handleViewChanged(viewMode)` và `handleFullscreenChanged(fullscreen)` vào `WidgetEventBridge` interface + implementation trong `widgets/ax-ganttchart/src/main/services/WidgetEventBridge.ts` — depends on T019
-- [x] T021 [US3] Trong `widgets/ax-ganttchart/src/main/hooks/useEventBusBridge.ts`: sau khi xử lý các ZOOM events, gọi `bridge.handleViewChanged(mode)` khi mode thay đổi thành công — depends on T020
-- [x] T022 [US3] Trong `widgets/ax-ganttchart/src/main/hooks/useEventBusBridge.ts`: trong `fullscreenService.onChange` callback, gọi `bridge.handleFullscreenChanged(fullscreen)` — depends on T020
-
-**Checkpoint**: Click Week → nanoflow fires với VIEW_CHANGED. Enter fullscreen → FULLSCREEN_CHANGED.
+**Checkpoint**: Runtime renders Mendix datasource with groups (no dates) + scheduled TASK/SUB_TASK bars.
 
 ---
 
-## Phase 6: Polish & Cross-cutting
+## Phase 4: User Story 2 — Task Selection and Mendix Actions (P1)
 
-**Purpose**: Verify toàn bộ refactor, check TypeScript strict compliance, clean up edge cases.
+**Goal**: Replace unified event bridge with typed Mendix actions writing `outItemId`, `outType`, `outChangedNum`.
 
-- [x] T023 [P] Cập nhật `widgets/ax-ganttchart/typings/AxGanttChartProps.d.ts` (generated file): chạy `pnpm --filter ax-ganttchart build` để regenerate, verify nó phản ánh XML mới (eventType, eventPayload thêm; showCriticalPath/showBaseline xóa)
-- [x] T024 [P] Check linter trên tất cả files đã sửa: `pnpm --filter ax-ganttchart lint` — fix any TypeScript strict errors hoặc unused import
-- [x] T025 Kiểm tra `widgets/ax-ganttchart/src/main/hooks/useSelectionBridge.ts` xem có reference nào đến props cũ không; update nếu cần
-- [x] T026 [P] Verify `AxGanttChart.editorPreview.tsx` compile sạch và preview vẫn render được trong Studio Pro preview mode — không có showCriticalPath/showBaseline trong preview defaults
+**Independent Test**: Click task → `onClicked` fires, `$outItemId` and `$outType` populated. Drag bar 2 months back → `onChanged` fires with `$outChangedNum = -2`.
+
+- [X] T022 [US2] Wire `fireClicked` on task row/bar click via delegated interaction handlers — `widgets/ax-ganttchart/src/main/components/AxGanttChartView.tsx`
+- [X] T023 [US2] Wire `fireDoubleClicked` on double-click — `widgets/ax-ganttchart/src/main/components/AxGanttChartView.tsx`
+- [X] T024 [US2] Snapshot drag start date on `onBeforeTaskDrag`; on `onAfterTaskDrag` call `fireChanged(itemId, type, computeChangedNum(...))` — `widgets/ax-ganttchart/src/main/components/AxGanttChartView.tsx`
+- [X] T025 [US2] Wire `fireAdded` on level-2 (+) button click — `widgets/ax-ganttchart/src/main/components/AxGanttChartView.tsx`
+- [X] T026 [US2] Wire `fireDropped` on grid row reorder (`onAfterTaskMove` / `gridReorder.ts`) — `widgets/ax-ganttchart/src/shared/utils/gridReorder.ts`
+- [X] T027 [US2] Remove `WidgetEventBridge.ts`, `useSelectionBridge.ts`, and all `eventType`/`eventPayload`/`onEvent` references — `widgets/ax-ganttchart/src/main/services/WidgetEventBridge.ts`
+
+**Checkpoint**: All five Mendix actions fire with correct write-back attributes; no JSON payload bridge remains.
+
+---
+
+## Phase 5: User Story 8 — Studio Pro Preview (P3)
+
+**Goal**: Preview uses `gantt-test.json` normalized mock data instead of hand-written `MOCK_GANTT_TASKS`.
+
+**Independent Test**: Open widget in Studio Pro design mode; hierarchy from gantt-test.json renders with toolbar, grid, timeline.
+
+- [X] T028 [P] [US8] Replace `MOCK_GANTT_TASKS` export with re-export from `ganttTestData.ts` — `widgets/ax-ganttchart/src/preview/previewConfig.ts`
+- [X] T029 [US8] Update `AxGanttChart.editorPreview.tsx` to pass `ganttTestData` tasks and new prop defaults — `widgets/ax-ganttchart/src/AxGanttChart.editorPreview.tsx`
+- [X] T030 [US8] Ensure preview path bypasses Mendix datasource validation and loads mock tasks into `AxGanttStore` — `widgets/ax-ganttchart/src/main/AxGanttInner.tsx`
+
+**Checkpoint**: Studio Pro preview shows real gantt-test.json hierarchy without datasource.
+
+---
+
+## Phase 6: User Story 3 — Timeline View Modes (P2)
+
+**Goal**: Day/Week/Month views via scale reconfiguration without gantt remount.
+
+**Independent Test**: Switch toolbar view mode and send `ZOOM_WEEK` command; scales update, no `gantt.destructor()`.
+
+- [X] T031 [US3] Migrate view mode state to `AxGanttStore.viewMode`; toolbar updates store — `widgets/ax-ganttchart/src/main/components/GanttToolbar.tsx`
+- [X] T032 [US3] Apply `getScales(viewMode)` + `applyTimelineRange` on viewMode change without re-init — `widgets/ax-ganttchart/src/main/components/TimelineManager.ts`
+- [X] T033 [US3] React to `ZOOM_DAY`/`ZOOM_WEEK`/`ZOOM_MONTH` bus topics in `AxGanttInner.tsx` — `widgets/ax-ganttchart/src/main/AxGanttInner.tsx`
+
+**Checkpoint**: View mode switches smoothly from toolbar and event bus.
+
+---
+
+## Phase 7: User Story 4 — Event Bus Programmatic Control (P2)
+
+**Goal**: External Mendix commands control Gantt via global bus; `AxGanttInner` is sole incoming listener.
+
+**Independent Test**: Set `command=REFRESH` → datasource reloads. `command=ENTER_FULLSCREEN` → fullscreen toggles. `command=SCROLL_TO_TASK` with payload → scrolls to task.
+
+- [X] T034 [US4] Migrate `useCommandSync` logic into `AxGanttInner.tsx` watching `command`/`commandPayload` props — `widgets/ax-ganttchart/src/main/AxGanttInner.tsx`
+- [X] T035 [US4] Migrate incoming command handlers from `useEventBusBridge.ts` / `GanttCommandRegistry.ts` to bus topic handlers in `AxGanttInner.tsx` — `widgets/ax-ganttchart/src/main/AxGanttInner.tsx`
+- [X] T036 [US4] Replace old `GanttEventBusImpl` usages with `emitEvent`/`getEventBus().on()` — `widgets/ax-ganttchart/src/main/components/AxGanttChartView.tsx`
+- [ ] T037 [US4] Delete obsolete files: `main/eventbus/GanttEventBus.ts`, `main/eventbus/eventTypes.ts`, `main/hooks/useEventBusBridge.ts`, `main/hooks/useCommandSync.ts` — `widgets/ax-ganttchart/src/main/`
+
+**Checkpoint**: All incoming commands work through `AxGanttInner`; old enum event bus removed.
+
+---
+
+## Phase 8: User Story 5 — Enterprise Visual Design (P2)
+
+**Goal**: Cross-highlight hover, today marker, polished grid styling preserved after refactor.
+
+**Independent Test**: Hover row → row `#fff8cc` + column `#fffbe6`. Today marker visible when enabled.
+
+- [X] T038 [P] [US5] Verify cross-highlight CSS and hover handlers still wired after view consolidation — `widgets/ax-ganttchart/src/styles/gantt.scss`
+- [X] T039 [US5] Ensure `TodayMarker.ts` sync still called from view init with `showTodayMarker` prop — `widgets/ax-ganttchart/src/main/components/TodayMarker.ts`
+- [X] T040 [US5] Ensure `MtoMarker.ts` sync still called for TASK/SUB_TASK milestone bars — `widgets/ax-ganttchart/src/main/components/MtoMarker.ts`
+
+**Checkpoint**: Visual UX unchanged or improved post-refactor.
+
+---
+
+## Phase 9: User Story 10 & 11 — Add Button + Progressive Expand (P1)
+
+**Goal**: (+) on level-2 rows in `#009999`; toolbar expand reveals one hierarchy level per click.
+
+**Independent Test**: (+) only on `$level === 1` rows; expand button opens next level each click.
+
+- [X] T041 [US10] Verify `ColumnManager.ts` (+) button renders only at `$level === 1` with brand color `#009999` — `widgets/ax-ganttchart/src/main/components/ColumnManager.ts`
+- [X] T042 [US11] Verify `TreeExpandManager.ts` progressive expand preserved in toolbar — `widgets/ax-ganttchart/src/main/components/TreeExpandManager.ts`
+- [X] T043 [US11] Preserve expand level across datasource refresh in `AxGanttStore` sync path — `widgets/ax-ganttchart/src/main/components/AxGanttChartView.tsx`
+
+**Checkpoint**: Add button and progressive expand work in Mendix runtime.
+
+---
+
+## Phase 10: User Story 6 — Large Dataset Performance (P3)
+
+**Goal**: Smart rendering and incremental updates at 1,000+ tasks.
+
+**Independent Test**: Load 1,000+ tasks; scroll responsive; single task change uses `gantt.updateTask` not full re-parse.
+
+- [X] T044 [US6] Ensure `smart_rendering: true` and `show_task_cells: false` when task count > 500 — `widgets/ax-ganttchart/src/main/components/GanttConfiguration.ts`
+- [X] T045 [US6] Migrate incremental sync from `GanttSyncService.ts` into view/store path using `gantt.updateTask`/`gantt.addTask`/`gantt.deleteTask` — `widgets/ax-ganttchart/src/main/services/GanttSyncService.ts`
+
+**Checkpoint**: Performance behavior preserved; no full re-parse on single-row datasource change.
+
+---
+
+## Phase 11: User Story 7 — Export Architecture (P3)
+
+**Goal**: Export via service layer triggered by bus commands, not UI components.
+
+**Independent Test**: Emit `EXPORT_PNG` topic → `ExportService` calls `gantt.exportToPNG` without crash.
+
+- [X] T046 [US7] Wire `EXPORT_PDF`/`EXPORT_PNG`/`EXPORT_EXCEL` bus topics in `AxGanttInner.tsx` to `ExportService` — `widgets/ax-ganttchart/src/main/services/ExportService.ts`
+- [X] T047 [US7] Ensure `enablePlugins({ export_api: true })` still called during gantt init — `widgets/ax-ganttchart/src/main/components/GanttConfiguration.ts`
+
+**Checkpoint**: Export commands work via event bus.
+
+---
+
+## Phase 12: Polish & Cross-Cutting Concerns
+
+**Purpose**: Remove dead layers, finalize simplified architecture, validate build.
+
+- [ ] T048 [P] Delete `main/providers/GanttProvider.tsx`, `main/hooks/useGanttInstance.ts`, `main/hooks/useDatasourceSync.ts`, `main/hooks/useSelectionBridge.ts`, `stores/RootStore.ts` — `widgets/ax-ganttchart/src/`
+- [ ] T049 [P] Update all imports from `GanttTask`/`GanttStore` to `AxGanttTask`/`AxGanttStore` across widget package — `widgets/ax-ganttchart/src/`
+- [X] T050 Update unit tests for `computeChangedNum`, adapter unscheduled mapping, and remove stale bridge tests — `widgets/ax-ganttchart/src/shared/utils/__tests__/`
+- [X] T051 Run `pnpm --filter ax-ganttchart build && pnpm --filter ax-ganttchart test`; fix TypeScript errors — `widgets/ax-ganttchart/`
+- [X] T052 Validate integration steps in `specs/002-enterprise-gantt-widget/quickstart.md` match implemented action props — `specs/002-enterprise-gantt-widget/quickstart.md`
 
 ---
 
@@ -114,75 +203,103 @@
 
 ### Phase Dependencies
 
-- **Phase 1 (Setup)**: Không phụ thuộc — bắt đầu ngay
-- **Phase 2 (Foundation)**: Phụ thuộc Phase 1 — **BLOCKS tất cả US**
-- **Phase 3 (US1)**: Sau Foundation — cần thiết cho US2 (bridge methods) 
-- **Phase 4 (US2)**: Sau Phase 3 — cần bridge có handleTaskUpdated/handleTaskReordered
-- **Phase 5 (US3)**: Có thể chạy song song với Phase 4 sau Phase 3
-- **Phase 6 (Polish)**: Sau tất cả US
+- **Phase 1 (Setup)**: No dependencies — start immediately
+- **Phase 2 (Foundational)**: Depends on Phase 1 (T006 props must exist) — **BLOCKS all user stories**
+- **Phase 3 (US1)**: Depends on Phase 2 — MVP datasource rendering
+- **Phase 4 (US2)**: Depends on Phase 3 (needs rendered gantt to wire interactions)
+- **Phase 5 (US8)**: Depends on Phase 2 (T012 mock data); can parallel with Phase 3 after T012
+- **Phase 6–11**: Depend on Phase 3 minimum; Phase 7 depends on Phase 2 bus; Phase 4 before Phase 9 (add button uses action bridge)
+- **Phase 12 (Polish)**: Depends on Phases 3–11
 
-### Task-level Dependencies
+### User Story Dependencies
 
-```
-T001 (baseline)
-  → T002, T003, T004 [parallel — independent files]
-    T003 → T005, T008, T009, T011
-      T005 → T006 → T007
-      T008 (depends T003)
-      T009 (depends T003)
-      T011 → T012 → T013, T014
-        T013 → T015 → T016 → T017, T018 [parallel]
-        T015 → T019 → T020 → T021, T022 [parallel]
-  → T023, T024, T025, T026 [parallel, after T012+]
-```
+| Story | Depends on | Can parallel with |
+|-------|------------|-------------------|
+| US1 (P1) | Foundational | — |
+| US2 (P1) | US1 | — |
+| US8 (P3) | Foundational (T012) | US1 after T012 |
+| US3 (P2) | US1 | US8 |
+| US4 (P2) | Foundational + US1 | US3, US5 |
+| US5 (P2) | US1 | US3, US4 |
+| US10/11 (P1) | US2 | US5 |
+| US6 (P3) | US1 | US7 |
+| US7 (P3) | US4 | US6 |
 
 ### Parallel Opportunities
 
-**Foundation (T002-T009)**: T002, T003, T004 có thể chạy song song (khác file). T005-T009 sequential theo dependency.
+**Phase 2** (after T006):
+```text
+T007 createBus.ts ∥ T008 globalScope.ts ∥ T010 axGanttTask.ts ∥ T012 ganttTestData.ts
+```
 
-**US1 + US2 setup**: T010, T011 song song; T015, T019 song song sau T013.
+**Phase 3** (after Phase 2):
+```text
+T016 validateDatasourceMapping.ts ∥ T018 mapTaskForDhtmlx.ts
+```
 
-**Polish**: T023, T024, T025, T026 song song.
+**Phase 12**:
+```text
+T048 delete old files ∥ T049 update imports
+```
 
 ---
 
-## Parallel Execution Example: US1
+## Parallel Example: User Story 1
 
 ```bash
-# Run together (different files):
-Task T010: "Thêm eventType/eventPayload vào AxGanttChart.xml"
-Task T011: "Thêm EditableValue props vào AxGanttChartProps.ts"
+# After Phase 2 completes, run in parallel:
+T016  validateDatasourceMapping.ts
+T018  mapTaskForDhtmlx.ts
 
-# After T011:
-Task T012: "Update WidgetEventBridge write-back"
-# After T012:
-Task T013: "Rename TASK_REQUEST_ADD → ADD_TASK_REQUESTED"
-Task T014: "Pass eventType/eventPayload từ GanttProvider"
+# Then sequential:
+T017 → T019 → T020 → T021
 ```
 
 ---
 
 ## Implementation Strategy
 
-### MVP (Phase 2 + Phase 3 chỉ — US1)
+### MVP First (US1 + US2)
 
-1. Complete Phase 2: Foundation cleanup
-2. Complete Phase 3: US1 — attribute write-back
-3. **STOP & TEST**: Bind widget trong Mendix test app → click task → verify `$EventType` = "TASK_CLICKED" trong nanoflow
-4. Demo: "Không cần JavaScript để đọc Gantt events"
+1. Complete Phase 1: Setup (XML + props)
+2. Complete Phase 2: Foundational (bus, store, types, mock, action bridge)
+3. Complete Phase 3: US1 — datasource + unscheduled groups render
+4. Complete Phase 4: US2 — typed Mendix actions
+5. **STOP and VALIDATE**: Deploy to Mendix; click/drag/reorder fires correct actions
 
-### Full Delivery (tất cả phases)
+### Incremental Delivery
 
-1. Foundation → US1 → US2 → US3 → Polish
-2. Mỗi phase là một increment độc lập, có thể test riêng
-3. US3 (VIEW_CHANGED/FULLSCREEN_CHANGED) có thể defer nếu không urgent
+1. Setup + Foundational → infrastructure ready
+2. US1 → datasource renders (MVP visual)
+3. US2 → Mendix integration complete (MVP functional)
+4. US8 → preview with real mock data
+5. US3 + US4 → view modes + programmatic control
+6. US5 + US10/11 → polish UX
+7. US6 + US7 → performance + export
+8. Phase 12 → cleanup + ship
+
+### Suggested MVP Scope
+
+**Phases 1–4 only** (T001–T027): XML contract, simplified architecture core, datasource rendering, typed Mendix actions.
 
 ---
 
-## Notes
+## Summary
 
-- `[P]` = files khác nhau, không dependency → chạy song song được
-- Verify TypeScript strict compile sau mỗi phase (không để dồn lỗi)
-- `window.__AX_GANTT__` global API KHÔNG xóa — backward compat cho dev đang dùng
-- Sau refactor: nanoflow chỉ cần 1 ExclusiveSplit trên `$EventType` — không cần JS
-- Total tasks: **26** (T001–T026)
+| Metric | Value |
+|--------|-------|
+| **Total tasks** | 52 |
+| **Phase 1 Setup** | 6 |
+| **Phase 2 Foundational** | 9 |
+| **US1** | 6 |
+| **US2** | 6 |
+| **US8** | 3 |
+| **US3** | 3 |
+| **US4** | 4 |
+| **US5** | 3 |
+| **US10/11** | 3 |
+| **US6** | 2 |
+| **US7** | 2 |
+| **Polish** | 5 |
+| **Parallel-marked [P]** | 14 |
+| **Format validation** | ✅ All tasks use `- [ ] T### [P?] [US?] Description — path` |

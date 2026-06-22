@@ -2,28 +2,21 @@ import { Empty } from "antd";
 import classNames from "classnames";
 import { observer } from "mobx-react-lite";
 import { useCallback, useMemo, useRef, useState } from "react";
-import type { AxGanttChartProps } from "../../typings/AxGanttChartProps";
-import { GanttSkeleton } from "./GanttSkeleton";
-import { GanttToolbar } from "./GanttToolbar";
-import { GanttTooltip } from "./GanttTooltip";
-import { useDatasourceSync } from "../hooks/useDatasourceSync";
-import { useCommandSync } from "../hooks/useCommandSync";
-import { useEventBusBridge } from "../hooks/useEventBusBridge";
-import { useGanttInstance } from "../hooks/useGanttInstance";
-import { useSelectionBridge } from "../hooks/useSelectionBridge";
-import { useGanttContext } from "../providers/GanttProvider";
-import { isDatasourceAvailable, mapMendixDatasourceToGanttTasks } from "../services/MendixTaskAdapter";
-import { createGanttEditingConfig } from "../../shared/types/editingConfig";
-import { resolveGanttContainerHeight, resolveGanttShellHeight } from "./GanttConfiguration";
-import type { GanttTask } from "../eventbus/eventTypes";
-
-function countDescendants(taskId: string, tasks: GanttTask[]): number {
-    const children = tasks.filter(task => task.parent === taskId);
-    return children.reduce((sum, child) => sum + 1 + countDescendants(child.id, tasks), 0);
-}
+import type { AxGanttChartProps } from "../typings/AxGanttChartProps";
+import { readDynamicBoolean, readWidgetHeight } from "../typings/AxGanttChartProps";
+import { GanttSkeleton } from "./components/GanttSkeleton";
+import { GanttToolbar } from "./components/GanttToolbar";
+import { GanttTooltip } from "./components/GanttTooltip";
+import { useDatasourceSync } from "./hooks/useDatasourceSync";
+import { useGanttInstance } from "./hooks/useGanttInstance";
+import { useAxGanttContext } from "../AxGanttInner";
+import { isDatasourceAvailable, mapMendixDatasourceToGanttTasks } from "./services/MendixTaskAdapter";
+import { createGanttEditingConfig } from "../shared/types/editingConfig";
+import { resolveGanttContainerHeight, resolveGanttShellHeight } from "./components/GanttConfiguration";
 
 export interface AxGanttChartViewProps {
     widgetProps: AxGanttChartProps;
+    rootRef: React.RefObject<HTMLDivElement>;
 }
 
 interface TooltipPos {
@@ -32,64 +25,53 @@ interface TooltipPos {
 }
 
 export const AxGanttChartView = observer(function AxGanttChartView({
-    widgetProps
+    widgetProps,
+    rootRef
 }: AxGanttChartViewProps): JSX.Element {
-    const { store, eventBus, bridge, widgetId, isPreview } = useGanttContext();
+    const { store, actionBridge, isPreview, customGanttConfig, useDhtmlxTooltip } = useAxGanttContext();
     const containerRef = useRef<HTMLDivElement>(null);
-    const rootRef = useRef<HTMLDivElement>(null);
 
     const [tooltipPos, setTooltipPos] = useState<TooltipPos>({ x: 0, y: 0 });
+    const showReactTooltip = !useDhtmlxTooltip;
 
     const mappingValid = useDatasourceSync(store, widgetProps, !isPreview);
-    useSelectionBridge(store, bridge);
+
+    const allowDrag = readDynamicBoolean(widgetProps.allowDrag, true);
+    const allowResize = readDynamicBoolean(widgetProps.allowResize, false);
+    const readOnly = readDynamicBoolean(widgetProps.readOnly, false);
+    const allowGridReorder = readDynamicBoolean(widgetProps.allowGridReorder, true);
+    const widgetHeight = readWidgetHeight(widgetProps, 600);
 
     const editingConfig = useMemo(
         () =>
             createGanttEditingConfig({
-                allowDrag: widgetProps.allowDrag,
-                allowResize: widgetProps.allowResize,
-                readOnly: widgetProps.readOnly
+                allowDrag,
+                allowResize,
+                readOnly
             }),
-        [widgetProps.allowDrag, widgetProps.allowResize, widgetProps.readOnly]
+        [allowDrag, allowResize, readOnly]
     );
 
     const handleAddTaskClick = useCallback(
         (taskId: string) => {
-            const task = store.taskById.get(taskId);
+            const task = store.getTask(taskId);
             if (!task) {
                 return;
             }
 
             store.selectTask(task);
-            bridge.handleAddTaskRequested(task, countDescendants(taskId, store.tasks));
+            actionBridge.fireAdded(task);
         },
-        [bridge, store]
+        [actionBridge, store]
     );
 
     const handleRefresh = useCallback(() => {
-        if (isPreview || !isDatasourceAvailable(widgetProps.tasksDatasource) || !mappingValid) {
+        if (isPreview || !isDatasourceAvailable(widgetProps.roadmapItems) || !mappingValid) {
             return;
         }
         const mapped = mapMendixDatasourceToGanttTasks(widgetProps);
         store.setTasksIfChanged(mapped.tasks);
     }, [isPreview, mappingValid, store, widgetProps]);
-
-    useEventBusBridge({
-        store,
-        eventBus,
-        widgetId,
-        bridge,
-        containerRef: rootRef,
-        onRefresh: handleRefresh
-    });
-
-    useCommandSync({
-        command: widgetProps.command,
-        commandPayload: widgetProps.commandPayload,
-        eventBus,
-        widgetId,
-        enabled: !isPreview
-    });
 
     useGanttInstance({
         store,
@@ -99,29 +81,39 @@ export const AxGanttChartView = observer(function AxGanttChartView({
         showProgress: widgetProps.showProgress,
         showTodayMarker: widgetProps.showTodayMarker,
         editing: editingConfig,
-        allowGridReorder: widgetProps.allowGridReorder,
-        bridge,
-        onAddTaskClick: handleAddTaskClick
+        allowGridReorder,
+        actionBridge,
+        customGanttConfig,
+        useDhtmlxTooltip,
+        onAddTaskClick: handleAddTaskClick,
+        onRefresh: handleRefresh
     });
 
-    const hoveredTask = store.hoveredTaskId ? store.taskById.get(store.hoveredTaskId) : undefined;
+    const hoveredTask = store.hoveredTaskId ? store.getTask(store.hoveredTaskId) : undefined;
     const showConfigError = !isPreview && !mappingValid;
     const showEmpty = !showConfigError && !store.loading && !store.hasTasks;
-    const shellHeight = resolveGanttShellHeight(widgetProps.height, store.expandHeight);
+    const shellHeight = resolveGanttShellHeight(widgetHeight, store.expandHeight);
     const ganttContainerHeight = resolveGanttContainerHeight(
-        widgetProps.height,
+        widgetHeight,
         store.expandHeight,
         widgetProps.showToolbar
     );
     const hideGantt = showEmpty || showConfigError;
 
-    const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-        setTooltipPos({ x: e.clientX, y: e.clientY });
-    }, []);
+    const handleMouseMove = useCallback(
+        (e: React.MouseEvent<HTMLDivElement>) => {
+            if (showReactTooltip) {
+                setTooltipPos({ x: e.clientX, y: e.clientY });
+            }
+        },
+        [showReactTooltip]
+    );
 
     const handleMouseLeave = useCallback(() => {
-        store.setHoveredTaskId(undefined);
-    }, [store]);
+        if (showReactTooltip) {
+            store.setHoveredTaskId(undefined);
+        }
+    }, [showReactTooltip, store]);
 
     const ganttContainerStyle = useMemo(
         () => ({
@@ -151,7 +143,7 @@ export const AxGanttChartView = observer(function AxGanttChartView({
                     <div className="ax-ganttchart__empty">
                         <Empty
                             image={Empty.PRESENTED_IMAGE_SIMPLE}
-                            description="Gantt configuration incomplete. Check id, text, start date, and end date or duration mappings."
+                            description="Gantt configuration incomplete. Check itemId, text, type, and parentId mappings."
                         />
                     </div>
                 )}
@@ -162,13 +154,11 @@ export const AxGanttChartView = observer(function AxGanttChartView({
                     </div>
                 )}
 
-                <div
-                    ref={containerRef}
-                    className="ax-ganttchart__gantt"
-                    style={ganttContainerStyle}
-                />
+                <div ref={containerRef} className="ax-ganttchart__gantt" style={ganttContainerStyle} />
 
-                {hoveredTask && <GanttTooltip task={hoveredTask} pos={tooltipPos} containerRef={rootRef} />}
+                {showReactTooltip && hoveredTask && (
+                    <GanttTooltip task={hoveredTask} pos={tooltipPos} containerRef={rootRef} />
+                )}
             </div>
         </div>
     );
